@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Millestone</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #ffffff;
+      color: #000000;
+      width: 100vw;
+      height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.dark {
+      background-color: #121212;
+      color: #ffffff;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 72px;
+      border-bottom: 1px solid #e0e0e0;
+      transition: border-color 0.3s, background-color 0.3s;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-left {
+      gap: 0;
+    }
+    body.dark nav {
+      border-bottom-color: #2e2e2e;
+    }
+
+    .nav-icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #555;
+      transition: background-color 0.2s, color 0.2s;
+    }
+    .nav-icon-btn:hover {
+      background-color: rgba(0, 0, 0, 0.07);
+    }
+    body.dark .nav-icon-btn {
+      color: #aaa;
+    }
+    body.dark .nav-icon-btn:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-icon-btn svg {
+      width: 22px;
+      height: 22px;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <!-- 아이콘 버튼 (왼쪽) -->
+    <div class="nav-left">
+      <!-- 구름 -->
+      <button class="nav-icon-btn" title="구름" aria-label="구름">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+        </svg>
+      </button>
+      <!-- 번개 -->
+      <button class="nav-icon-btn" title="번개" aria-label="번개">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+      </button>
+      <!-- 전구 -->
+      <button class="nav-icon-btn" title="전구" aria-label="전구">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="9" y1="18" x2="15" y2="18"/>
+          <line x1="10" y1="22" x2="14" y2="22"/>
+          <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- 아이콘 버튼 (오른쪽) -->
+    <div class="nav-right">
+    <!-- 달 (다크모드 토글) -->
+    <button class="nav-icon-btn" id="theme-toggle" title="테마 전환" aria-label="테마 전환">
+      <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+      <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        style="display:none;">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/>
+        <line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/>
+        <line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+    </button>
+
+    <!-- 설정 -->
+    <button class="nav-icon-btn" id="settings-btn" title="설정" aria-label="설정" onclick="location.href='settings.html'">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06
+          a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09
+          A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06
+          A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
+          A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06
+          A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09
+          a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06
+          A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09
+          a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+    </div>
+  </nav>
+
+  <script>
+    // ──────────────────────────────────────────
+    // 데이터 구조
+    // ──────────────────────────────────────────
+    const SCORE = Object.freeze({ UP: 1, NONE: 0, DOWN: -1 });
+
+    class Prompt {
+      constructor(message, score = SCORE.NONE) {
+        this.id      = crypto.randomUUID();   // 고유 식별자
+        this.message = message;               // 프롬프트 텍스트
+        this.score   = score;                 // SCORE.UP | SCORE.NONE | SCORE.DOWN
+      }
+    }
+
+    const prompts = [];   // Prompt 인스턴스 배열
+
+    const IMPORTANCE = Object.freeze({ LOW: 1, MEDIUM: 2, HIGH: 3 });
+
+    const STATUS = Object.freeze({
+      IDEA:        'idea',
+      PENDING:     'pending',
+      IN_PROGRESS: 'in_progress',
+      DONE:        'done',
+      ON_HOLD:     'on_hold',
+      ERROR:       'error',
+    });
+
+    class Task {
+      constructor(name, importance = IMPORTANCE.MEDIUM, status = STATUS.IDEA) {
+        this.id         = crypto.randomUUID();   // 고유 식별자
+        this.name       = name;                  // Task 이름
+        this.importance = importance;            // IMPORTANCE.LOW | MEDIUM | HIGH
+        this.status     = status;               // STATUS.*
+        this.prompts    = [];                    // Prompt 인스턴스 배열
+      }
+    }
+
+    const tasks = [];   // Task 인스턴스 배열
+
+    class Idea {
+      constructor(title, description = '') {
+        this.id          = crypto.randomUUID();   // 고유 식별자
+        this.title       = title;                 // 아이디어 제목
+        this.description = description;           // 아이디어 설명
+        this.tasks       = [];                    // Task 인스턴스 배열
+      }
+
+      // 하위 Task 분포에 따라 자동 산출되는 Status
+      get status() {
+        const t = this.tasks;
+        if (t.length === 0)                                return STATUS.IDEA;
+
+        const statuses = t.map(task => task.status);
+        const has  = s => statuses.includes(s);
+        const all  = s => statuses.every(task => task === s);
+
+        if (has(STATUS.ERROR))                             return STATUS.ERROR;
+        if (all(STATUS.DONE))                              return STATUS.DONE;
+        if (all(STATUS.ON_HOLD))                           return STATUS.ON_HOLD;
+        if (all(STATUS.IDEA))                              return STATUS.IDEA;
+        if (all(STATUS.PENDING))                           return STATUS.PENDING;
+        if (statuses.every(s => s === STATUS.DONE || s === STATUS.ON_HOLD))
+                                                           return STATUS.ON_HOLD;
+        return STATUS.IN_PROGRESS;
+      }
+    }
+
+    const ideas = [];   // Idea 인스턴스 배열
+
+    class Project {
+      constructor(name, description = '', outputPath = '') {
+        this.id          = crypto.randomUUID();   // 고유 식별자
+        this.name        = name;                  // 프로젝트 이름
+        this.description = description;           // 프로젝트 설명
+        this.outputPath  = outputPath;            // 결과물 저장 위치 (경로 또는 URL)
+        this.ideas       = [];                    // Idea 인스턴스 배열
+      }
+    }
+
+    const projects = [];   // Project 인스턴스 배열
+
+    class Workspace {
+      constructor(name, description = '') {
+        this.id          = crypto.randomUUID();   // 고유 식별자
+        this.name        = name;                  // 워크스페이스 이름
+        this.description = description;           // 워크스페이스 설명
+        this.projects    = [];                    // Project 인스턴스 배열
+      }
+    }
+
+    const workspaces = [];   // Workspace 인스턴스 배열
+
+    // ──────────────────────────────────────────
+    // 테마
+    // ──────────────────────────────────────────
+    const toggle = document.getElementById('theme-toggle');
+    const moon = document.getElementById('icon-moon');
+    const sun = document.getElementById('icon-sun');
+
+    const STORAGE_KEY = 'settings.theme';
+    const DEFAULT_THEME = 'light'; // settings.config 기본값과 동일
+
+    function applyTheme(theme) {
+      const isDark = theme === 'dark';
+      document.body.classList.toggle('dark', isDark);
+      moon.style.display = isDark ? 'none' : '';
+      sun.style.display = isDark ? '' : 'none';
+    }
+
+    function loadTheme() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved !== null ? saved : DEFAULT_THEME;
+    }
+
+    function saveTheme(theme) {
+      localStorage.setItem(STORAGE_KEY, theme);
+    }
+
+    // 페이지 로드 시 저장된 테마 적용
+    applyTheme(loadTheme());
+
+    toggle.addEventListener('click', () => {
+      const isDark = document.body.classList.contains('dark');
+      const next = isDark ? 'light' : 'dark';
+      applyTheme(next);
+      saveTheme(next);
+    });
+  </script>
+</body>
+</html>

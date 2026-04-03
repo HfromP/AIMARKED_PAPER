@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Millestone</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #ffffff;
+      color: #000000;
+      width: 100vw;
+      height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.dark {
+      background-color: #121212;
+      color: #ffffff;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 72px;
+      border-bottom: 1px solid #e0e0e0;
+      transition: border-color 0.3s, background-color 0.3s;
+    }
+    body.dark nav {
+      border-bottom-color: #2e2e2e;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #555;
+      transition: background-color 0.2s, color 0.2s;
+    }
+    .nav-icon-btn:hover {
+      background-color: rgba(0, 0, 0, 0.07);
+    }
+    body.dark .nav-icon-btn {
+      color: #aaa;
+    }
+    body.dark .nav-icon-btn:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    .nav-icon-btn svg {
+      width: 22px;
+      height: 22px;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <!-- 아이콘 버튼 (왼쪽) -->
+    <div class="nav-left">
+      <!-- 구름 -->
+      <button class="nav-icon-btn" title="구름" aria-label="구름">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+        </svg>
+      </button>
+      <!-- 번개 -->
+      <button class="nav-icon-btn" title="번개" aria-label="번개">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+      </button>
+      <!-- 전구 -->
+      <button class="nav-icon-btn" title="전구" aria-label="전구">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="9" y1="18" x2="15" y2="18"/>
+          <line x1="10" y1="22" x2="14" y2="22"/>
+          <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/>
+        </svg>
+      </button>
+      <!-- 설정 (현재 페이지) -->
+      <button class="nav-icon-btn" title="설정" aria-label="설정">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06
+            a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09
+            A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06
+            A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
+            A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06
+            A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09
+            a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06
+            A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09
+            a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- 나가기 버튼 (오른쪽) -->
+    <div class="nav-right">
+      <button class="nav-icon-btn" title="나가기" aria-label="나가기" onclick="location.href='main.html'">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <script>
+    const STORAGE_KEY = 'settings.theme';
+    const DEFAULT_THEME = 'light';
+
+    function applyTheme(theme) {
+      document.body.classList.toggle('dark', theme === 'dark');
+    }
+
+    function loadTheme() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved !== null ? saved : DEFAULT_THEME;
+    }
+
+    applyTheme(loadTheme());
+  </script>
+</body>
+</html>
