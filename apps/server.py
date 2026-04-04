@@ -48,6 +48,30 @@ def find_idea(data, idea_id):
     return None
 
 
+def find_task(data, task_id):
+    """data 구조에서 task_id에 해당하는 (idea, task) 반환."""
+    for ws in data.get('workspaces', []):
+        for proj in ws.get('projects', []):
+            for ms in proj.get('milestones', []):
+                for idea in ms.get('ideas', []):
+                    for task in idea.get('tasks', []):
+                        if task.get('id') == task_id:
+                            return idea, task
+    return None, None
+
+
+def find_task_context(data, task_id):
+    """data 구조에서 task_id에 해당하는 (workspace, project, idea, task) 반환."""
+    for ws in data.get('workspaces', []):
+        for proj in ws.get('projects', []):
+            for ms in proj.get('milestones', []):
+                for idea in ms.get('ideas', []):
+                    for task in idea.get('tasks', []):
+                        if task.get('id') == task_id:
+                            return ws, proj, idea, task
+    return None, None, None, None
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(BASE_DIR), **kwargs)
@@ -78,6 +102,8 @@ class Handler(SimpleHTTPRequestHandler):
             self._handle_claude_check()
         elif self.path == '/api/gemini-check':
             self._handle_gemini_check()
+        elif self.path == '/api/browse-folder':
+            self._handle_browse_folder()
         else:
             super().do_GET()
 
@@ -91,10 +117,44 @@ class Handler(SimpleHTTPRequestHandler):
         m = re.fullmatch(r'/api/ideas/([^/]+)/run', self.path)
         if m:
             self._handle_run_idea(m.group(1))
-        else:
-            self._send_json(404, {'error': 'Not found'})
+            return
+        m = re.fullmatch(r'/api/tasks/([^/]+)/prompt', self.path)
+        if m:
+            self._handle_task_prompt(m.group(1))
+            return
+        m = re.fullmatch(r'/api/tasks/([^/]+)/execute', self.path)
+        if m:
+            self._handle_task_execute(m.group(1))
+            return
+        if self.path == '/api/reveal-folder':
+            self._handle_reveal_folder()
+            return
+        if self.path == '/api/classify-message':
+            self._handle_classify_message()
+            return
+        if self.path == '/api/refine-prompt':
+            self._handle_refine_prompt()
+            return
+        self._send_json(404, {'error': 'Not found'})
 
     # ── 핸들러 구현 ────────────────────────────────────────
+
+    def _handle_browse_folder(self):
+        try:
+            result = subprocess.run(
+                ['osascript', '-e', 'POSIX path of (choose folder)'],
+                capture_output=True, text=True, timeout=60
+            )
+            if result.returncode == 0:
+                path = result.stdout.strip()
+                self._send_json(200, {'ok': True, 'path': path})
+            else:
+                # 취소한 경우 returncode != 0
+                self._send_json(200, {'ok': False, 'cancelled': True})
+        except subprocess.TimeoutExpired:
+            self._send_json(200, {'ok': False, 'error': '응답 시간 초과'})
+        except Exception as e:
+            self._send_json(500, {'error': str(e)})
 
     def _handle_gemini_check(self):
         try:
@@ -152,13 +212,23 @@ class Handler(SimpleHTTPRequestHandler):
                 self._send_json(404, {'error': f'idea {idea_id} not found'})
                 return
 
-            prompt = (
+            parts = []
+            files = idea.get('files', [])
+            if files:
+                file_section = "\n\n".join(
+                    f"[참고 파일: {f.get('name', '')}]\n{f.get('content', '')}"
+                    for f in files[:3]
+                )
+                parts.append(f"다음 파일들을 참고해서 Task를 구성해줘:\n\n{file_section}")
+
+            parts.append(
                 f"아이디어 제목: {idea.get('title', '')}\n"
                 f"아이디어 설명: {idea.get('description', '')}\n\n"
                 "위 아이디어를 구현하기 위한 구체적인 Task 목록을 JSON 배열로만 응답해줘.\n"
                 "다른 설명 없이 JSON 배열만 출력해줘.\n"
                 '각 Task는 {"name": "...", "importance": 1|2|3} 형태야. (1=낮음, 2=보통, 3=높음)'
             )
+            prompt = "\n\n".join(parts)
 
             result = subprocess.run(
                 [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
@@ -180,6 +250,201 @@ class Handler(SimpleHTTPRequestHandler):
             idea.setdefault('tasks', []).extend(tasks)
             write_data(data)
             self._send_json(200, idea)
+
+        except subprocess.TimeoutExpired:
+            self._send_json(500, {'error': 'Claude CLI 응답 시간 초과'})
+        except Exception as e:
+            self._send_json(500, {'error': str(e)})
+
+    def _handle_task_prompt(self, task_id):
+        try:
+            body = json.loads(self._read_body()) if int(self.headers.get('Content-Length', 0)) else {}
+            system_prompt = body.get('systemPrompt', '').strip()
+            history = body.get('conversationHistory', [])
+
+            data = read_data()
+            idea, task = find_task(data, task_id)
+            if task is None:
+                self._send_json(404, {'error': f'task {task_id} not found'})
+                return
+
+            parts = []
+            if system_prompt:
+                parts.append(system_prompt)
+            if history:
+                parts.append("[이전 프롬프트 히스토리]\n" +
+                             "\n".join(f"{i+1}. {h}" for i, h in enumerate(history)))
+            parts.append(
+                f"아이디어: {idea.get('title', '')}\n"
+                f"아이디어 설명: {idea.get('description', '')}\n"
+                f"Task 이름: {task.get('name', '')}\n\n"
+                "위 Task를 수행하기 위한 가장 효과적인 AI 프롬프트를 하나 생성해줘.\n"
+                "프롬프트 텍스트만 출력하고 다른 설명은 하지 마."
+            )
+            prompt = "\n\n".join(parts)
+
+            result = subprocess.run(
+                [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
+                capture_output=True, text=True, timeout=60
+            )
+
+            if result.returncode != 0:
+                raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
+
+            self._send_json(200, {'ok': True, 'prompt': result.stdout.strip()})
+
+        except subprocess.TimeoutExpired:
+            self._send_json(500, {'error': 'Claude CLI 응답 시간 초과'})
+        except Exception as e:
+            self._send_json(500, {'error': str(e)})
+
+    def _handle_task_execute(self, task_id):
+        import time as _time
+        try:
+            body = json.loads(self._read_body())
+            prompt_text = body.get('prompt', '')
+
+            data = read_data()
+            ws, proj, idea, task = find_task_context(data, task_id)
+            if task is None:
+                self._send_json(404, {'error': f'task {task_id} not found'})
+                return
+
+            # 파일명 안전 변환
+            def safe_name(s, max_len=30):
+                s = re.sub(r'[^\w\s가-힣-]', '', s).strip()
+                return re.sub(r'\s+', '_', s)[:max_len] or 'untitled'
+
+            output_path = proj.get('outputPath', '').strip()
+            updated_output_path = None
+            if not output_path:
+                output_path = str(
+                    BASE_DIR / 'default_directory'
+                    / safe_name(ws.get('name', 'workspace'))
+                    / safe_name(proj.get('name', 'project'))
+                )
+                proj['outputPath'] = output_path
+                write_data(data)
+                updated_output_path = output_path
+
+            # Claude CLI 실행
+            result = subprocess.run(
+                [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt_text],
+                capture_output=True, text=True, timeout=120
+            )
+            if result.returncode != 0:
+                raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
+
+            content = result.stdout.strip()
+
+            idea_dir   = safe_name(idea.get('title', 'idea'))
+            task_dir   = safe_name(task.get('name', 'task'))
+            timestamp  = _time.strftime('%Y%m%d_%H%M%S')
+            first_line = content.split('\n')[0][:40].strip()
+            short_title = safe_name(first_line) or 'result'
+            filename = f'{timestamp}_{short_title}.md'
+
+            folder_path = Path(output_path) / idea_dir / task_dir
+            folder_path.mkdir(parents=True, exist_ok=True)
+            file_path = folder_path / filename
+
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(f'# {task.get("name", "")}\n\n')
+                f.write(f'## 프롬프트\n\n{prompt_text}\n\n')
+                f.write(f'## 결과\n\n{content}\n')
+
+            resp = {
+                'ok': True,
+                'filePath': str(file_path),
+                'folderPath': str(folder_path),
+                'fileName': filename,
+                'projectId': proj.get('id', ''),
+            }
+            if updated_output_path:
+                resp['updatedOutputPath'] = updated_output_path
+            self._send_json(200, resp)
+
+        except subprocess.TimeoutExpired:
+            self._send_json(500, {'error': 'Claude CLI 응답 시간 초과'})
+        except Exception as e:
+            self._send_json(500, {'error': str(e)})
+
+    def _handle_reveal_folder(self):
+        try:
+            body = json.loads(self._read_body())
+            folder_path = body.get('path', '')
+            subprocess.run(['open', folder_path], timeout=5)
+            self._send_json(200, {'ok': True})
+        except Exception as e:
+            self._send_json(500, {'error': str(e)})
+
+    def _handle_refine_prompt(self):
+        try:
+            body = json.loads(self._read_body())
+            instruction = body.get('instruction', '').strip()
+            original = body.get('originalPrompt', '').strip()
+            if not instruction or not original:
+                self._send_json(400, {'error': '지시 또는 원본 프롬프트가 없습니다.'})
+                return
+
+            system_prompt = body.get('systemPrompt', '').strip()
+            history = body.get('conversationHistory', [])
+
+            parts = []
+            if system_prompt:
+                parts.append(system_prompt)
+            if history:
+                parts.append("[대화 히스토리]\n" +
+                             "\n".join(f"{i+1}. {h}" for i, h in enumerate(history)))
+            parts.append(
+                "다음 프롬프트를 주어진 지시에 따라 수정해줘.\n"
+                "수정된 프롬프트만 출력하고 다른 설명은 하지 마.\n\n"
+                f"원본 프롬프트:\n{original}\n\n"
+                f"수정 지시: {instruction}"
+            )
+            prompt = "\n\n".join(parts)
+
+            result = subprocess.run(
+                [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
+                capture_output=True, text=True, timeout=60
+            )
+            if result.returncode != 0:
+                raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
+
+            self._send_json(200, {'ok': True, 'refinedPrompt': result.stdout.strip()})
+
+        except subprocess.TimeoutExpired:
+            self._send_json(500, {'error': 'Claude CLI 응답 시간 초과'})
+        except Exception as e:
+            self._send_json(500, {'error': str(e)})
+
+    def _handle_classify_message(self):
+        try:
+            body = json.loads(self._read_body())
+            message = body.get('message', '').strip()
+            if not message:
+                self._send_json(200, {'isAdjustment': False})
+                return
+
+            prompt = (
+                "다음 메시지가 \"AI 프롬프트를 수정하거나 조정하는 요청\"인지 판단해줘.\n"
+                "프롬프트 수정 요청 예: \"더 간결하게\", \"한국어로 바꿔줘\", \"기술적 용어를 줄여줘\", "
+                "\"다른 관점에서 재작성\", \"더 자세히\", \"예시 추가\"\n"
+                "프롬프트 수정 요청이 아닌 예: \"오늘 날씨?\", \"피자 레시피\", \"주식 정보\", "
+                "\"코드 짜줘\", \"회의록 작성해줘\"\n\n"
+                f"메시지: \"{message}\"\n\n"
+                "\"yes\" 또는 \"no\"만 답해."
+            )
+
+            result = subprocess.run(
+                [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
+                capture_output=True, text=True, timeout=30
+            )
+            if result.returncode != 0:
+                raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
+
+            answer = result.stdout.strip().lower()
+            self._send_json(200, {'isAdjustment': answer.startswith('yes')})
 
         except subprocess.TimeoutExpired:
             self._send_json(500, {'error': 'Claude CLI 응답 시간 초과'})

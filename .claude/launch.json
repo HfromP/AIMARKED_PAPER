@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "millestone",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["/Volumes/ADATA HV620S/AIMARKED/Harness_/Millestone/apps/server.py"],
+      "port": 5500
+    }
+  ]
+}

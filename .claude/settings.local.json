@@ -15,7 +15,14 @@
       "Bash(ls \"/Volumes/ADATA HV620S/AIMARKED/Harness_/Millestone/\"*.command)",
       "Bash(chmod +x \"/Volumes/ADATA HV620S/AIMARKED/Harness_/Millestone/apps/Installations/install_python.command\")",
       "Read(//opt/homebrew/bin/**)",
-      "Bash(/dev/null -name claude -type f)"
+      "Bash(/dev/null -name claude -type f)",
+      "Bash(python3 -m json.tool \"/Volumes/ADATA HV620S/AIMARKED/Harness_/Millestone/apps/data.json\")",
+      "Bash(ls /usr/local/bin/node*)",
+      "Bash(ls /opt/homebrew/bin/node*)",
+      "Bash(/usr/local/bin/node --check /tmp/check_main.js)",
+      "mcp__Claude_Preview__preview_start",
+      "mcp__Control_Chrome__open_url",
+      "mcp__Control_Chrome__execute_javascript"
     ]
   }
 }

@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Millestone</title>
   <style>
+    :root { --fs: 1; }
+
     * {
       margin: 0;
       padding: 0;
@@ -16,6 +18,7 @@
       color: #000000;
       width: 100vw;
       height: 100vh;
+      overflow: hidden;
       transition: background-color 0.3s, color 0.3s;
     }
     body.dark {
@@ -90,7 +93,7 @@
       color: #fff;
       padding: 4px 9px;
       border-radius: 6px;
-      font-size: 12px;
+      font-size: calc(12px * var(--fs, 1));
       font-weight: 400;
       white-space: nowrap;
       opacity: 0;
@@ -114,12 +117,141 @@
       top: calc(100% + 5px);
     }
 
+    /* ── 본문 레이아웃 ── */
+    #app-body {
+      display: flex;
+      height: calc(100vh - 72px);
+      overflow: hidden;
+    }
+
+    /* ── 트리 패널 ── */
+    #tree-panel {
+      width: 220px;
+      min-width: 220px;
+      border-right: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: width 0.2s, min-width 0.2s;
+    }
+    #tree-panel.collapsed {
+      width: 32px;
+      min-width: 32px;
+    }
+    body.dark #tree-panel { border-right-color: #2e2e2e; }
+
+    #tree-toggle-btn {
+      flex-shrink: 0;
+      width: 100%;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 8px;
+      background: none;
+      border: none;
+      border-bottom: 1px solid #e0e0e0;
+      cursor: pointer;
+      color: #aaa;
+      transition: color 0.15s;
+    }
+    #tree-toggle-btn:hover { color: #555; }
+    body.dark #tree-toggle-btn { border-bottom-color: #2e2e2e; color: #555; }
+    body.dark #tree-toggle-btn:hover { color: #aaa; }
+
+    #tree-scroll {
+      overflow-y: auto;
+      overflow-x: hidden;
+      flex: 1;
+      padding: 8px 0;
+    }
+    #tree-panel.collapsed #tree-scroll { display: none; }
+    #tree-panel.collapsed #tree-home-btn { display: none; }
+
+    #tree-home-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      background: none;
+      border: none;
+      border-bottom: 1px solid #e0e0e0;
+      cursor: pointer;
+      font-size: calc(12px * var(--fs, 1));
+      color: #444;
+      text-align: left;
+      transition: background-color 0.12s;
+      user-select: none;
+    }
+    #tree-home-btn:hover { background-color: rgba(0,0,0,0.05); }
+    body.dark #tree-home-btn { border-bottom-color: #2e2e2e; color: #bbb; }
+    body.dark #tree-home-btn:hover { background-color: rgba(255,255,255,0.07); }
+
+    .tree-node {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      font-size: calc(12px * var(--fs, 1));
+      color: #444;
+      border-radius: 4px;
+      margin: 0 4px;
+      transition: background-color 0.12s;
+      user-select: none;
+    }
+
+    .tree-status {
+      flex-shrink: 0;
+      font-size: calc(10px * var(--fs, 1));
+      padding: 1px 5px;
+      border-radius: 8px;
+      margin-left: auto;
+    }
+    .tree-node:hover { background-color: rgba(0,0,0,0.05); }
+    .tree-node.active { background-color: rgba(0,0,0,0.08); font-weight: 600; }
+    body.dark .tree-node { color: #bbb; }
+    body.dark .tree-node:hover { background-color: rgba(255,255,255,0.07); }
+    body.dark .tree-node.active { background-color: rgba(255,255,255,0.1); }
+
+    .tree-arrow {
+      flex-shrink: 0;
+      font-size: 11px;
+      color: #bbb;
+      width: 16px;
+      text-align: center;
+      transition: transform 0.15s, color 0.15s;
+      padding: 4px 2px;
+      margin: -4px 0;
+      border-radius: 3px;
+    }
+    .tree-arrow:hover { color: #555; background-color: rgba(0,0,0,0.08); }
+    body.dark .tree-arrow:hover { color: #aaa; background-color: rgba(255,255,255,0.1); }
+    .tree-arrow.open { transform: rotate(90deg); }
+
+    .tree-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tree-children { display: none; }
+    .tree-children.open { display: block; }
+
     /* ── 본문 ── */
     main#content {
+      flex: 1;
+      overflow-y: auto;
       padding: 32px 28px;
       display: flex;
       flex-direction: column;
       gap: 24px;
+    }
+    main#content.idea-active {
+      overflow: hidden;
+      padding-bottom: 0;
     }
 
     .content-header {
@@ -135,7 +267,7 @@
     }
 
     .content-header h1 {
-      font-size: 18px;
+      font-size: calc(18px * var(--fs, 1));
       font-weight: 600;
       letter-spacing: -0.3px;
     }
@@ -148,7 +280,7 @@
       border: 1px solid #d0d0d0;
       border-radius: 8px;
       background: none;
-      font-size: 14px;
+      font-size: calc(14px * var(--fs, 1));
       color: #333;
       cursor: pointer;
       transition: background-color 0.2s, border-color 0.2s, color 0.2s;
@@ -168,7 +300,7 @@
       border: 1px solid #d0d0d0;
       border-radius: 8px;
       background: none;
-      font-size: 14px;
+      font-size: calc(14px * var(--fs, 1));
       color: #333;
       cursor: pointer;
       transition: background-color 0.2s, border-color 0.2s, color 0.2s;
@@ -185,7 +317,7 @@
       border: 1px solid #d0d0d0;
       border-radius: 8px;
       background: none;
-      font-size: 14px;
+      font-size: calc(14px * var(--fs, 1));
       color: #333;
       cursor: pointer;
       transition: background-color 0.2s, border-color 0.2s, color 0.2s;
@@ -225,7 +357,7 @@
       border: 1px solid #d0d0d0;
       border-radius: 8px;
       background: none;
-      font-size: 14px;
+      font-size: calc(14px * var(--fs, 1));
       color: #333;
       cursor: pointer;
       transition: background-color 0.2s, border-color 0.2s, color 0.2s;
@@ -235,7 +367,7 @@
     body.dark #btn-add-milestone:hover { background-color: rgba(255,255,255,0.07); }
 
     .ws-card-status {
-      font-size: 11px;
+      font-size: calc(11px * var(--fs, 1));
       font-weight: 500;
       padding: 2px 8px;
       border-radius: 20px;
@@ -269,7 +401,7 @@
       border: 1px solid #d0d0d0;
       border-radius: 8px;
       background: none;
-      font-size: 14px;
+      font-size: calc(14px * var(--fs, 1));
       color: #333;
       cursor: pointer;
       transition: background-color 0.2s, border-color 0.2s, color 0.2s;
@@ -304,7 +436,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      font-size: 12px;
+      font-size: calc(12px * var(--fs, 1));
       color: #555;
     }
     body.dark .idea-task-item { color: #999; }
@@ -317,7 +449,7 @@
     }
 
     .idea-task-status {
-      font-size: 10px;
+      font-size: calc(10px * var(--fs, 1));
       font-weight: 500;
       padding: 1px 6px;
       border-radius: 20px;
@@ -325,12 +457,31 @@
     }
 
     .idea-empty-tasks {
-      font-size: 12px;
+      font-size: calc(12px * var(--fs, 1));
       color: #bbb;
       padding-top: 10px;
       border-top: 1px solid #f0f0f0;
     }
     body.dark .idea-empty-tasks { color: #555; border-top-color: #2e2e2e; }
+
+    .idea-task-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      width: 100%;
+      margin-top: 2px;
+      padding: 2px 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: calc(11px * var(--fs, 1));
+      color: #aaa;
+      transition: color 0.15s;
+    }
+    .idea-task-toggle:hover { color: #555; }
+    body.dark .idea-task-toggle { color: #555; }
+    body.dark .idea-task-toggle:hover { color: #aaa; }
 
     /* ── 카드 그리드 ── */
     #ws-grid {
@@ -375,7 +526,7 @@
     }
 
     .ws-card-name {
-      font-size: 15px;
+      font-size: calc(15px * var(--fs, 1));
       font-weight: 600;
       flex: 1;
     }
@@ -407,7 +558,7 @@
     .btn-card-icon svg { width: 15px; height: 15px; }
 
     .ws-card-desc {
-      font-size: 13px;
+      font-size: calc(13px * var(--fs, 1));
       color: #777;
       flex: 1;
       line-height: 1.5;
@@ -441,7 +592,7 @@
     body.dark .modal-box { background: #1e1e1e; }
 
     .modal-title {
-      font-size: 16px;
+      font-size: calc(16px * var(--fs, 1));
       font-weight: 700;
     }
 
@@ -452,7 +603,7 @@
     }
 
     .modal-field label {
-      font-size: 12px;
+      font-size: calc(12px * var(--fs, 1));
       color: #888;
       font-weight: 500;
     }
@@ -463,7 +614,7 @@
       padding: 10px 12px;
       border: 1px solid #ddd;
       border-radius: 8px;
-      font-size: 14px;
+      font-size: calc(14px * var(--fs, 1));
       background: #fafafa;
       color: inherit;
       resize: none;
@@ -498,7 +649,7 @@
       padding: 9px 20px;
       border-radius: 8px;
       border: 1px solid #ddd;
-      font-size: 14px;
+      font-size: calc(14px * var(--fs, 1));
       cursor: pointer;
       transition: background-color 0.15s;
       background: none;
@@ -518,9 +669,578 @@
       border-color: #eee;
     }
     body.dark .btn-modal.btn-confirm:hover { background: #ccc; border-color: #ccc; }
+
+    /* ── 아이디어 상세 뷰 ── */
+    #idea-detail {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #idea-detail-header {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e0e0e0;
+      margin-bottom: 0;
+    }
+    body.dark #idea-detail-header { border-bottom-color: #2e2e2e; }
+
+    #idea-detail-body {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      overflow: hidden;
+    }
+
+    #idea-task-area {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      display: flex;
+      padding-top: 16px;
+    }
+
+    #idea-task-scroll {
+      flex: 1;
+      overflow-y: scroll;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      scrollbar-width: none;
+      padding-bottom: 24px;
+    }
+    #idea-task-scroll::-webkit-scrollbar { display: none; }
+
+    #idea-task-scrollbar {
+      width: 8px;
+      flex-shrink: 0;
+      border-radius: 4px;
+      position: relative;
+      background: #f0f0f0;
+      display: none;
+      margin-left: 4px;
+    }
+    body.dark #idea-task-scrollbar { background: #2a2a2a; }
+
+    #idea-task-scrollbar-thumb {
+      position: absolute;
+      width: 100%;
+      background: #c0c0c0;
+      border-radius: 4px;
+      min-height: 40px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    #idea-task-scrollbar-thumb:hover { background: #999; }
+    body.dark #idea-task-scrollbar-thumb { background: #555; }
+    body.dark #idea-task-scrollbar-thumb:hover { background: #777; }
+
+    #idea-detail-title {
+      font-size: calc(20px * var(--fs, 1));
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    #idea-detail-desc {
+      font-size: calc(14px * var(--fs, 1));
+      color: #666;
+      line-height: 1.6;
+    }
+    body.dark #idea-detail-desc { color: #888; }
+
+    #idea-detail-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #idea-detail-sysprompt-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 8px;
+    }
+    #idea-detail-sysprompt-label {
+      font-size: calc(11px * var(--fs, 1));
+      font-weight: 600;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    #idea-detail-sysprompt {
+      font-size: calc(13px * var(--fs, 1));
+      font-family: inherit;
+      color: inherit;
+      background: none;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 6px 8px;
+      resize: none;
+      line-height: 1.5;
+      width: 100%;
+    }
+    #idea-detail-sysprompt:focus { outline: none; border-color: #888; }
+    body.dark #idea-detail-sysprompt { border-color: #333; }
+    body.dark #idea-detail-sysprompt:focus { border-color: #888; }
+
+    #idea-detail-files-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    #idea-detail-files-label {
+      font-size: calc(11px * var(--fs, 1));
+      font-weight: 600;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    #idea-detail-files-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .idea-file-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: calc(12px * var(--fs, 1));
+      padding: 4px 8px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+    }
+    body.dark .idea-file-row { border-color: #333; }
+    .idea-file-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .idea-file-remove {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #aaa;
+      padding: 0 2px;
+      font-size: calc(13px * var(--fs, 1));
+      line-height: 1;
+    }
+    .idea-file-remove:hover { color: #e55; }
+    #btn-idea-add-file {
+      align-self: flex-start;
+      background: none;
+      border: 1px dashed #ccc;
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: calc(12px * var(--fs, 1));
+      color: #888;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    #btn-idea-add-file:hover { border-color: #888; color: #444; }
+    #btn-idea-add-file:disabled { opacity: 0.4; cursor: default; }
+    body.dark #btn-idea-add-file { border-color: #444; }
+    body.dark #btn-idea-add-file:hover { border-color: #888; color: #ccc; }
+
+    #idea-task-table {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .task-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      border: 1px solid #f0f0f0;
+      background: #fafafa;
+      transition: background-color 0.12s;
+    }
+    .task-row:hover { background: #f5f5f5; }
+    body.dark .task-row { border-color: #2a2a2a; background: #1a1a1a; }
+    body.dark .task-row:hover { background: #222; }
+
+    .importance-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: transform 0.12s, opacity 0.12s;
+    }
+    .importance-dot:hover { transform: scale(1.3); }
+
+    .importance-popover {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 20px;
+      padding: 6px 8px;
+      display: flex;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+      z-index: 100;
+    }
+    body.dark .importance-popover { background: #2a2a2a; border-color: #444; }
+
+    .importance-popover-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.12s;
+      flex-shrink: 0;
+    }
+    .importance-popover-dot:hover { transform: scale(1.35); }
+    .importance-popover-dot.selected { outline: 2px solid #888; outline-offset: 2px; }
+    .importance-dot.low,    .importance-popover-dot.low    { background: #ccc; }
+    .importance-dot.medium, .importance-popover-dot.medium { background: #f59e0b; }
+    .importance-dot.high,   .importance-popover-dot.high   { background: #ef4444; }
+
+    .task-row-name {
+      flex: 1;
+      font-size: calc(13px * var(--fs, 1));
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .task-status-select {
+      font-size: calc(11px * var(--fs, 1));
+      padding: 2px 6px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      background: none;
+      color: inherit;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    body.dark .task-status-select { border-color: #444; background: #1e1e1e; }
+
+    .task-row-del {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #ccc;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-size: calc(14px * var(--fs, 1));
+      line-height: 1;
+      transition: color 0.12s;
+      flex-shrink: 0;
+    }
+    .task-row-del:hover { color: #e53e3e; }
+
+    .task-row-start {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #bbb;
+      padding: 2px 4px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      transition: color 0.12s;
+      flex-shrink: 0;
+    }
+    .task-row-start:hover { color: #4caf50; }
+    .task-row-start:disabled { opacity: 0.4; cursor: default; }
+    .task-row-start svg { width: 13px; height: 13px; }
+
+    .task-add-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+    }
+
+    #btn-add-task {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border: 1px dashed #ccc;
+      border-radius: 8px;
+      background: none;
+      font-size: calc(13px * var(--fs, 1));
+      color: #999;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    #btn-add-task:hover { border-color: #888; color: #555; }
+    body.dark #btn-add-task { border-color: #444; color: #666; }
+    body.dark #btn-add-task:hover { border-color: #888; color: #aaa; }
+
+    .task-add-input {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: calc(13px * var(--fs, 1));
+      background: #fafafa;
+      color: inherit;
+      font-family: inherit;
+    }
+    .task-add-input:focus { outline: none; border-color: #888; }
+    body.dark .task-add-input { background: #1a1a1a; border-color: #444; }
+
+
+    /* ── 패널 리사이저 ── */
+    #idea-panel-resizer {
+      display: none;
+      width: 5px;
+      flex-shrink: 0;
+      cursor: col-resize;
+      background: transparent;
+      transition: background-color 0.15s;
+      border-left: 1px solid #e0e0e0;
+    }
+    #idea-panel-resizer:hover,
+    #idea-panel-resizer.dragging { background: #c8c8c8; }
+    body.dark #idea-panel-resizer { border-left-color: #2e2e2e; }
+    body.dark #idea-panel-resizer:hover,
+    body.dark #idea-panel-resizer.dragging { background: #555; }
+
+    /* ── Task 대화 패널 ── */
+    #task-chat-panel {
+      width: 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: width 0.22s ease, min-width 0.22s ease;
+      flex-shrink: 0;
+    }
+    #task-chat-panel.open {
+      width: 50%;
+      min-width: 50%;
+    }
+    body.dark #task-chat-panel { border-left-color: #2e2e2e; }
+
+    #task-chat-header {
+      flex-shrink: 0;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    body.dark #task-chat-header { border-bottom-color: #2a2a2a; }
+
+    #task-chat-title {
+      flex: 1;
+      font-size: calc(13px * var(--fs, 1));
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    #task-chat-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #aaa;
+      font-size: 18px;
+      line-height: 1;
+      padding: 0 2px;
+      transition: color 0.12s;
+    }
+    #task-chat-close:hover { color: #555; }
+
+    #task-chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .chat-bubble {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .chat-bubble-text {
+      background: #f4f4f4;
+      border-radius: 10px 10px 10px 2px;
+      padding: 8px 12px;
+      font-size: calc(13px * var(--fs, 1));
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    body.dark .chat-bubble-text { background: #2a2a2a; }
+
+    .chat-bubble-result .chat-bubble-text {
+      background: #edf7ed;
+      border-left: 3px solid #4caf50;
+    }
+    body.dark .chat-bubble-result .chat-bubble-text {
+      background: #1a2e1a;
+      border-left-color: #4caf50;
+    }
+
+    .chat-exec-btn {
+      background: none;
+      border: 1px solid #d0d0d0;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: calc(11px * var(--fs, 1));
+      padding: 2px 8px;
+      color: inherit;
+      transition: background-color 0.15s;
+      white-space: nowrap;
+    }
+    .chat-exec-btn:hover { background: rgba(0,0,0,0.05); }
+    .chat-exec-btn:disabled { opacity: 0.4; cursor: default; }
+    body.dark .chat-exec-btn { border-color: #444; }
+
+    .chat-open-folder-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: calc(12px * var(--fs, 1));
+      color: #4caf50;
+      padding: 1px 4px;
+      border-radius: 4px;
+      transition: opacity 0.12s;
+    }
+    .chat-open-folder-btn:hover { opacity: 0.7; }
+
+    .chat-bubble-actions {
+      display: flex;
+      gap: 6px;
+      padding-left: 4px;
+    }
+
+    .chat-score-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 1px 4px;
+      border-radius: 4px;
+      color: #bbb;
+      transition: color 0.12s;
+    }
+    .chat-score-btn:hover { color: #555; }
+    .chat-score-btn.active { color: #f59e0b; }
+    .chat-score-btn.active.down { color: #ef4444; }
+
+    .chat-del-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      color: #ddd;
+      padding: 1px 4px;
+      border-radius: 4px;
+      transition: color 0.12s;
+      margin-left: auto;
+    }
+    .chat-del-btn:hover { color: #e53e3e; }
+
+    #task-chat-input-area {
+      flex-shrink: 0;
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px 14px;
+      border-top: 1px solid #f0f0f0;
+    }
+    body.dark #task-chat-input-area { border-top-color: #2a2a2a; }
+
+    #task-chat-input {
+      flex: 1;
+      padding: 7px 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: calc(13px * var(--fs, 1));
+      background: none;
+      color: inherit;
+      font-family: inherit;
+      resize: none;
+      line-height: 1.4;
+    }
+    #task-chat-input:focus { outline: none; border-color: #888; }
+    body.dark #task-chat-input { border-color: #444; }
+
+    #task-chat-btn-col {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .chat-action-btn {
+      padding: 6px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: none;
+      cursor: pointer;
+      color: inherit;
+      font-size: calc(13px * var(--fs, 1));
+      transition: background-color 0.15s;
+      white-space: nowrap;
+      flex: 1;
+    }
+    .chat-action-btn:hover { background-color: rgba(0,0,0,0.05); }
+    .chat-action-btn:disabled { opacity: 0.5; cursor: default; }
+    body.dark .chat-action-btn { border-color: #444; }
+    body.dark .chat-action-btn:hover { background-color: rgba(255,255,255,0.07); }
+    #task-chat-refine {
+      border-color: #aaa;
+      font-weight: 500;
+    }
+    body.dark #task-chat-refine { border-color: #666; }
+
+    #run-confirm-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    #run-confirm-modal.open { display: flex; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: #333;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: calc(13px * var(--fs, 1));
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 9999;
+      white-space: nowrap;
+    }
+    body.dark #toast { background: #555; }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
   </style>
 </head>
 <body>
+<div id="toast"></div>
   <nav>
     <!-- 아이콘 버튼 (왼쪽) -->
     <div class="nav-left">
@@ -591,6 +1311,28 @@
     </div>
   </nav>
 
+  <div id="app-body">
+  <!-- 트리 패널 -->
+  <div id="tree-panel" class="collapsed">
+    <button id="tree-toggle-btn" title="트리 접기/펼치기">
+      <svg id="tree-toggle-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
+    <button id="tree-home-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        style="flex-shrink:0;">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      홈
+    </button>
+    <div id="tree-scroll"></div>
+  </div>
+
   <main id="content">
     <div class="content-header">
       <h1>워크스페이스</h1>
@@ -635,8 +1377,52 @@
     <div id="ws-grid"></div>
     <div id="proj-grid" style="display:none;"></div>
     <div id="idea-grid" style="display:none;"></div>
+    <div id="idea-detail" style="display:none;">
+      <div id="idea-detail-header">
+        <div id="idea-detail-title"></div>
+        <div id="idea-detail-desc"></div>
+        <div id="idea-detail-meta"></div>
+        <div id="idea-detail-sysprompt-wrap">
+          <label for="idea-detail-sysprompt" id="idea-detail-sysprompt-label">시스템 프롬프트</label>
+          <textarea id="idea-detail-sysprompt" rows="2" placeholder="이 아이디어 내 AI 동작의 맥락 (선택)"></textarea>
+        </div>
+        <div id="idea-detail-files-wrap">
+          <span id="idea-detail-files-label">참고 파일 (MD, 최대 3개)</span>
+          <div id="idea-detail-files-list"></div>
+          <button id="btn-idea-add-file">+ MD 파일 추가</button>
+          <input id="idea-file-input" type="file" accept=".md,text/markdown" multiple style="display:none">
+        </div>
+      </div>
+      <div id="idea-detail-body">
+        <div id="idea-task-area">
+          <div id="idea-task-scroll">
+            <div id="idea-task-table"></div>
+            <button id="btn-add-task">+ Task 추가</button>
+          </div>
+          <div id="idea-task-scrollbar">
+            <div id="idea-task-scrollbar-thumb"></div>
+          </div>
+        </div>
+        <div id="idea-panel-resizer"></div>
+        <div id="task-chat-panel">
+          <div id="task-chat-header">
+            <span id="task-chat-title"></span>
+            <button id="task-chat-close">×</button>
+          </div>
+          <div id="task-chat-messages"></div>
+          <div id="task-chat-input-area">
+            <textarea id="task-chat-input" rows="2" placeholder="프롬프트 입력…"></textarea>
+            <div id="task-chat-btn-col">
+              <button id="task-chat-send" class="chat-action-btn">추가</button>
+              <button id="task-chat-refine" class="chat-action-btn">수정</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div id="milestone-grid" style="display:none;"></div>
   </main>
+  </div><!-- #app-body -->
 
   <!-- 워크스페이스 추가/수정 모달 -->
   <div id="ws-modal">
@@ -649,6 +1435,10 @@
       <div class="modal-field">
         <label for="ws-desc-input">설명</label>
         <textarea id="ws-desc-input" rows="3" placeholder="간단한 설명 (선택)"></textarea>
+      </div>
+      <div class="modal-field">
+        <label for="ws-sysprompt-input">시스템 프롬프트</label>
+        <textarea id="ws-sysprompt-input" rows="3" placeholder="이 워크스페이스 내 AI 동작의 기본 맥락 (선택)"></textarea>
       </div>
       <div class="modal-actions">
         <button class="btn-modal" id="btn-modal-cancel">취소</button>
@@ -688,6 +1478,10 @@
         <label for="milestone-desc-input">설명</label>
         <textarea id="milestone-desc-input" rows="3" placeholder="간단한 설명 (선택)"></textarea>
       </div>
+      <div class="modal-field">
+        <label for="milestone-sysprompt-input">시스템 프롬프트</label>
+        <textarea id="milestone-sysprompt-input" rows="3" placeholder="이 마일스톤 내 AI 동작의 맥락 (선택)"></textarea>
+      </div>
       <div class="modal-actions">
         <button class="btn-modal" id="btn-milestone-modal-cancel">취소</button>
         <button class="btn-modal btn-confirm" id="btn-milestone-modal-confirm">저장</button>
@@ -708,12 +1502,31 @@
         <textarea id="proj-desc-input" rows="3" placeholder="간단한 설명 (선택)"></textarea>
       </div>
       <div class="modal-field">
+        <label for="proj-sysprompt-input">시스템 프롬프트</label>
+        <textarea id="proj-sysprompt-input" rows="3" placeholder="이 프로젝트 내 AI 동작의 맥락 (선택)"></textarea>
+      </div>
+      <div class="modal-field">
         <label for="proj-path-input">결과물 저장 위치</label>
-        <input id="proj-path-input" type="text" placeholder="경로 또는 URL (선택)">
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input id="proj-path-input" type="text" placeholder="경로 또는 URL (선택)" style="flex:1;min-width:0;">
+          <button type="button" class="btn-modal" style="white-space:nowrap;padding:6px 12px;" onclick="browseProjectFolder()">폴더 열기</button>
+        </div>
       </div>
       <div class="modal-actions">
         <button class="btn-modal" id="btn-proj-modal-cancel">취소</button>
         <button class="btn-modal btn-confirm" id="btn-proj-modal-confirm">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 실행 확인 모달 -->
+  <div id="run-confirm-modal">
+    <div class="modal-box" style="max-width:320px;gap:14px;">
+      <h2 class="modal-title" style="font-size:calc(15px * var(--fs, 1));">이미 Task가 있습니다</h2>
+      <p style="font-size:calc(13px * var(--fs, 1));color:#666;line-height:1.6;">기존 Task 목록을 모두 삭제하고<br>새로 실행할까요?</p>
+      <div class="modal-actions">
+        <button class="btn-modal" id="btn-run-confirm-cancel">아니오</button>
+        <button class="btn-modal btn-confirm" id="btn-run-confirm-ok">예, 실행</button>
       </div>
     </div>
   </div>
@@ -759,10 +1572,12 @@
 
     class Idea {
       constructor(title, description = '') {
-        this.id          = crypto.randomUUID();   // 고유 식별자
-        this.title       = title;                 // 아이디어 제목
-        this.description = description;           // 아이디어 설명
-        this.tasks       = [];                    // Task 인스턴스 배열
+        this.id           = crypto.randomUUID();   // 고유 식별자
+        this.title        = title;                 // 아이디어 제목
+        this.description  = description;           // 아이디어 설명
+        this.systemPrompt = '';                    // 시스템 프롬프트
+        this.files        = [];                    // 첨부 MD 파일 [{name, content}] 최대 3개
+        this.tasks        = [];                    // Task 인스턴스 배열
       }
 
       // 하위 Task 분포에 따라 자동 산출되는 Status
@@ -787,10 +1602,11 @@
 
     class Milestone {
       constructor(name, description = '') {
-        this.id          = crypto.randomUUID();   // 고유 식별자
-        this.name        = name;                  // 마일스톤 이름
-        this.description = description;           // 마일스톤 설명
-        this.ideas       = [];                    // Idea 인스턴스 배열
+        this.id           = crypto.randomUUID();   // 고유 식별자
+        this.name         = name;                  // 마일스톤 이름
+        this.description  = description;           // 마일스톤 설명
+        this.systemPrompt = '';                    // 시스템 프롬프트
+        this.ideas        = [];                    // Idea 인스턴스 배열
       }
 
       // 하위 Idea 분포에 따라 자동 산출되는 Status
@@ -815,11 +1631,12 @@
 
     class Project {
       constructor(name, description = '', outputPath = '') {
-        this.id          = crypto.randomUUID();   // 고유 식별자
-        this.name        = name;                  // 프로젝트 이름
-        this.description = description;           // 프로젝트 설명
-        this.outputPath  = outputPath;            // 결과물 저장 위치 (경로 또는 URL)
-        this.milestones  = [];                    // Milestone 인스턴스 배열
+        this.id           = crypto.randomUUID();   // 고유 식별자
+        this.name         = name;                  // 프로젝트 이름
+        this.description  = description;           // 프로젝트 설명
+        this.systemPrompt = '';                    // 시스템 프롬프트
+        this.outputPath   = outputPath;            // 결과물 저장 위치 (경로 또는 URL)
+        this.milestones   = [];                    // Milestone 인스턴스 배열
       }
     }
 
@@ -827,10 +1644,11 @@
 
     class Workspace {
       constructor(name, description = '') {
-        this.id          = crypto.randomUUID();   // 고유 식별자
-        this.name        = name;                  // 워크스페이스 이름
-        this.description = description;           // 워크스페이스 설명
-        this.projects    = [];                    // Project 인스턴스 배열
+        this.id           = crypto.randomUUID();   // 고유 식별자
+        this.name         = name;                  // 워크스페이스 이름
+        this.description  = description;           // 워크스페이스 설명
+        this.systemPrompt = '';                    // 시스템 프롬프트
+        this.projects     = [];                    // Project 인스턴스 배열
       }
     }
 
@@ -853,18 +1671,32 @@
       (data.workspaces || []).forEach(d => {
         const ws = new Workspace(d.name, d.description);
         ws.id = d.id;
+        ws.systemPrompt = d.systemPrompt || '';
         (d.projects || []).forEach(pd => {
           const proj = new Project(pd.name, pd.description, pd.outputPath);
           proj.id = pd.id;
+          proj.systemPrompt = pd.systemPrompt || '';
           (pd.milestones || []).forEach(md => {
             const ms = new Milestone(md.name, md.description);
             ms.id = md.id;
+            ms.systemPrompt = md.systemPrompt || '';
             (md.ideas || []).forEach(id => {
               const idea = new Idea(id.title, id.description);
               idea.id = id.id;
+              idea.systemPrompt = id.systemPrompt || '';
+              idea.files = (id.files || []).map(f => ({ name: f.name, content: f.content }));
               (id.tasks || []).forEach(td => {
                 const task = new Task(td.name, td.importance, td.status);
                 task.id = td.id;
+                (td.prompts || []).forEach(pd => {
+                  if (pd.type === 'result') {
+                    task.prompts.push({ ...pd });
+                  } else {
+                    const p = new Prompt(pd.message, pd.score ?? SCORE.NONE);
+                    p.id = pd.id;
+                    task.prompts.push(p);
+                  }
+                });
                 idea.tasks.push(task);
               });
               ms.ideas.push(idea);
@@ -942,10 +1774,29 @@
           </div>
           <div class="ws-card-desc">${escapeHtml(ws.description) || '<span style="opacity:0.4">설명 없음</span>'}</div>
         `;
-        card.addEventListener('dblclick', () => selectWorkspace(ws));
+        card.addEventListener('click', () => selectWorkspace(ws));
         card.querySelector('.btn-edit').addEventListener('click', () => openModal('edit', ws));
         card.querySelector('.btn-delete').addEventListener('click', () => deleteWorkspace(ws.id));
         grid.appendChild(card);
+      });
+    }
+
+    function showRunConfirm() {
+      return new Promise(resolve => {
+        const modal = document.getElementById('run-confirm-modal');
+        modal.classList.add('open');
+        const ok = document.getElementById('btn-run-confirm-ok');
+        const cancel = document.getElementById('btn-run-confirm-cancel');
+        function close(result) {
+          modal.classList.remove('open');
+          ok.removeEventListener('click', onOk);
+          cancel.removeEventListener('click', onCancel);
+          resolve(result);
+        }
+        function onOk() { close(true); }
+        function onCancel() { close(false); }
+        ok.addEventListener('click', onOk);
+        cancel.addEventListener('click', onCancel);
       });
     }
 
@@ -990,7 +1841,7 @@
           </div>
           <div class="ws-card-desc">${escapeHtml(proj.description) || '<span style="opacity:0.4">설명 없음</span>'}</div>
         `;
-        card.addEventListener('dblclick', () => selectProject(ws, proj));
+        card.addEventListener('click', () => selectProject(ws, proj));
         card.querySelector('.btn-edit').addEventListener('click', () => openProjModal('edit', ws, proj));
         card.querySelector('.btn-delete').addEventListener('click', () => deleteProject(ws, proj.id));
         grid.appendChild(card);
@@ -1023,14 +1874,380 @@
     // 아이디어 렌더링 & CRUD
     // ──────────────────────────────────────────
     let _selectedMilestoneId = null;
+    let _selectedIdeaId = null;
+
+    function selectIdea(ws, proj, ms, idea) {
+      _selectedIdeaId = idea.id;
+      document.querySelector('.content-header h1').textContent = `${ms.name} — ${idea.title}`;
+      document.getElementById('btn-add-idea').style.display = 'none';
+      document.getElementById('idea-grid').style.display = 'none';
+      document.getElementById('idea-detail').style.display = '';
+      document.getElementById('content').classList.add('idea-active');
+      renderIdeaDetail(ws, proj, ms, idea);
+      // 이전에 열려 있던 대화창 복원
+      if (_chatTask) {
+        const t = idea.tasks.find(t => t.id === _chatTask.id);
+        if (t) openTaskChat(t);
+      }
+    }
+
+    function deselectIdea() {
+      hideTaskChatPanel();
+      const ws = workspaces.find(w => w.id === _selectedWsId);
+      const proj = ws?.projects.find(p => p.id === _selectedProjId);
+      const ms = proj?.milestones.find(m => m.id === _selectedMilestoneId);
+      _selectedIdeaId = null;
+      document.querySelector('.content-header h1').textContent = `${proj.name} - 마일스톤: ${ms.name}`;
+      document.getElementById('btn-add-idea').style.display = '';
+      document.getElementById('idea-grid').style.display = '';
+      document.getElementById('idea-detail').style.display = 'none';
+      document.getElementById('content').classList.remove('idea-active');
+      renderIdeas(ws, proj, ms);
+    }
+
+    function renderIdeaDetail(ws, proj, ms, idea) {
+      const IMPORTANCE_CLASS = { 1: 'low', 2: 'medium', 3: 'high' };
+
+      // 헤더
+      const titleEl = document.getElementById('idea-detail-title');
+      titleEl.textContent = idea.title;
+      titleEl.contentEditable = 'true';
+      titleEl.style.cursor = 'text';
+      titleEl.style.outline = 'none';
+      titleEl.style.borderRadius = '4px';
+      titleEl.style.padding = '1px 4px';
+      titleEl.style.margin = '0 -4px';
+      titleEl.addEventListener('focus', () => titleEl.style.background = 'rgba(0,0,0,0.04)');
+      titleEl.addEventListener('blur', () => {
+        titleEl.style.background = '';
+        const val = titleEl.textContent.trim();
+        if (val && val !== idea.title) {
+          idea.title = val;
+          saveWorkspaces();
+          renderTree();
+        } else {
+          titleEl.textContent = idea.title;
+        }
+      });
+      titleEl.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); titleEl.blur(); }
+        if (e.key === 'Escape') { titleEl.textContent = idea.title; titleEl.blur(); }
+      });
+
+      const descEl = document.getElementById('idea-detail-desc');
+      descEl.textContent = idea.description || '';
+      descEl.contentEditable = 'true';
+      descEl.style.cursor = 'text';
+      descEl.style.outline = 'none';
+      descEl.style.borderRadius = '4px';
+      descEl.style.padding = '1px 4px';
+      descEl.style.margin = '0 -4px';
+      descEl.setAttribute('data-placeholder', '설명 없음');
+      descEl.addEventListener('focus', () => descEl.style.background = 'rgba(0,0,0,0.04)');
+      descEl.addEventListener('blur', () => {
+        descEl.style.background = '';
+        const val = descEl.textContent.trim();
+        idea.description = val;
+        saveWorkspaces();
+      });
+      descEl.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); descEl.blur(); }
+        if (e.key === 'Escape') { descEl.textContent = idea.description; descEl.blur(); }
+      });
+      const meta = document.getElementById('idea-detail-meta');
+      meta.innerHTML = `<span class="ws-card-status status-${idea.status}">${STATUS_LABEL[idea.status]}</span>`;
+
+      const syspromptEl = document.getElementById('idea-detail-sysprompt');
+      syspromptEl.value = idea.systemPrompt || '';
+      syspromptEl.addEventListener('change', () => {
+        idea.systemPrompt = syspromptEl.value.trim();
+        saveWorkspaces();
+      });
+
+      function renderIdeaFiles() {
+        if (!idea.files) idea.files = [];
+        const list = document.getElementById('idea-detail-files-list');
+        const addBtn = document.getElementById('btn-idea-add-file');
+        list.innerHTML = '';
+        idea.files.forEach((file, idx) => {
+          const row = document.createElement('div');
+          row.className = 'idea-file-row';
+          const name = document.createElement('span');
+          name.className = 'idea-file-name';
+          name.textContent = '📄 ' + file.name;
+          const removeBtn = document.createElement('button');
+          removeBtn.className = 'idea-file-remove';
+          removeBtn.textContent = '×';
+          removeBtn.title = '삭제';
+          removeBtn.addEventListener('click', () => {
+            idea.files.splice(idx, 1);
+            saveWorkspaces();
+            renderIdeaFiles();
+          });
+          row.appendChild(name);
+          row.appendChild(removeBtn);
+          list.appendChild(row);
+        });
+        addBtn.disabled = idea.files.length >= 3;
+        addBtn.textContent = idea.files.length >= 3 ? '최대 3개까지 가능합니다' : '+ MD 파일 추가';
+      }
+
+      renderIdeaFiles();
+
+      const fileInput = document.getElementById('idea-file-input');
+      const addFileBtn = document.getElementById('btn-idea-add-file');
+
+      // 이벤트 중복 방지: 기존 리스너 교체
+      const newFileAddBtn = addFileBtn.cloneNode(true);
+      addFileBtn.parentNode.replaceChild(newFileAddBtn, addFileBtn);
+      const newFileInput = fileInput.cloneNode(true);
+      fileInput.parentNode.replaceChild(newFileInput, fileInput);
+
+      document.getElementById('btn-idea-add-file').addEventListener('click', () => {
+        document.getElementById('idea-file-input').value = '';
+        document.getElementById('idea-file-input').click();
+      });
+
+      document.getElementById('idea-file-input').addEventListener('change', (e) => {
+        const selected = Array.from(e.target.files);
+        if (!idea.files) idea.files = [];
+        const remaining = 3 - idea.files.length;
+        const toAdd = selected.slice(0, remaining);
+        let loaded = 0;
+        toAdd.forEach(file => {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            idea.files.push({ name: file.name, content: ev.target.result });
+            loaded++;
+            if (loaded === toAdd.length) {
+              saveWorkspaces();
+              renderIdeaFiles();
+            }
+          };
+          reader.readAsText(file);
+        });
+        if (selected.length > remaining) {
+          showToast(`파일은 최대 3개까지만 추가할 수 있습니다.`);
+        }
+      });
+
+      // 실행 버튼
+      const runBtn = document.createElement('button');
+      runBtn.className = '';
+      runBtn.style.cssText = 'display:flex;align-items:center;gap:6px;margin-left:auto;margin-right:12px;margin-bottom:12px;padding:6px 14px;border:1px solid #d0d0d0;border-radius:8px;background:none;font-size:calc(13px * var(--fs,1));color:inherit;cursor:pointer;transition:background-color 0.2s;';
+      if (!_aiAvailable) { runBtn.disabled = true; runBtn.title = 'AI 연결 없음'; runBtn.style.opacity = '0.4'; runBtn.style.cursor = 'default'; }
+      runBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="5 3 19 12 5 21 5 3"/></svg> 실행`;
+      runBtn.addEventListener('click', async () => {
+        if (idea.tasks.length > 0) {
+          const confirmed = await showRunConfirm();
+          if (!confirmed) return;
+          idea.tasks = [];
+        }
+        runBtn.disabled = true;
+        const orig = runBtn.innerHTML;
+        runBtn.innerHTML = '...';
+        try {
+          const res = await fetch(`/api/ideas/${idea.id}/run`, { method: 'POST' });
+          const updated = await res.json();
+          if (updated.error) throw new Error(updated.error);
+          idea.tasks = (updated.tasks || []).map(td => {
+            const t = new Task(td.name, td.importance, td.status);
+            t.id = td.id;
+            return t;
+          });
+          saveWorkspaces();
+          renderIdeaDetail(ws, proj, ms, idea);
+          renderTree();
+        } catch (err) {
+          alert('Task 생성 실패: ' + err.message);
+        } finally {
+          runBtn.disabled = false;
+          runBtn.innerHTML = orig;
+        }
+      });
+      // Task 목록
+      const table = document.getElementById('idea-task-table');
+      const scrollArea = document.getElementById('idea-task-scroll');
+      scrollArea.querySelectorAll('.btn-run-idea').forEach(b => b.remove());
+      runBtn.classList.add('btn-run-idea');
+      scrollArea.insertBefore(runBtn, table);
+      table.innerHTML = '';
+      idea.tasks.forEach(task => {
+        const row = document.createElement('div');
+        row.className = 'task-row';
+
+        const dot = document.createElement('span');
+        dot.className = `importance-dot ${IMPORTANCE_CLASS[task.importance] || 'medium'}`;
+        dot.style.position = 'relative';
+        dot.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // 이미 열려있으면 닫기
+          const existing = dot.querySelector('.importance-popover');
+          if (existing) { existing.remove(); return; }
+          // 다른 팝오버 모두 닫기
+          document.querySelectorAll('.importance-popover').forEach(p => p.remove());
+
+          const popover = document.createElement('div');
+          popover.className = 'importance-popover';
+
+          [1, 2, 3].forEach(level => {
+            const d = document.createElement('span');
+            d.className = `importance-popover-dot ${IMPORTANCE_CLASS[level]}${task.importance === level ? ' selected' : ''}`;
+            d.title = ['', '낮음', '중간', '높음'][level];
+            d.addEventListener('click', (e) => {
+              e.stopPropagation();
+              task.importance = level;
+              dot.className = `importance-dot ${IMPORTANCE_CLASS[level]}`;
+              saveWorkspaces();
+              popover.remove();
+            });
+            popover.appendChild(d);
+          });
+
+          dot.appendChild(popover);
+
+          // 외부 클릭 시 닫기
+          setTimeout(() => {
+            document.addEventListener('click', () => popover.remove(), { once: true });
+          }, 0);
+        });
+
+        const name = document.createElement('span');
+        name.className = 'task-row-name';
+        name.textContent = task.name;
+
+        const sel = document.createElement('select');
+        sel.className = `task-status-select ws-card-status status-${task.status}`;
+        Object.entries(STATUS_LABEL).forEach(([val, label]) => {
+          const opt = document.createElement('option');
+          opt.value = val;
+          opt.textContent = label;
+          if (val === task.status) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        sel.addEventListener('change', () => {
+          task.status = sel.value;
+          sel.className = `task-status-select ws-card-status status-${task.status}`;
+          saveWorkspaces();
+          // 상태 뱃지 갱신
+          document.getElementById('idea-detail-meta').querySelector('.ws-card-status').className =
+            `ws-card-status status-${idea.status}`;
+          document.getElementById('idea-detail-meta').querySelector('.ws-card-status').textContent =
+            STATUS_LABEL[idea.status];
+          renderTree();
+        });
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'task-row-del';
+        delBtn.textContent = '×';
+        delBtn.addEventListener('click', () => {
+          idea.tasks = idea.tasks.filter(t => t.id !== task.id);
+          saveWorkspaces();
+          renderIdeaDetail(ws, proj, ms, idea);
+          renderTree();
+        });
+
+        row.addEventListener('dblclick', (e) => {
+          e.stopPropagation();
+          openTaskChat(task);
+        });
+
+        // 시작 버튼
+        const startBtn = document.createElement('button');
+        startBtn.className = 'task-row-start';
+        startBtn.title = _aiAvailable ? '시작 — 추천 프롬프트 생성' : 'AI 연결 없음';
+        if (!_aiAvailable) { startBtn.disabled = true; }
+        startBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+        startBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          startBtn.disabled = true;
+          startBtn.textContent = '…';
+          try {
+            openTaskChat(task);
+            const conversationHistory = (task.prompts || [])
+              .filter(p => p.type !== 'result').map(p => p.message);
+            const res = await fetch(`/api/tasks/${task.id}/prompt`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                systemPrompt: buildSystemPrompt(task.id),
+                conversationHistory
+              })
+            });
+            const result = await res.json();
+            if (!result.ok) throw new Error(result.error);
+            if (!task.prompts) task.prompts = [];
+            task.prompts.push(new Prompt(result.prompt));
+            task.status = STATUS.PENDING;
+            saveWorkspaces();
+            renderTaskChat(task);
+            renderIdeaDetail(ws, proj, ms, idea);
+            renderTree();
+            openTaskChat(task);
+          } catch (err) {
+            alert('프롬프트 생성 실패: ' + err.message);
+            startBtn.disabled = false;
+            startBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+          }
+        });
+
+        row.appendChild(dot);
+        row.appendChild(name);
+        row.appendChild(sel);
+        row.appendChild(startBtn);
+        row.appendChild(delBtn);
+        table.appendChild(row);
+      });
+
+      // Task 추가 버튼
+      const addBtn = document.getElementById('btn-add-task');
+      const newAddBtn = addBtn.cloneNode(true); // 이전 이벤트 제거
+      addBtn.parentNode.replaceChild(newAddBtn, addBtn);
+      newAddBtn.addEventListener('click', () => {
+        const row = document.createElement('div');
+        row.className = 'task-add-row';
+        const input = document.createElement('input');
+        input.className = 'task-add-input';
+        input.placeholder = 'Task 이름 입력 후 Enter';
+        row.appendChild(input);
+        table.appendChild(row);
+        input.focus();
+        let committed = false;
+        function commit() {
+          if (committed) return;
+          committed = true;
+          const name = input.value.trim();
+          if (name) {
+            idea.tasks.push(new Task(name));
+            saveWorkspaces();
+            renderIdeaDetail(ws, proj, ms, idea);
+            renderTree();
+          } else {
+            row.remove();
+          }
+        }
+        input.addEventListener('keydown', e => {
+          if (e.key === 'Enter') commit();
+          if (e.key === 'Escape') row.remove();
+        });
+        input.addEventListener('blur', commit);
+      });
+
+      requestAnimationFrame(() => window._updateTaskScrollbar?.());
+    }
 
     function selectMilestone(ws, proj, ms) {
       _selectedMilestoneId = ms.id;
+      _selectedIdeaId = null;
       document.querySelector('.content-header h1').textContent = `${proj.name} - 마일스톤: ${ms.name}`;
       document.getElementById('btn-add-milestone').style.display = 'none';
       document.getElementById('milestone-grid').style.display = 'none';
       document.getElementById('btn-add-idea').style.display = '';
       document.getElementById('idea-grid').style.display = '';
+      document.getElementById('idea-detail').style.display = 'none';
+      document.getElementById('content').classList.remove('idea-active');
       renderIdeas(ws, proj, ms);
     }
 
@@ -1038,11 +2255,14 @@
       const ws = workspaces.find(w => w.id === _selectedWsId);
       const proj = ws?.projects.find(p => p.id === _selectedProjId);
       _selectedMilestoneId = null;
+      _selectedIdeaId = null;
       document.querySelector('.content-header h1').textContent = `${ws.name} - 프로젝트: ${proj.name}`;
       document.getElementById('btn-add-milestone').style.display = '';
       document.getElementById('milestone-grid').style.display = '';
       document.getElementById('btn-add-idea').style.display = 'none';
       document.getElementById('idea-grid').style.display = 'none';
+      document.getElementById('idea-detail').style.display = 'none';
+      document.getElementById('content').classList.remove('idea-active');
     }
 
     function renderIdeas(ws, proj, ms) {
@@ -1052,13 +2272,15 @@
         const card = document.createElement('div');
         card.className = 'ws-card';
         const st = idea.status;
-        const topTasks = idea.tasks.slice(0, 3);
-        const tasksHtml = topTasks.length
-          ? topTasks.map(t => `
+        const PREVIEW = 3;
+        const allTasks = idea.tasks;
+        const renderTaskItems = (tasks) => tasks.map(t => `
               <div class="idea-task-item">
                 <span class="idea-task-name">${escapeHtml(t.name)}</span>
                 <span class="idea-task-status ws-card-status status-${t.status}">${STATUS_LABEL[t.status]}</span>
-              </div>`).join('')
+              </div>`).join('');
+        const tasksHtml = allTasks.length
+          ? renderTaskItems(allTasks.slice(0, PREVIEW))
           : '<div class="idea-empty-tasks">Task 없음</div>';
 
         card.innerHTML = `
@@ -1092,14 +2314,36 @@
           <div class="ws-card-desc">${escapeHtml(idea.description) || '<span style="opacity:0.4">설명 없음</span>'}</div>
           <div class="ws-card-status status-${st}">${STATUS_LABEL[st]}</div>
           <div class="idea-task-list">${tasksHtml}</div>
+          ${allTasks.length > PREVIEW ? `<button class="idea-task-toggle btn-toggle-tasks">▼ ${allTasks.length - PREVIEW}개 더 보기</button>` : ''}
         `;
+
+        if (allTasks.length > PREVIEW) {
+          let expanded = false;
+          const taskList = card.querySelector('.idea-task-list');
+          const toggleBtn = card.querySelector('.btn-toggle-tasks');
+          toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            expanded = !expanded;
+            taskList.innerHTML = renderTaskItems(expanded ? allTasks : allTasks.slice(0, PREVIEW));
+            toggleBtn.textContent = expanded
+              ? '▲ 접기'
+              : `▼ ${allTasks.length - PREVIEW}개 더 보기`;
+          });
+        }
         card.querySelector('.btn-run').addEventListener('click', async (e) => {
           e.stopPropagation();
           const btn = e.currentTarget;
           if (btn.disabled) return;
+
+          if (idea.tasks.length > 0) {
+            const confirmed = await showRunConfirm();
+            if (!confirmed) return;
+            idea.tasks = [];
+          }
+
           btn.disabled = true;
           const origHTML = btn.innerHTML;
-          btn.innerHTML = '<span style="font-size:11px;padding:0 2px">...</span>';
+          btn.innerHTML = '<span style="font-size:calc(11px * var(--fs, 1));padding:0 2px">...</span>';
           try {
             const res = await fetch(`/api/ideas/${idea.id}/run`, { method: 'POST' });
             const updated = await res.json();
@@ -1110,6 +2354,7 @@
               return t;
             });
             renderIdeas(ws, proj, ms);
+            renderTree();
           } catch (err) {
             alert('Task 생성 실패: ' + err.message);
           } finally {
@@ -1117,8 +2362,9 @@
             btn.innerHTML = origHTML;
           }
         });
-        card.querySelector('.btn-edit').addEventListener('click', () => openIdeaModal('edit', ws, proj, ms, idea));
-        card.querySelector('.btn-delete').addEventListener('click', () => deleteIdea(ws, proj, ms, idea.id));
+        card.addEventListener('click', () => selectIdea(ws, proj, ms, idea));
+        card.querySelector('.btn-edit').addEventListener('click', (e) => { e.stopPropagation(); openIdeaModal('edit', ws, proj, ms, idea); });
+        card.querySelector('.btn-delete').addEventListener('click', (e) => { e.stopPropagation(); deleteIdea(ws, proj, ms, idea.id); });
         grid.appendChild(card);
       });
     }
@@ -1160,6 +2406,7 @@
 
       saveWorkspaces();
       renderIdeas(ws, proj, ms);
+      renderTree();
       closeIdeaModal();
     }
 
@@ -1169,6 +2416,7 @@
         ms.ideas.splice(idx, 1);
         saveWorkspaces();
         renderIdeas(ws, proj, ms);
+        renderTree();
       }
     }
 
@@ -1212,7 +2460,7 @@
           <div class="ws-card-desc">${escapeHtml(ms.description) || '<span style="opacity:0.4">설명 없음</span>'}</div>
           <div class="ws-card-status status-${st}">${STATUS_LABEL[st]}</div>
         `;
-        card.addEventListener('dblclick', () => selectMilestone(ws, proj, ms));
+        card.addEventListener('click', () => selectMilestone(ws, proj, ms));
         card.querySelector('.btn-edit').addEventListener('click', () => openMilestoneModal('edit', ws, proj, ms));
         card.querySelector('.btn-delete').addEventListener('click', () => deleteMilestone(ws, proj, ms.id));
         grid.appendChild(card);
@@ -1228,6 +2476,7 @@
       modal.querySelector('.modal-title').textContent = mode === 'edit' ? '마일스톤 수정' : '새 마일스톤';
       nameInput.value = ms ? ms.name : '';
       descInput.value = ms ? ms.description : '';
+      document.getElementById('milestone-sysprompt-input').value = ms ? (ms.systemPrompt || '') : '';
       _editingMilestoneId = ms ? ms.id : null;
       modal.classList.add('open');
       nameInput.focus();
@@ -1245,16 +2494,20 @@
       const name = document.getElementById('milestone-name-input').value.trim();
       if (!name) { document.getElementById('milestone-name-input').focus(); return; }
       const desc = document.getElementById('milestone-desc-input').value.trim();
+      const sysprompt = document.getElementById('milestone-sysprompt-input').value.trim();
 
       if (_editingMilestoneId) {
         const ms = proj.milestones.find(m => m.id === _editingMilestoneId);
-        if (ms) { ms.name = name; ms.description = desc; }
+        if (ms) { ms.name = name; ms.description = desc; ms.systemPrompt = sysprompt; }
       } else {
-        proj.milestones.push(new Milestone(name, desc));
+        const ms = new Milestone(name, desc);
+        ms.systemPrompt = sysprompt;
+        proj.milestones.push(ms);
       }
 
       saveWorkspaces();
       renderMilestones(ws, proj);
+      renderTree();
       closeMilestoneModal();
     }
 
@@ -1264,7 +2517,18 @@
         proj.milestones.splice(idx, 1);
         saveWorkspaces();
         renderMilestones(ws, proj);
+        renderTree();
       }
+    }
+
+    async function browseProjectFolder() {
+      try {
+        const res = await fetch('/api/browse-folder');
+        const data = await res.json();
+        if (data.ok && data.path) {
+          document.getElementById('proj-path-input').value = data.path;
+        }
+      } catch { /* 서버 미실행 등 무시 */ }
     }
 
     let _editingProjId = null;
@@ -1276,16 +2540,19 @@
       const descInput = document.getElementById('proj-desc-input');
       const pathInput = document.getElementById('proj-path-input');
 
+      const syspromptInput = document.getElementById('proj-sysprompt-input');
       if (mode === 'edit' && proj) {
         title.textContent = '프로젝트 수정';
         nameInput.value = proj.name;
         descInput.value = proj.description;
+        syspromptInput.value = proj.systemPrompt || '';
         pathInput.value = proj.outputPath;
         _editingProjId = proj.id;
       } else {
         title.textContent = '새 프로젝트';
         nameInput.value = '';
         descInput.value = '';
+        syspromptInput.value = '';
         pathInput.value = '';
         _editingProjId = null;
       }
@@ -1304,17 +2571,21 @@
       const name = document.getElementById('proj-name-input').value.trim();
       if (!name) { document.getElementById('proj-name-input').focus(); return; }
       const desc = document.getElementById('proj-desc-input').value.trim();
+      const sysprompt = document.getElementById('proj-sysprompt-input').value.trim();
       const path = document.getElementById('proj-path-input').value.trim();
 
       if (_editingProjId) {
         const proj = ws.projects.find(p => p.id === _editingProjId);
-        if (proj) { proj.name = name; proj.description = desc; proj.outputPath = path; }
+        if (proj) { proj.name = name; proj.description = desc; proj.systemPrompt = sysprompt; proj.outputPath = path; }
       } else {
-        ws.projects.push(new Project(name, desc, path));
+        const proj = new Project(name, desc, path);
+        proj.systemPrompt = sysprompt;
+        ws.projects.push(proj);
       }
 
       saveWorkspaces();
       renderProjects(ws);
+      renderTree();
       closeProjModal();
     }
 
@@ -1324,6 +2595,7 @@
         ws.projects.splice(idx, 1);
         saveWorkspaces();
         renderProjects(ws);
+        renderTree();
       }
     }
 
@@ -1338,15 +2610,18 @@
       const nameInput = document.getElementById('ws-name-input');
       const descInput = document.getElementById('ws-desc-input');
 
+      const syspromptInput = document.getElementById('ws-sysprompt-input');
       if (mode === 'edit' && ws) {
         title.textContent = '워크스페이스 수정';
         nameInput.value = ws.name;
         descInput.value = ws.description;
+        syspromptInput.value = ws.systemPrompt || '';
         _editingId = ws.id;
       } else {
         title.textContent = '새 워크스페이스';
         nameInput.value = '';
         descInput.value = '';
+        syspromptInput.value = '';
         _editingId = null;
       }
       modal.classList.add('open');
@@ -1365,16 +2640,20 @@
         return;
       }
       const desc = document.getElementById('ws-desc-input').value.trim();
+      const sysprompt = document.getElementById('ws-sysprompt-input').value.trim();
 
       if (_editingId) {
         const ws = workspaces.find(w => w.id === _editingId);
-        if (ws) { ws.name = name; ws.description = desc; }
+        if (ws) { ws.name = name; ws.description = desc; ws.systemPrompt = sysprompt; }
       } else {
-        workspaces.push(new Workspace(name, desc));
+        const ws = new Workspace(name, desc);
+        ws.systemPrompt = sysprompt;
+        workspaces.push(ws);
       }
 
       saveWorkspaces();
       renderWorkspaces();
+      renderTree();
       closeModal();
     }
 
@@ -1384,6 +2663,7 @@
         workspaces.splice(idx, 1);
         saveWorkspaces();
         renderWorkspaces();
+        renderTree();
       }
     }
 
@@ -1392,7 +2672,8 @@
     // ──────────────────────────────────────────
     document.getElementById('btn-add-ws').addEventListener('click', () => openModal('add'));
     document.getElementById('btn-exit-ws').addEventListener('click', () => {
-      if (_selectedMilestoneId) deselectMilestone();
+      if (_selectedIdeaId) deselectIdea();
+      else if (_selectedMilestoneId) deselectMilestone();
       else if (_selectedProjId) deselectProject();
       else deselectWorkspace();
     });
@@ -1448,10 +2729,528 @@
       if (e.key === 'Escape') closeModal();
     });
 
+    // ──────────────────────────────────────────
+    // 트리 패널
+    // ──────────────────────────────────────────
+    const treePanel = document.getElementById('tree-panel');
+    const treeScroll = document.getElementById('tree-scroll');
+    const treeToggleBtn = document.getElementById('tree-toggle-btn');
+    const treeToggleIcon = document.querySelector('#tree-toggle-icon polyline');
+    // 초기 상태가 collapsed이므로 화살표를 오른쪽(▶)으로 초기화
+    treeToggleIcon.setAttribute('points', '9 18 15 12 9 6');
+
+    // 열린 노드 상태 (id set)
+    const treeOpen = new Set();
+
+    document.getElementById('tree-home-btn').addEventListener('click', () => {
+      _selectedWsId = null;
+      _selectedProjId = null;
+      _selectedMilestoneId = null;
+      document.getElementById('ws-grid').style.display = '';
+      document.getElementById('proj-grid').style.display = 'none';
+      document.getElementById('milestone-grid').style.display = 'none';
+      document.getElementById('idea-grid').style.display = 'none';
+      document.getElementById('btn-add-ws').style.display = '';
+      document.getElementById('btn-add-proj').style.display = 'none';
+      document.getElementById('btn-add-milestone').style.display = 'none';
+      document.getElementById('btn-add-idea').style.display = 'none';
+      document.getElementById('btn-exit-ws').style.display = 'none';
+      document.querySelector('.content-header h1').textContent = '워크스페이스';
+      renderWorkspaces();
+    });
+
+    // 저장된 패널 상태 복원 (기본값: collapsed)
+    const _treeSaved = localStorage.getItem('tree.collapsed');
+    if (_treeSaved === 'false') {
+      treePanel.classList.remove('collapsed');
+      treeToggleIcon.setAttribute('points', '15 18 9 12 15 6');
+    }
+
+    treeToggleBtn.addEventListener('click', () => {
+      const collapsed = treePanel.classList.toggle('collapsed');
+      treeToggleIcon.setAttribute('points', collapsed ? '9 18 15 12 9 6' : '15 18 9 12 15 6');
+      localStorage.setItem('tree.collapsed', collapsed);
+    });
+
+    function treeNavigate(ws, proj, ms, idea) {
+      hideTaskChatPanel();
+      // 모든 그리드/버튼 완전 리셋
+      _selectedWsId = null;
+      _selectedProjId = null;
+      _selectedMilestoneId = null;
+      _selectedIdeaId = null;
+      document.getElementById('ws-grid').style.display = 'none';
+      document.getElementById('proj-grid').style.display = 'none';
+      document.getElementById('milestone-grid').style.display = 'none';
+      document.getElementById('idea-grid').style.display = 'none';
+      document.getElementById('idea-detail').style.display = 'none';
+      document.getElementById('content').classList.remove('idea-active');
+      document.getElementById('btn-add-ws').style.display = 'none';
+      document.getElementById('btn-add-proj').style.display = 'none';
+      document.getElementById('btn-add-milestone').style.display = 'none';
+      document.getElementById('btn-add-idea').style.display = 'none';
+      document.getElementById('btn-exit-ws').style.display = '';
+
+      if (idea) {
+        selectWorkspace(ws);
+        selectProject(ws, proj);
+        selectMilestone(ws, proj, ms);
+        selectIdea(ws, proj, ms, idea);
+      } else if (ms) {
+        selectWorkspace(ws);
+        selectProject(ws, proj);
+        selectMilestone(ws, proj, ms);
+      } else if (proj) {
+        selectWorkspace(ws);
+        selectProject(ws, proj);
+      } else {
+        selectWorkspace(ws);
+      }
+    }
+
+    function renderTree() {
+      treeScroll.innerHTML = '';
+      workspaces.forEach(ws => {
+        const wsNode = makeTreeNode(ws.name, '🗂', 0, ws.projects.length > 0, null, ws.id);
+        treeScroll.appendChild(wsNode.el);
+        wsNode.el.addEventListener('click', () => treeNavigate(ws));
+
+        const wsChildren = makeChildren(treeOpen.has(ws.id));
+        ws.projects.forEach(proj => {
+          const projNode = makeTreeNode(proj.name, '📁', 1, proj.milestones.length > 0, proj.status, proj.id);
+          wsChildren.appendChild(projNode.el);
+          projNode.el.addEventListener('click', () => treeNavigate(ws, proj));
+
+          const projChildren = makeChildren(treeOpen.has(proj.id));
+          proj.milestones.forEach(ms => {
+            const msNode = makeTreeNode(ms.name, '🏁', 2, ms.ideas.length > 0, ms.status, ms.id);
+            projChildren.appendChild(msNode.el);
+            msNode.el.addEventListener('click', () => treeNavigate(ws, proj, ms));
+
+            const msChildren = makeChildren(treeOpen.has(ms.id));
+            ms.ideas.forEach(idea => {
+              const ideaNode = makeTreeNode(idea.title, '💡', 3, false, idea.status, idea.id);
+              msChildren.appendChild(ideaNode.el);
+              ideaNode.el.addEventListener('click', () => treeNavigate(ws, proj, ms, idea));
+            });
+
+            projChildren.appendChild(msChildren);
+            bindToggle(msNode, msChildren, ms.id);
+          });
+
+          wsChildren.appendChild(projChildren);
+          bindToggle(projNode, projChildren, proj.id);
+        });
+
+        treeScroll.appendChild(wsChildren);
+        bindToggle(wsNode, wsChildren, ws.id);
+      });
+    }
+
+    function makeChildren(isOpen) {
+      const el = document.createElement('div');
+      el.className = 'tree-children' + (isOpen ? ' open' : '');
+      return el;
+    }
+
+    function makeTreeNode(label, icon, depth, hasChildren, status, id) {
+      const el = document.createElement('div');
+      el.className = 'tree-node';
+      el.style.paddingLeft = (8 + depth * 8) + 'px';
+
+      const arrow = document.createElement('span');
+      const isOpen = hasChildren && id && treeOpen.has(id);
+      arrow.className = 'tree-arrow' + (isOpen ? ' open' : '');
+      arrow.textContent = hasChildren ? '▶' : '';
+
+      const labelEl = document.createElement('span');
+      labelEl.className = 'tree-label';
+      labelEl.textContent = (icon ? icon + ' ' : '') + label;
+
+      el.appendChild(arrow);
+      el.appendChild(labelEl);
+
+      if (status) {
+        const badge = document.createElement('span');
+        badge.className = 'tree-status ws-card-status status-' + status;
+        badge.textContent = STATUS_LABEL?.[status] ?? status;
+        el.appendChild(badge);
+      }
+
+      return { el, arrow };
+    }
+
+    function saveTreeOpen() {
+      localStorage.setItem('tree.openNodes', JSON.stringify([...treeOpen]));
+    }
+
+    function bindToggle(node, childrenEl, id) {
+      node.arrow.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = childrenEl.classList.toggle('open');
+        node.arrow.classList.toggle('open', isOpen);
+        if (isOpen) treeOpen.add(id); else treeOpen.delete(id);
+        saveTreeOpen();
+      });
+    }
+
+    // ── Toast ────────────────────────────────────────
+    let _toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+    }
+
+    // ── AI 연결 상태 ─────────────────────────────────
+    let _aiAvailable = false;
+
+    async function checkAiAvailability() {
+      try {
+        const [claude, gemini] = await Promise.all([
+          fetch('/api/claude-check').then(r => r.json()).catch(() => ({ ok: false })),
+          fetch('/api/gemini-check').then(r => r.json()).catch(() => ({ ok: false }))
+        ]);
+        _aiAvailable = claude.ok || gemini.ok;
+      } catch {
+        _aiAvailable = false;
+      }
+    }
+
+    // ── Task 대화 패널 ──────────────────────────────
+    let _chatTask = null;
+
+    const CHAT_WIDTH_KEY = 'chatPanel.width';
+
+    function openTaskChat(task) {
+      if (!_aiAvailable) { showToast('AI가 연결되지 않아 대화창을 열 수 없습니다.'); return; }
+      _chatTask = task;
+      document.getElementById('task-chat-title').textContent = task.name;
+      if (!task.prompts) task.prompts = [];
+      renderTaskChat(task);
+      const panel = document.getElementById('task-chat-panel');
+      panel.classList.add('open');
+      const saved = localStorage.getItem(CHAT_WIDTH_KEY);
+      if (saved) {
+        panel.style.width = saved + 'px';
+        panel.style.minWidth = saved + 'px';
+      }
+      document.getElementById('idea-panel-resizer').style.display = 'block';
+    }
+
+    function hideTaskChatPanel() {
+      const panel = document.getElementById('task-chat-panel');
+      panel.classList.remove('open');
+      document.getElementById('idea-panel-resizer').style.display = 'none';
+    }
+
+    function closeTaskChat() {
+      const panel = document.getElementById('task-chat-panel');
+      panel.classList.remove('open');
+      panel.style.width = '';
+      panel.style.minWidth = '';
+      document.getElementById('idea-panel-resizer').style.display = 'none';
+      _chatTask = null;
+    }
+
+    // 커스텀 스크롤바
+    (function () {
+      const scrollEl = document.getElementById('idea-task-scroll');
+      const track    = document.getElementById('idea-task-scrollbar');
+      const thumb    = document.getElementById('idea-task-scrollbar-thumb');
+
+      function update() {
+        const { scrollHeight, clientHeight, scrollTop } = scrollEl;
+        if (scrollHeight <= clientHeight) { track.style.display = 'none'; return; }
+        track.style.display = 'block';
+        const thumbH = Math.max(40, (clientHeight / scrollHeight) * clientHeight);
+        const thumbTop = (scrollTop / (scrollHeight - clientHeight)) * (clientHeight - thumbH);
+        thumb.style.height = thumbH + 'px';
+        thumb.style.top    = thumbTop + 'px';
+      }
+
+      scrollEl.addEventListener('scroll', update);
+      window._updateTaskScrollbar = () => requestAnimationFrame(update);
+
+      thumb.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        const startY   = e.clientY;
+        const startTop = scrollEl.scrollTop;
+        const { scrollHeight, clientHeight } = scrollEl;
+        const scrollRange = scrollHeight - clientHeight;
+        const thumbRange  = clientHeight - thumb.offsetHeight;
+
+        function onMove(e) {
+          const delta = ((e.clientY - startY) / thumbRange) * scrollRange;
+          scrollEl.scrollTop = Math.max(0, Math.min(scrollRange, startTop + delta));
+        }
+        function onUp() {
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    })();
+
+    // 리사이저 드래그
+    (function () {
+      const resizer = document.getElementById('idea-panel-resizer');
+      const chatPanel = document.getElementById('task-chat-panel');
+      const body = document.getElementById('idea-detail-body');
+
+      resizer.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        resizer.classList.add('dragging');
+        chatPanel.style.transition = 'none';
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+
+        function onMove(e) {
+          const rect = body.getBoundingClientRect();
+          const offsetFromRight = rect.right - e.clientX;
+          const clamped = Math.max(200, Math.min(rect.width - 200, offsetFromRight));
+          chatPanel.style.width = clamped + 'px';
+          chatPanel.style.minWidth = clamped + 'px';
+        }
+
+        function onUp() {
+          resizer.classList.remove('dragging');
+          chatPanel.style.transition = '';
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+          const w = parseInt(chatPanel.style.width);
+          if (w) localStorage.setItem(CHAT_WIDTH_KEY, w);
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        }
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    })();
+
+    function renderTaskChat(task) {
+      const container = document.getElementById('task-chat-messages');
+      container.innerHTML = '';
+      (task.prompts || []).forEach(p => {
+        const bubble = document.createElement('div');
+        const actions = document.createElement('div');
+        actions.className = 'chat-bubble-actions';
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'chat-del-btn';
+        delBtn.textContent = '×';
+        delBtn.addEventListener('click', () => {
+          task.prompts = task.prompts.filter(x => x.id !== p.id);
+          saveWorkspaces();
+          renderTaskChat(task);
+        });
+
+        if (p.type === 'result') {
+          // 파일 저장 결과 버블
+          bubble.className = 'chat-bubble chat-bubble-result';
+          const text = document.createElement('div');
+          text.className = 'chat-bubble-text';
+          text.textContent = `저장됨: ${p.fileName}`;
+
+          const openBtn = document.createElement('button');
+          openBtn.className = 'chat-open-folder-btn';
+          openBtn.textContent = '📂 폴더 열기';
+          openBtn.addEventListener('click', () => {
+            fetch('/api/reveal-folder', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ path: p.folderPath })
+            });
+          });
+
+          actions.appendChild(openBtn);
+          actions.appendChild(delBtn);
+          bubble.appendChild(text);
+          bubble.appendChild(actions);
+        } else {
+          // 일반 프롬프트 버블
+          bubble.className = 'chat-bubble';
+          const text = document.createElement('div');
+          text.className = 'chat-bubble-text';
+          text.textContent = p.message;
+
+          const execBtn = document.createElement('button');
+          execBtn.className = 'chat-exec-btn';
+          execBtn.textContent = '▶ 실행';
+          execBtn.style.display = 'none';
+          execBtn.addEventListener('click', async () => {
+            execBtn.disabled = true;
+            execBtn.textContent = '실행 중…';
+            try {
+              const res = await fetch(`/api/tasks/${task.id}/execute`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: p.message })
+              });
+              const data = await res.json();
+              if (!data.ok) throw new Error(data.error);
+              if (data.updatedOutputPath && data.projectId) {
+                workspaces.forEach(ws => ws.projects && ws.projects.forEach(proj => {
+                  if (proj.id === data.projectId) proj.outputPath = data.updatedOutputPath;
+                }));
+              }
+              task.prompts.push({
+                id: crypto.randomUUID(),
+                type: 'result',
+                fileName: data.fileName,
+                filePath: data.filePath,
+                folderPath: data.folderPath,
+                score: SCORE.NONE
+              });
+              saveWorkspaces();
+              renderTaskChat(task);
+            } catch (err) {
+              alert('실행 실패: ' + err.message);
+              execBtn.disabled = false;
+              execBtn.textContent = '▶ 실행';
+            }
+          });
+
+          const upBtn = document.createElement('button');
+          upBtn.className = 'chat-score-btn' + (p.score === SCORE.UP ? ' active' : '');
+          upBtn.textContent = '👍';
+          upBtn.addEventListener('click', () => {
+            p.score = p.score === SCORE.UP ? SCORE.NONE : SCORE.UP;
+            saveWorkspaces();
+            renderTaskChat(task);
+          });
+
+          const downBtn = document.createElement('button');
+          downBtn.className = 'chat-score-btn down' + (p.score === SCORE.DOWN ? ' active' : '');
+          downBtn.textContent = '👎';
+          downBtn.addEventListener('click', () => {
+            p.score = p.score === SCORE.DOWN ? SCORE.NONE : SCORE.DOWN;
+            saveWorkspaces();
+            renderTaskChat(task);
+          });
+
+          actions.appendChild(execBtn);
+          actions.appendChild(upBtn);
+          actions.appendChild(downBtn);
+          actions.appendChild(delBtn);
+          bubble.appendChild(text);
+          bubble.appendChild(actions);
+        }
+
+        container.appendChild(bubble);
+      });
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function buildSystemPrompt(taskId) {
+      for (const ws of workspaces) {
+        for (const proj of ws.projects || []) {
+          for (const ms of proj.milestones || []) {
+            for (const idea of ms.ideas || []) {
+              if ((idea.tasks || []).some(t => t.id === taskId)) {
+                return [ws.systemPrompt, proj.systemPrompt, ms.systemPrompt, idea.systemPrompt]
+                  .filter(Boolean).join('\n\n');
+              }
+            }
+          }
+        }
+      }
+      return '';
+    }
+
+    let _sending = false;
+
+    function sendChatMessage() {
+      if (!_chatTask || _sending) return;
+      const msg = document.getElementById('task-chat-input').value.trim();
+      if (!msg) return;
+      if (!_chatTask.prompts) _chatTask.prompts = [];
+      _chatTask.prompts.push(new Prompt(msg));
+      saveWorkspaces();
+      renderTaskChat(_chatTask);
+      document.getElementById('task-chat-input').value = '';
+    }
+
+    async function refinePrompt() {
+      if (!_chatTask || _sending) return;
+      const input = document.getElementById('task-chat-input');
+      const refineBtn = document.getElementById('task-chat-refine');
+      const instruction = input.value.trim();
+      if (!instruction) { showToast('수정 지시를 입력해 주세요.'); return; }
+
+      const prompts = (_chatTask.prompts || []).filter(p => p.type !== 'result');
+      if (prompts.length === 0) { showToast('수정할 프롬프트가 없습니다. 먼저 추가해 주세요.'); return; }
+      const originalPrompt = prompts[prompts.length - 1].message;
+
+      _sending = true;
+      refineBtn.disabled = true;
+      document.getElementById('task-chat-send').disabled = true;
+      refineBtn.textContent = '수정 중…';
+      try {
+        const conversationHistory = (_chatTask.prompts || [])
+          .filter(p => p.type !== 'result')
+          .map(p => p.message);
+        const res = await fetch('/api/refine-prompt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            instruction,
+            originalPrompt,
+            conversationHistory,
+            systemPrompt: buildSystemPrompt(_chatTask.id)
+          })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error);
+        if (!_chatTask.prompts) _chatTask.prompts = [];
+        _chatTask.prompts.push(new Prompt(data.refinedPrompt));
+        saveWorkspaces();
+        renderTaskChat(_chatTask);
+        document.getElementById('task-chat-input').value = '';
+      } catch (err) {
+        showToast('수정 실패: ' + err.message);
+      } finally {
+        _sending = false;
+        refineBtn.disabled = false;
+        document.getElementById('task-chat-send').disabled = false;
+        refineBtn.textContent = '수정';
+      }
+    }
+
+    document.getElementById('task-chat-close').addEventListener('click', closeTaskChat);
+    document.getElementById('task-chat-send').addEventListener('click', sendChatMessage);
+    document.getElementById('task-chat-refine').addEventListener('click', refinePrompt);
+    document.getElementById('task-chat-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+      }
+    });
+
     // 초기 로드
     (async () => {
-      await loadWorkspaces();
+      await Promise.all([loadWorkspaces(), checkAiAvailability()]);
+      const _savedOpen = localStorage.getItem('tree.openNodes');
+      if (_savedOpen) {
+        JSON.parse(_savedOpen).forEach(id => treeOpen.add(id));
+      } else {
+        workspaces.forEach(ws => {
+          treeOpen.add(ws.id);
+          ws.projects.forEach(proj => {
+            treeOpen.add(proj.id);
+            proj.milestones.forEach(ms => {
+              treeOpen.add(ms.id);
+              ms.ideas.forEach(idea => treeOpen.add(idea.id));
+            });
+          });
+        });
+      }
       renderWorkspaces();
+      renderTree();
     })();
 
     // ──────────────────────────────────────────
@@ -1480,8 +3279,10 @@
       localStorage.setItem(STORAGE_KEY, theme);
     }
 
-    // 페이지 로드 시 저장된 테마 적용
+    // 페이지 로드 시 저장된 테마 및 폰트 스케일 적용
     applyTheme(loadTheme());
+    const _fontScale = localStorage.getItem('settings.fontScale') || '1.0';
+    document.documentElement.style.setProperty('--fs', _fontScale);
 
     toggle.addEventListener('click', () => {
       const isDark = document.body.classList.contains('dark');
