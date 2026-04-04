@@ -31,6 +31,15 @@ pause
 exit /b 1
 
 :system_python_found
+:: Windows Store 파이썬 스텁 감지 — 스텁은 --version 실행 시 errorlevel 9009 반환
+"!PYTHON_BIN!" --version >nul 2>nul
+if errorlevel 1 (
+    echo [오류] Python이 제대로 설치되어 있지 않습니다.
+    echo        python.org 에서 Python 3 를 설치하거나,
+    echo        Installations\install_python.bat 를 실행하여 로컬 Python 을 설치해주세요.
+    pause
+    exit /b 1
+)
 echo [안내] 로컬 Python 환경이 없습니다. 시스템 Python으로 서버를 시작합니다.
 echo        브라우저에서 온보딩 화면을 통해 환경을 설치해주세요.
 echo.
@@ -54,3 +63,12 @@ echo ==============================
 echo.
 
 "!PYTHON_BIN!" "%SERVER_PY%"
+set "SERVER_EXIT=%errorlevel%"
+if %SERVER_EXIT% neq 0 (
+    echo.
+    echo [오류] 서버가 비정상 종료되었습니다. ^(종료 코드: %SERVER_EXIT%^)
+    echo        위의 오류 메시지를 확인하세요.
+)
+echo.
+echo 서버가 종료되었습니다. 창을 닫으려면 아무 키나 누르세요.
+pause >nul
