@@ -9,6 +9,7 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      user-select: none;
     }
     body {
       background-color: #ffffff;
@@ -76,6 +77,447 @@
       width: 22px;
       height: 22px;
     }
+
+    /* ── 툴팁 ── */
+    [data-tooltip] { position: relative; }
+    [data-tooltip]::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a1a1a;
+      color: #fff;
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 400;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+      z-index: 200;
+    }
+    [data-tooltip]:hover::after { opacity: 1; }
+    body.dark [data-tooltip]::after {
+      background: #e0e0e0;
+      color: #111;
+    }
+    /* 네비게이션 아이콘은 아래 방향 */
+    .nav-icon-btn[data-tooltip]::after {
+      bottom: auto;
+      top: calc(100% + 6px);
+    }
+    /* 카드 아이콘은 아래 방향 */
+    .btn-card-icon[data-tooltip]::after {
+      bottom: auto;
+      top: calc(100% + 5px);
+    }
+
+    /* ── 본문 ── */
+    main#content {
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .content-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .content-header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    #btn-add-ws {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: 1px solid #d0d0d0;
+      border-radius: 8px;
+      background: none;
+      font-size: 14px;
+      color: #333;
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    }
+    #btn-add-ws:hover { background-color: rgba(0,0,0,0.05); }
+    body.dark #btn-add-ws {
+      border-color: #444;
+      color: #ccc;
+    }
+    body.dark #btn-add-ws:hover { background-color: rgba(255,255,255,0.07); }
+
+    #btn-exit-ws {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: 1px solid #d0d0d0;
+      border-radius: 8px;
+      background: none;
+      font-size: 14px;
+      color: #333;
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    }
+    #btn-exit-ws:hover { background-color: rgba(0,0,0,0.05); }
+    body.dark #btn-exit-ws { border-color: #444; color: #ccc; }
+    body.dark #btn-exit-ws:hover { background-color: rgba(255,255,255,0.07); }
+
+    #btn-add-proj {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: 1px solid #d0d0d0;
+      border-radius: 8px;
+      background: none;
+      font-size: 14px;
+      color: #333;
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    }
+    #btn-add-proj:hover { background-color: rgba(0,0,0,0.05); }
+    body.dark #btn-add-proj { border-color: #444; color: #ccc; }
+    body.dark #btn-add-proj:hover { background-color: rgba(255,255,255,0.07); }
+
+    #proj-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    #proj-modal, #milestone-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    #proj-modal.open, #milestone-modal.open { display: flex; }
+
+    #milestone-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    #btn-add-milestone {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: 1px solid #d0d0d0;
+      border-radius: 8px;
+      background: none;
+      font-size: 14px;
+      color: #333;
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    }
+    #btn-add-milestone:hover { background-color: rgba(0,0,0,0.05); }
+    body.dark #btn-add-milestone { border-color: #444; color: #ccc; }
+    body.dark #btn-add-milestone:hover { background-color: rgba(255,255,255,0.07); }
+
+    .ws-card-status {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 20px;
+      display: inline-block;
+      width: fit-content;
+    }
+    .status-idea       { background: #f0f0f0; color: #888; }
+    .status-pending    { background: #fff3cd; color: #856404; }
+    .status-in_progress{ background: #cce5ff; color: #004085; }
+    .status-done       { background: #d4edda; color: #155724; }
+    .status-on_hold    { background: #e2e3e5; color: #383d41; }
+    .status-error      { background: #f8d7da; color: #721c24; }
+    body.dark .status-idea        { background: #2a2a2a; color: #666; }
+    body.dark .status-pending     { background: #3a3000; color: #ffc107; }
+    body.dark .status-in_progress { background: #003366; color: #66b2ff; }
+    body.dark .status-done        { background: #003300; color: #66cc66; }
+    body.dark .status-on_hold     { background: #2a2a2a; color: #aaa; }
+    body.dark .status-error       { background: #3a0000; color: #ff6666; }
+
+    #idea-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    #btn-add-idea {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: 1px solid #d0d0d0;
+      border-radius: 8px;
+      background: none;
+      font-size: 14px;
+      color: #333;
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    }
+    #btn-add-idea:hover { background-color: rgba(0,0,0,0.05); }
+    body.dark #btn-add-idea { border-color: #444; color: #ccc; }
+    body.dark #btn-add-idea:hover { background-color: rgba(255,255,255,0.07); }
+
+    #idea-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    #idea-modal.open { display: flex; }
+
+    .idea-task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-top: 4px;
+      padding-top: 10px;
+      border-top: 1px solid #f0f0f0;
+    }
+    body.dark .idea-task-list { border-top-color: #2e2e2e; }
+
+    .idea-task-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      color: #555;
+    }
+    body.dark .idea-task-item { color: #999; }
+
+    .idea-task-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .idea-task-status {
+      font-size: 10px;
+      font-weight: 500;
+      padding: 1px 6px;
+      border-radius: 20px;
+      flex-shrink: 0;
+    }
+
+    .idea-empty-tasks {
+      font-size: 12px;
+      color: #bbb;
+      padding-top: 10px;
+      border-top: 1px solid #f0f0f0;
+    }
+    body.dark .idea-empty-tasks { color: #555; border-top-color: #2e2e2e; }
+
+    /* ── 카드 그리드 ── */
+    #ws-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .ws-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      cursor: default;
+    }
+    .ws-card:hover {
+      border-color: #bbb;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    }
+    body.dark .ws-card { border-color: #2e2e2e; }
+    body.dark .ws-card:hover {
+      border-color: #555;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    .ws-card--selected {
+      border-color: #555;
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.15);
+    }
+    body.dark .ws-card--selected {
+      border-color: #888;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
+    }
+
+    .ws-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .ws-card-name {
+      font-size: 15px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .ws-card-icon-actions {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .btn-card-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #aaa;
+      transition: background-color 0.15s, color 0.15s;
+    }
+    .btn-card-icon:hover { background-color: rgba(0,0,0,0.06); color: #555; }
+    .btn-card-icon.btn-delete:hover { background-color: rgba(192,57,43,0.08); color: #c0392b; }
+    body.dark .btn-card-icon { color: #555; }
+    body.dark .btn-card-icon:hover { background-color: rgba(255,255,255,0.08); color: #aaa; }
+    body.dark .btn-card-icon.btn-delete:hover { background-color: rgba(229,115,115,0.1); color: #e57373; }
+
+    .btn-card-icon svg { width: 15px; height: 15px; }
+
+    .ws-card-desc {
+      font-size: 13px;
+      color: #777;
+      flex: 1;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    body.dark .ws-card-desc { color: #888; }
+
+    /* ── 모달 ── */
+    #ws-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    #ws-modal.open { display: flex; }
+
+    .modal-box {
+      background: #fff;
+      border-radius: 14px;
+      padding: 28px;
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    }
+    body.dark .modal-box { background: #1e1e1e; }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .modal-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .modal-field label {
+      font-size: 12px;
+      color: #888;
+      font-weight: 500;
+    }
+
+    .modal-field input,
+    .modal-field textarea {
+      user-select: text;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      background: #fafafa;
+      color: inherit;
+      resize: none;
+      transition: border-color 0.2s, background 0.2s;
+      font-family: inherit;
+    }
+    .modal-field input:focus,
+    .modal-field textarea:focus {
+      outline: none;
+      border-color: #999;
+      background: #fff;
+    }
+    body.dark .modal-field input,
+    body.dark .modal-field textarea {
+      background: #2a2a2a;
+      border-color: #3a3a3a;
+      color: #eee;
+    }
+    body.dark .modal-field input:focus,
+    body.dark .modal-field textarea:focus {
+      border-color: #666;
+      background: #333;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .btn-modal {
+      padding: 9px 20px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.15s;
+      background: none;
+      color: inherit;
+    }
+    .btn-modal:hover { background-color: rgba(0,0,0,0.05); }
+    .btn-modal.btn-confirm {
+      background: #222;
+      color: #fff;
+      border-color: #222;
+    }
+    .btn-modal.btn-confirm:hover { background: #444; border-color: #444; }
+    body.dark .btn-modal { border-color: #444; }
+    body.dark .btn-modal.btn-confirm {
+      background: #eee;
+      color: #111;
+      border-color: #eee;
+    }
+    body.dark .btn-modal.btn-confirm:hover { background: #ccc; border-color: #ccc; }
   </style>
 </head>
 <body>
@@ -110,7 +552,7 @@
     <!-- 아이콘 버튼 (오른쪽) -->
     <div class="nav-right">
     <!-- 달 (다크모드 토글) -->
-    <button class="nav-icon-btn" id="theme-toggle" title="테마 전환" aria-label="테마 전환">
+    <button class="nav-icon-btn" id="theme-toggle" data-tooltip="테마 전환" aria-label="테마 전환">
       <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
@@ -131,7 +573,7 @@
     </button>
 
     <!-- 설정 -->
-    <button class="nav-icon-btn" id="settings-btn" title="설정" aria-label="설정" onclick="location.href='settings.html'">
+    <button class="nav-icon-btn" id="settings-btn" data-tooltip="설정" aria-label="설정" onclick="location.href='settings.html'">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="3"/>
@@ -148,6 +590,133 @@
     </button>
     </div>
   </nav>
+
+  <main id="content">
+    <div class="content-header">
+      <h1>워크스페이스</h1>
+      <div class="header-actions">
+        <button id="btn-add-ws">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          새 워크스페이스
+        </button>
+        <button id="btn-add-proj" style="display:none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          새 프로젝트
+        </button>
+        <button id="btn-add-idea" style="display:none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          새 아이디어
+        </button>
+        <button id="btn-add-milestone" style="display:none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          새 마일스톤
+        </button>
+        <button id="btn-exit-ws" style="display:none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          나가기
+        </button>
+      </div>
+    </div>
+    <div id="ws-grid"></div>
+    <div id="proj-grid" style="display:none;"></div>
+    <div id="idea-grid" style="display:none;"></div>
+    <div id="milestone-grid" style="display:none;"></div>
+  </main>
+
+  <!-- 워크스페이스 추가/수정 모달 -->
+  <div id="ws-modal">
+    <div class="modal-box">
+      <h2 class="modal-title">워크스페이스</h2>
+      <div class="modal-field">
+        <label for="ws-name-input">이름</label>
+        <input id="ws-name-input" type="text" placeholder="워크스페이스 이름" maxlength="50">
+      </div>
+      <div class="modal-field">
+        <label for="ws-desc-input">설명</label>
+        <textarea id="ws-desc-input" rows="3" placeholder="간단한 설명 (선택)"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal" id="btn-modal-cancel">취소</button>
+        <button class="btn-modal btn-confirm" id="btn-modal-confirm">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 아이디어 추가/수정 모달 -->
+  <div id="idea-modal">
+    <div class="modal-box">
+      <h2 class="modal-title">아이디어</h2>
+      <div class="modal-field">
+        <label for="idea-name-input">제목</label>
+        <input id="idea-name-input" type="text" placeholder="아이디어 제목" maxlength="50">
+      </div>
+      <div class="modal-field">
+        <label for="idea-desc-input">설명</label>
+        <textarea id="idea-desc-input" rows="3" placeholder="간단한 설명 (선택)"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal" id="btn-idea-modal-cancel">취소</button>
+        <button class="btn-modal btn-confirm" id="btn-idea-modal-confirm">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 마일스톤 추가/수정 모달 -->
+  <div id="milestone-modal">
+    <div class="modal-box">
+      <h2 class="modal-title">마일스톤</h2>
+      <div class="modal-field">
+        <label for="milestone-name-input">이름</label>
+        <input id="milestone-name-input" type="text" placeholder="마일스톤 이름" maxlength="50">
+      </div>
+      <div class="modal-field">
+        <label for="milestone-desc-input">설명</label>
+        <textarea id="milestone-desc-input" rows="3" placeholder="간단한 설명 (선택)"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal" id="btn-milestone-modal-cancel">취소</button>
+        <button class="btn-modal btn-confirm" id="btn-milestone-modal-confirm">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 프로젝트 추가/수정 모달 -->
+  <div id="proj-modal">
+    <div class="modal-box">
+      <h2 class="modal-title">프로젝트</h2>
+      <div class="modal-field">
+        <label for="proj-name-input">이름</label>
+        <input id="proj-name-input" type="text" placeholder="프로젝트 이름" maxlength="50">
+      </div>
+      <div class="modal-field">
+        <label for="proj-desc-input">설명</label>
+        <textarea id="proj-desc-input" rows="3" placeholder="간단한 설명 (선택)"></textarea>
+      </div>
+      <div class="modal-field">
+        <label for="proj-path-input">결과물 저장 위치</label>
+        <input id="proj-path-input" type="text" placeholder="경로 또는 URL (선택)">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal" id="btn-proj-modal-cancel">취소</button>
+        <button class="btn-modal btn-confirm" id="btn-proj-modal-confirm">저장</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     // ──────────────────────────────────────────
@@ -216,7 +785,33 @@
       }
     }
 
-    const ideas = [];   // Idea 인스턴스 배열
+    class Milestone {
+      constructor(name, description = '') {
+        this.id          = crypto.randomUUID();   // 고유 식별자
+        this.name        = name;                  // 마일스톤 이름
+        this.description = description;           // 마일스톤 설명
+        this.ideas       = [];                    // Idea 인스턴스 배열
+      }
+
+      // 하위 Idea 분포에 따라 자동 산출되는 Status
+      get status() {
+        const ideas = this.ideas;
+        if (ideas.length === 0)                                      return STATUS.IDEA;
+
+        const statuses = ideas.map(idea => idea.status);
+        const has = s => statuses.includes(s);
+        const all = s => statuses.every(s2 => s2 === s);
+
+        if (has(STATUS.ERROR))                                       return STATUS.ERROR;
+        if (all(STATUS.DONE))                                        return STATUS.DONE;
+        if (all(STATUS.ON_HOLD))                                     return STATUS.ON_HOLD;
+        if (all(STATUS.IDEA))                                        return STATUS.IDEA;
+        if (all(STATUS.PENDING))                                     return STATUS.PENDING;
+        if (statuses.every(s => s === STATUS.DONE || s === STATUS.ON_HOLD))
+                                                                     return STATUS.ON_HOLD;
+        return STATUS.IN_PROGRESS;
+      }
+    }
 
     class Project {
       constructor(name, description = '', outputPath = '') {
@@ -224,7 +819,7 @@
         this.name        = name;                  // 프로젝트 이름
         this.description = description;           // 프로젝트 설명
         this.outputPath  = outputPath;            // 결과물 저장 위치 (경로 또는 URL)
-        this.ideas       = [];                    // Idea 인스턴스 배열
+        this.milestones  = [];                    // Milestone 인스턴스 배열
       }
     }
 
@@ -240,6 +835,624 @@
     }
 
     const workspaces = [];   // Workspace 인스턴스 배열
+
+    // ──────────────────────────────────────────
+    // 워크스페이스 API 연동 (Python 서버)
+    // ──────────────────────────────────────────
+
+    async function saveWorkspaces() {
+      await fetch('/api/workspaces', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspaces })
+      });
+    }
+
+    function _restoreWorkspaces(data) {
+      workspaces.length = 0;
+      (data.workspaces || []).forEach(d => {
+        const ws = new Workspace(d.name, d.description);
+        ws.id = d.id;
+        (d.projects || []).forEach(pd => {
+          const proj = new Project(pd.name, pd.description, pd.outputPath);
+          proj.id = pd.id;
+          (pd.milestones || []).forEach(md => {
+            const ms = new Milestone(md.name, md.description);
+            ms.id = md.id;
+            (md.ideas || []).forEach(id => {
+              const idea = new Idea(id.title, id.description);
+              idea.id = id.id;
+              (id.tasks || []).forEach(td => {
+                const task = new Task(td.name, td.importance, td.status);
+                task.id = td.id;
+                idea.tasks.push(task);
+              });
+              ms.ideas.push(idea);
+            });
+            proj.milestones.push(ms);
+          });
+          ws.projects.push(proj);
+        });
+        workspaces.push(ws);
+      });
+    }
+
+    async function loadWorkspaces() {
+      try {
+        const res = await fetch('/api/workspaces');
+        const data = await res.json();
+        _restoreWorkspaces(data);
+      } catch {}
+    }
+
+    // ──────────────────────────────────────────
+    // 워크스페이스 렌더링
+    // ──────────────────────────────────────────
+    let _selectedWsId = null;
+
+    function selectWorkspace(ws) {
+      _selectedWsId = ws.id;
+      document.querySelector('.content-header h1').textContent = `워크스페이스: ${ws.name}`;
+      document.getElementById('btn-add-ws').style.display = 'none';
+      document.getElementById('btn-exit-ws').style.display = '';
+      document.getElementById('btn-add-proj').style.display = '';
+      document.getElementById('ws-grid').style.display = 'none';
+      document.getElementById('proj-grid').style.display = '';
+      renderProjects(ws);
+    }
+
+    function deselectWorkspace() {
+      _selectedWsId = null;
+      document.querySelector('.content-header h1').textContent = '워크스페이스';
+      document.getElementById('btn-add-ws').style.display = '';
+      document.getElementById('btn-exit-ws').style.display = 'none';
+      document.getElementById('btn-add-proj').style.display = 'none';
+      document.getElementById('ws-grid').style.display = '';
+      document.getElementById('proj-grid').style.display = 'none';
+    }
+
+    function renderWorkspaces() {
+      const grid = document.getElementById('ws-grid');
+      grid.innerHTML = '';
+      workspaces.forEach(ws => {
+        const card = document.createElement('div');
+        card.className = 'ws-card';
+        if (ws.id === _selectedWsId) card.classList.add('ws-card--selected');
+        card.innerHTML = `
+          <div class="ws-card-header">
+            <div class="ws-card-name">${escapeHtml(ws.name)}</div>
+            <div class="ws-card-icon-actions">
+              <button class="btn-card-icon btn-edit" data-tooltip="수정">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button class="btn-card-icon btn-delete" data-tooltip="삭제">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6"/><path d="M14 11v6"/>
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="ws-card-desc">${escapeHtml(ws.description) || '<span style="opacity:0.4">설명 없음</span>'}</div>
+        `;
+        card.addEventListener('dblclick', () => selectWorkspace(ws));
+        card.querySelector('.btn-edit').addEventListener('click', () => openModal('edit', ws));
+        card.querySelector('.btn-delete').addEventListener('click', () => deleteWorkspace(ws.id));
+        grid.appendChild(card);
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // ──────────────────────────────────────────
+    // 프로젝트 렌더링 & CRUD
+    // ──────────────────────────────────────────
+    function renderProjects(ws) {
+      const grid = document.getElementById('proj-grid');
+      grid.innerHTML = '';
+      ws.projects.forEach(proj => {
+        const card = document.createElement('div');
+        card.className = 'ws-card';
+        card.innerHTML = `
+          <div class="ws-card-header">
+            <div class="ws-card-name">${escapeHtml(proj.name)}</div>
+            <div class="ws-card-icon-actions">
+              <button class="btn-card-icon btn-edit" data-tooltip="수정">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button class="btn-card-icon btn-delete" data-tooltip="삭제">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6"/><path d="M14 11v6"/>
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="ws-card-desc">${escapeHtml(proj.description) || '<span style="opacity:0.4">설명 없음</span>'}</div>
+        `;
+        card.addEventListener('dblclick', () => selectProject(ws, proj));
+        card.querySelector('.btn-edit').addEventListener('click', () => openProjModal('edit', ws, proj));
+        card.querySelector('.btn-delete').addEventListener('click', () => deleteProject(ws, proj.id));
+        grid.appendChild(card);
+      });
+    }
+
+    let _selectedProjId = null;
+
+    function selectProject(ws, proj) {
+      _selectedProjId = proj.id;
+      document.querySelector('.content-header h1').textContent = `${ws.name} - 프로젝트: ${proj.name}`;
+      document.getElementById('btn-add-proj').style.display = 'none';
+      document.getElementById('proj-grid').style.display = 'none';
+      document.getElementById('btn-add-milestone').style.display = '';
+      document.getElementById('milestone-grid').style.display = '';
+      renderMilestones(ws, proj);
+    }
+
+    function deselectProject() {
+      const ws = workspaces.find(w => w.id === _selectedWsId);
+      _selectedProjId = null;
+      document.querySelector('.content-header h1').textContent = `워크스페이스: ${ws.name}`;
+      document.getElementById('btn-add-proj').style.display = '';
+      document.getElementById('proj-grid').style.display = '';
+      document.getElementById('btn-add-milestone').style.display = 'none';
+      document.getElementById('milestone-grid').style.display = 'none';
+    }
+
+    // ──────────────────────────────────────────
+    // 아이디어 렌더링 & CRUD
+    // ──────────────────────────────────────────
+    let _selectedMilestoneId = null;
+
+    function selectMilestone(ws, proj, ms) {
+      _selectedMilestoneId = ms.id;
+      document.querySelector('.content-header h1').textContent = `${proj.name} - 마일스톤: ${ms.name}`;
+      document.getElementById('btn-add-milestone').style.display = 'none';
+      document.getElementById('milestone-grid').style.display = 'none';
+      document.getElementById('btn-add-idea').style.display = '';
+      document.getElementById('idea-grid').style.display = '';
+      renderIdeas(ws, proj, ms);
+    }
+
+    function deselectMilestone() {
+      const ws = workspaces.find(w => w.id === _selectedWsId);
+      const proj = ws?.projects.find(p => p.id === _selectedProjId);
+      _selectedMilestoneId = null;
+      document.querySelector('.content-header h1').textContent = `${ws.name} - 프로젝트: ${proj.name}`;
+      document.getElementById('btn-add-milestone').style.display = '';
+      document.getElementById('milestone-grid').style.display = '';
+      document.getElementById('btn-add-idea').style.display = 'none';
+      document.getElementById('idea-grid').style.display = 'none';
+    }
+
+    function renderIdeas(ws, proj, ms) {
+      const grid = document.getElementById('idea-grid');
+      grid.innerHTML = '';
+      ms.ideas.forEach(idea => {
+        const card = document.createElement('div');
+        card.className = 'ws-card';
+        const st = idea.status;
+        const topTasks = idea.tasks.slice(0, 3);
+        const tasksHtml = topTasks.length
+          ? topTasks.map(t => `
+              <div class="idea-task-item">
+                <span class="idea-task-name">${escapeHtml(t.name)}</span>
+                <span class="idea-task-status ws-card-status status-${t.status}">${STATUS_LABEL[t.status]}</span>
+              </div>`).join('')
+          : '<div class="idea-empty-tasks">Task 없음</div>';
+
+        card.innerHTML = `
+          <div class="ws-card-header">
+            <div class="ws-card-name">${escapeHtml(idea.title)}</div>
+            <div class="ws-card-icon-actions">
+              <button class="btn-card-icon btn-run" data-tooltip="실행">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+              </button>
+              <button class="btn-card-icon btn-edit" data-tooltip="수정">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button class="btn-card-icon btn-delete" data-tooltip="삭제">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6"/><path d="M14 11v6"/>
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="ws-card-desc">${escapeHtml(idea.description) || '<span style="opacity:0.4">설명 없음</span>'}</div>
+          <div class="ws-card-status status-${st}">${STATUS_LABEL[st]}</div>
+          <div class="idea-task-list">${tasksHtml}</div>
+        `;
+        card.querySelector('.btn-run').addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const btn = e.currentTarget;
+          if (btn.disabled) return;
+          btn.disabled = true;
+          const origHTML = btn.innerHTML;
+          btn.innerHTML = '<span style="font-size:11px;padding:0 2px">...</span>';
+          try {
+            const res = await fetch(`/api/ideas/${idea.id}/run`, { method: 'POST' });
+            const updated = await res.json();
+            if (updated.error) throw new Error(updated.error);
+            idea.tasks = (updated.tasks || []).map(td => {
+              const t = new Task(td.name, td.importance, td.status);
+              t.id = td.id;
+              return t;
+            });
+            renderIdeas(ws, proj, ms);
+          } catch (err) {
+            alert('Task 생성 실패: ' + err.message);
+          } finally {
+            btn.disabled = false;
+            btn.innerHTML = origHTML;
+          }
+        });
+        card.querySelector('.btn-edit').addEventListener('click', () => openIdeaModal('edit', ws, proj, ms, idea));
+        card.querySelector('.btn-delete').addEventListener('click', () => deleteIdea(ws, proj, ms, idea.id));
+        grid.appendChild(card);
+      });
+    }
+
+    let _editingIdeaId = null;
+
+    function openIdeaModal(mode, ws, proj, ms, idea = null) {
+      const modal = document.getElementById('idea-modal');
+      const nameInput = document.getElementById('idea-name-input');
+      const descInput = document.getElementById('idea-desc-input');
+      modal.querySelector('.modal-title').textContent = mode === 'edit' ? '아이디어 수정' : '새 아이디어';
+      nameInput.value = idea ? idea.title : '';
+      descInput.value = idea ? idea.description : '';
+      _editingIdeaId = idea ? idea.id : null;
+      modal.classList.add('open');
+      nameInput.focus();
+    }
+
+    function closeIdeaModal() {
+      document.getElementById('idea-modal').classList.remove('open');
+      _editingIdeaId = null;
+    }
+
+    function saveIdea() {
+      const ws = workspaces.find(w => w.id === _selectedWsId);
+      const proj = ws?.projects.find(p => p.id === _selectedProjId);
+      const ms = proj?.milestones.find(m => m.id === _selectedMilestoneId);
+      if (!ms) return;
+      const title = document.getElementById('idea-name-input').value.trim();
+      if (!title) { document.getElementById('idea-name-input').focus(); return; }
+      const desc = document.getElementById('idea-desc-input').value.trim();
+
+      if (_editingIdeaId) {
+        const idea = ms.ideas.find(i => i.id === _editingIdeaId);
+        if (idea) { idea.title = title; idea.description = desc; }
+      } else {
+        ms.ideas.push(new Idea(title, desc));
+      }
+
+      saveWorkspaces();
+      renderIdeas(ws, proj, ms);
+      closeIdeaModal();
+    }
+
+    function deleteIdea(ws, proj, ms, id) {
+      const idx = ms.ideas.findIndex(i => i.id === id);
+      if (idx !== -1) {
+        ms.ideas.splice(idx, 1);
+        saveWorkspaces();
+        renderIdeas(ws, proj, ms);
+      }
+    }
+
+    // ──────────────────────────────────────────
+    // 마일스톤 렌더링 & CRUD
+    // ──────────────────────────────────────────
+    const STATUS_LABEL = {
+      idea: '아이디어', pending: '대기', in_progress: '진행 중',
+      done: '완료', on_hold: '보류', error: '오류'
+    };
+
+    function renderMilestones(ws, proj) {
+      const grid = document.getElementById('milestone-grid');
+      grid.innerHTML = '';
+      proj.milestones.forEach(ms => {
+        const card = document.createElement('div');
+        card.className = 'ws-card';
+        const st = ms.status;
+        card.innerHTML = `
+          <div class="ws-card-header">
+            <div class="ws-card-name">${escapeHtml(ms.name)}</div>
+            <div class="ws-card-icon-actions">
+              <button class="btn-card-icon btn-edit" data-tooltip="수정">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button class="btn-card-icon btn-delete" data-tooltip="삭제">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6"/><path d="M14 11v6"/>
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="ws-card-desc">${escapeHtml(ms.description) || '<span style="opacity:0.4">설명 없음</span>'}</div>
+          <div class="ws-card-status status-${st}">${STATUS_LABEL[st]}</div>
+        `;
+        card.addEventListener('dblclick', () => selectMilestone(ws, proj, ms));
+        card.querySelector('.btn-edit').addEventListener('click', () => openMilestoneModal('edit', ws, proj, ms));
+        card.querySelector('.btn-delete').addEventListener('click', () => deleteMilestone(ws, proj, ms.id));
+        grid.appendChild(card);
+      });
+    }
+
+    let _editingMilestoneId = null;
+
+    function openMilestoneModal(mode, ws, proj, ms = null) {
+      const modal = document.getElementById('milestone-modal');
+      const nameInput = document.getElementById('milestone-name-input');
+      const descInput = document.getElementById('milestone-desc-input');
+      modal.querySelector('.modal-title').textContent = mode === 'edit' ? '마일스톤 수정' : '새 마일스톤';
+      nameInput.value = ms ? ms.name : '';
+      descInput.value = ms ? ms.description : '';
+      _editingMilestoneId = ms ? ms.id : null;
+      modal.classList.add('open');
+      nameInput.focus();
+    }
+
+    function closeMilestoneModal() {
+      document.getElementById('milestone-modal').classList.remove('open');
+      _editingMilestoneId = null;
+    }
+
+    function saveMilestone() {
+      const ws = workspaces.find(w => w.id === _selectedWsId);
+      const proj = ws?.projects.find(p => p.id === _selectedProjId);
+      if (!proj) return;
+      const name = document.getElementById('milestone-name-input').value.trim();
+      if (!name) { document.getElementById('milestone-name-input').focus(); return; }
+      const desc = document.getElementById('milestone-desc-input').value.trim();
+
+      if (_editingMilestoneId) {
+        const ms = proj.milestones.find(m => m.id === _editingMilestoneId);
+        if (ms) { ms.name = name; ms.description = desc; }
+      } else {
+        proj.milestones.push(new Milestone(name, desc));
+      }
+
+      saveWorkspaces();
+      renderMilestones(ws, proj);
+      closeMilestoneModal();
+    }
+
+    function deleteMilestone(ws, proj, id) {
+      const idx = proj.milestones.findIndex(m => m.id === id);
+      if (idx !== -1) {
+        proj.milestones.splice(idx, 1);
+        saveWorkspaces();
+        renderMilestones(ws, proj);
+      }
+    }
+
+    let _editingProjId = null;
+
+    function openProjModal(mode, ws, proj = null) {
+      const modal = document.getElementById('proj-modal');
+      const title = modal.querySelector('.modal-title');
+      const nameInput = document.getElementById('proj-name-input');
+      const descInput = document.getElementById('proj-desc-input');
+      const pathInput = document.getElementById('proj-path-input');
+
+      if (mode === 'edit' && proj) {
+        title.textContent = '프로젝트 수정';
+        nameInput.value = proj.name;
+        descInput.value = proj.description;
+        pathInput.value = proj.outputPath;
+        _editingProjId = proj.id;
+      } else {
+        title.textContent = '새 프로젝트';
+        nameInput.value = '';
+        descInput.value = '';
+        pathInput.value = '';
+        _editingProjId = null;
+      }
+      modal.classList.add('open');
+      nameInput.focus();
+    }
+
+    function closeProjModal() {
+      document.getElementById('proj-modal').classList.remove('open');
+      _editingProjId = null;
+    }
+
+    function saveProject() {
+      const ws = workspaces.find(w => w.id === _selectedWsId);
+      if (!ws) return;
+      const name = document.getElementById('proj-name-input').value.trim();
+      if (!name) { document.getElementById('proj-name-input').focus(); return; }
+      const desc = document.getElementById('proj-desc-input').value.trim();
+      const path = document.getElementById('proj-path-input').value.trim();
+
+      if (_editingProjId) {
+        const proj = ws.projects.find(p => p.id === _editingProjId);
+        if (proj) { proj.name = name; proj.description = desc; proj.outputPath = path; }
+      } else {
+        ws.projects.push(new Project(name, desc, path));
+      }
+
+      saveWorkspaces();
+      renderProjects(ws);
+      closeProjModal();
+    }
+
+    function deleteProject(ws, id) {
+      const idx = ws.projects.findIndex(p => p.id === id);
+      if (idx !== -1) {
+        ws.projects.splice(idx, 1);
+        saveWorkspaces();
+        renderProjects(ws);
+      }
+    }
+
+    // ──────────────────────────────────────────
+    // 모달
+    // ──────────────────────────────────────────
+    let _editingId = null;
+
+    function openModal(mode, ws = null) {
+      const modal = document.getElementById('ws-modal');
+      const title = modal.querySelector('.modal-title');
+      const nameInput = document.getElementById('ws-name-input');
+      const descInput = document.getElementById('ws-desc-input');
+
+      if (mode === 'edit' && ws) {
+        title.textContent = '워크스페이스 수정';
+        nameInput.value = ws.name;
+        descInput.value = ws.description;
+        _editingId = ws.id;
+      } else {
+        title.textContent = '새 워크스페이스';
+        nameInput.value = '';
+        descInput.value = '';
+        _editingId = null;
+      }
+      modal.classList.add('open');
+      nameInput.focus();
+    }
+
+    function closeModal() {
+      document.getElementById('ws-modal').classList.remove('open');
+      _editingId = null;
+    }
+
+    function saveWorkspace() {
+      const name = document.getElementById('ws-name-input').value.trim();
+      if (!name) {
+        document.getElementById('ws-name-input').focus();
+        return;
+      }
+      const desc = document.getElementById('ws-desc-input').value.trim();
+
+      if (_editingId) {
+        const ws = workspaces.find(w => w.id === _editingId);
+        if (ws) { ws.name = name; ws.description = desc; }
+      } else {
+        workspaces.push(new Workspace(name, desc));
+      }
+
+      saveWorkspaces();
+      renderWorkspaces();
+      closeModal();
+    }
+
+    function deleteWorkspace(id) {
+      const idx = workspaces.findIndex(w => w.id === id);
+      if (idx !== -1) {
+        workspaces.splice(idx, 1);
+        saveWorkspaces();
+        renderWorkspaces();
+      }
+    }
+
+    // ──────────────────────────────────────────
+    // 이벤트 바인딩
+    // ──────────────────────────────────────────
+    document.getElementById('btn-add-ws').addEventListener('click', () => openModal('add'));
+    document.getElementById('btn-exit-ws').addEventListener('click', () => {
+      if (_selectedMilestoneId) deselectMilestone();
+      else if (_selectedProjId) deselectProject();
+      else deselectWorkspace();
+    });
+    document.getElementById('btn-add-proj').addEventListener('click', () => {
+      const ws = workspaces.find(w => w.id === _selectedWsId);
+      if (ws) openProjModal('add', ws);
+    });
+    document.getElementById('btn-add-idea').addEventListener('click', () => {
+      const ws = workspaces.find(w => w.id === _selectedWsId);
+      const proj = ws?.projects.find(p => p.id === _selectedProjId);
+      const ms = proj?.milestones.find(m => m.id === _selectedMilestoneId);
+      if (ms) openIdeaModal('add', ws, proj, ms);
+    });
+    document.getElementById('idea-modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeIdeaModal();
+    });
+    document.getElementById('btn-idea-modal-cancel').addEventListener('click', closeIdeaModal);
+    document.getElementById('btn-idea-modal-confirm').addEventListener('click', saveIdea);
+    document.getElementById('idea-name-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') saveIdea();
+      if (e.key === 'Escape') closeIdeaModal();
+    });
+    document.getElementById('btn-add-milestone').addEventListener('click', () => {
+      const ws = workspaces.find(w => w.id === _selectedWsId);
+      const proj = ws?.projects.find(p => p.id === _selectedProjId);
+      if (proj) openMilestoneModal('add', ws, proj);
+    });
+    document.getElementById('milestone-modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeMilestoneModal();
+    });
+    document.getElementById('btn-milestone-modal-cancel').addEventListener('click', closeMilestoneModal);
+    document.getElementById('btn-milestone-modal-confirm').addEventListener('click', saveMilestone);
+    document.getElementById('milestone-name-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') saveMilestone();
+      if (e.key === 'Escape') closeMilestoneModal();
+    });
+    document.getElementById('proj-modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeProjModal();
+    });
+    document.getElementById('btn-proj-modal-cancel').addEventListener('click', closeProjModal);
+    document.getElementById('btn-proj-modal-confirm').addEventListener('click', saveProject);
+    document.getElementById('proj-name-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') saveProject();
+      if (e.key === 'Escape') closeProjModal();
+    });
+    document.getElementById('btn-modal-cancel').addEventListener('click', closeModal);
+    document.getElementById('btn-modal-confirm').addEventListener('click', saveWorkspace);
+    document.getElementById('ws-modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+    document.getElementById('ws-name-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') saveWorkspace();
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // 초기 로드
+    (async () => {
+      await loadWorkspaces();
+      renderWorkspaces();
+    })();
 
     // ──────────────────────────────────────────
     // 테마

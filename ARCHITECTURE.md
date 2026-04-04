@@ -16,12 +16,29 @@
 ```
 /
 ├── apps/
-│   ├── main.html               # 앱 진입점. 레이아웃, 스타일, 스크립트 통합
+│   ├── main.html               # SPA 진입점. 렌더링 전담, fetch로 Python API 호출
 │   ├── settings.html           # 설정 페이지. 좌: 4개 아이콘 / 우: 나가기(X) → main.html
-│   └── settings.config         # 앱 기본값 정의 (JSON). 런타임 저장은 localStorage 사용
+│   ├── server.py               # HTTP 서버: 정적 파일 서빙(port 5500) + REST API + Claude CLI 브리지
+│   │                           #   GET  /api/workspaces       → data.json 반환
+│   │                           #   PUT  /api/workspaces       → data.json 저장
+│   │                           #   POST /api/ideas/{id}/run   → Claude CLI 호출 → tasks 생성
+│   ├── data.json               # 데이터 영속 파일 (workspaces 배열)
+│   └── settings.config         # 앱 기본값 정의 (JSON). 테마는 여전히 localStorage 사용
 ├── ARCHITECTURE.md             # (이 파일) 프로젝트 구조 나침반 — AI 전용
 ├── CLAUDE.md                   # Claude Code 행동 규칙 및 제약 조건
-└── README.md                   # 프로젝트 소개
+├── README.md                   # 프로젝트 소개
+├── install_python.command      # Python 로컬 설치 스크립트 (더블클릭 실행)
+│                               #   → local_python/ 에 Python 설치
+│                               #   → apps/system.config 생성 (Python 경로 기록)
+├── run.command                 # 서버 실행 스크립트 (더블클릭 실행)
+│                               #   → apps/system.config 읽어 server.py 실행
+└── local_python/               # (install_python.command 실행 후 생성) 로컬 Python 런타임
+```
+
+## 실행 방법
+```
+python3 apps/server.py
+# → http://localhost:5500/main.html
 ```
 
 ---
@@ -32,8 +49,10 @@
 |------|------|------|
 | `<nav>` | main.html | 상단 네비게이션 바 (좌: 로고 / 우: 아이콘) |
 | `#theme-toggle` | nav 우측 | 다크/라이트 모드 토글 (달↔태양 아이콘) |
-| `#settings-btn` | nav 우측 | 설정 아이콘 버튼 (기능 미구현) |
+| `#settings-btn` | nav 우측 | settings.html 이동 |
 | `.dark` class | body | 다크모드 상태 클래스 |
+| `#ws-grid` / `#proj-grid` / `#milestone-grid` / `#idea-grid` | main | 계층 탐색 카드 그리드 |
+| `btn-run` | idea 카드 | POST /api/ideas/{id}/run 호출 → Task 자동 생성 |
 
 ---
 

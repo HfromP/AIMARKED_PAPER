@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebSearch",
+      "WebFetch(domain:simonwillison.net)",
+      "Read(//usr/local/bin/**)",
+      "Read(//Users/HOON/.npm-global/bin/**)",
+      "Read(//Users/HOON/.local/share/claude/versions/**)",
+      "Read(//usr/local/**)",
+      "Bash(chmod +x \"/Volumes/ADATA HV620S/AIMARKED/Harness_/Millestone/install_python.command\" \"/Volumes/ADATA HV620S/AIMARKED/Harness_/Millestone/run.command\")",
+      "Bash(\"/Volumes/ADATA HV620S/AIMARKED/Harness_/Millestone/apps/dependencies/local_python/bin/python3\" --version)",
+      "Bash(printf 'PYTHON_BIN=/Volumes/ADATA HV620S/AIMARKED/Harness_/Millestone/apps/dependencies/local_python/bin/python3\\\\nSERVER_DIR=/Volumes/ADATA HV620S/AIMARKED/Harness_/Millestone/apps\\\\n')",
+      "Bash(\"/Volumes/ADATA HV620S/AIMARKED/Harness_/Millestone/apps/system.config\")",
+      "Bash(ls \"/Volumes/ADATA HV620S/AIMARKED/Harness_/Millestone/\"*.command)",
+      "Bash(chmod +x \"/Volumes/ADATA HV620S/AIMARKED/Harness_/Millestone/apps/Installations/install_python.command\")",
+      "Read(//opt/homebrew/bin/**)",
+      "Bash(/dev/null -name claude -type f)"
+    ]
+  }
+}

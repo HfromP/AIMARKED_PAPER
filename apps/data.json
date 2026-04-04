@@ -1,0 +1,10 @@
+{
+  "workspaces": [
+    {
+      "id": "8b1bf4b0-5aee-43ee-ba6b-d6474fdfeb0f",
+      "name": "Company",
+      "description": "Doing this in company",
+      "projects": []
+    }
+  ]
+}

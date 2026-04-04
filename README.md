@@ -14,21 +14,26 @@ Workspace
      └── Project
           ├── name
           ├── description
-          ├── outputPath        결과물 저장 위치 (경로 또는 URL)
-          └── ideas[]
-               └── Idea
-                    ├── title
+          ├── outputPath          결과물 저장 위치 (경로 또는 URL)
+          └── milestones[]
+               └── Milestone
+                    ├── name
                     ├── description
-                    ├── status    하위 Task 분포에 따라 자동 산출
-                    └── tasks[]
-                         └── Task
-                              ├── name
-                              ├── importance    1(낮음) · 2(보통) · 3(높음)
-                              ├── status        아래 Status 참고
-                              └── prompts[]
-                                   └── Prompt
-                                        ├── message
-                                        └── score    1(따봉) · 0(없음) · -1(싫어요)
+                    ├── status      하위 Idea 분포에 따라 자동 산출
+                    └── ideas[]
+                         └── Idea
+                              ├── title
+                              ├── description
+                              ├── status      하위 Task 분포에 따라 자동 산출
+                              └── tasks[]
+                                   └── Task
+                                        ├── name
+                                        ├── importance    1(낮음) · 2(보통) · 3(높음)
+                                        ├── status        아래 Status 참고
+                                        └── prompts[]
+                                             └── Prompt
+                                                  ├── message
+                                                  └── score    1(따봉) · 0(없음) · -1(싫어요)
 ```
 
 ---

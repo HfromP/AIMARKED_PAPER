@@ -71,6 +71,73 @@
       width: 22px;
       height: 22px;
     }
+
+    main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 20px;
+      gap: 24px;
+    }
+
+    .settings-section {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .settings-section h2 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #888;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .settings-label {
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .btn-action {
+      padding: 6px 16px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      background: none;
+      cursor: pointer;
+      font-size: 13px;
+      color: inherit;
+      transition: background-color 0.15s;
+    }
+    .btn-action:hover { background-color: rgba(0,0,0,0.06); }
+    body.dark .btn-action { border-color: #444; }
+    body.dark .btn-action:hover { background-color: rgba(255,255,255,0.08); }
+
+    .status-badge {
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    .status-badge.ok   { background: #e6f4ea; color: #2d7a3a; }
+    .status-badge.fail { background: #fce8e6; color: #c5221f; }
+    .status-badge.idle { background: #f1f1f1; color: #888; }
+    body.dark .status-badge.ok   { background: #1e3a26; color: #6fcf97; }
+    body.dark .status-badge.fail { background: #3a1e1e; color: #eb5757; }
+    body.dark .status-badge.idle { background: #2a2a2a; color: #888; }
   </style>
 </head>
 <body>
@@ -130,6 +197,28 @@
     </div>
   </nav>
 
+  <main>
+    <div class="settings-section">
+      <h2>Gemini CLI</h2>
+      <div class="settings-row">
+        <span class="settings-label">연결 상태</span>
+        <button class="btn-action" id="btn-check-gemini" onclick="checkGemini()">연결 확인</button>
+        <span class="status-badge idle" id="gemini-status">미확인</span>
+      </div>
+      <div id="gemini-version" style="font-size:12px; color:#888; text-align:center;"></div>
+    </div>
+
+    <div class="settings-section">
+      <h2>Claude CLI</h2>
+      <div class="settings-row">
+        <span class="settings-label">연결 상태</span>
+        <button class="btn-action" id="btn-check-cli" onclick="checkCli()">연결 확인</button>
+        <span class="status-badge idle" id="cli-status">미확인</span>
+      </div>
+      <div id="cli-version" style="font-size:12px; color:#888; text-align:center;"></div>
+    </div>
+  </main>
+
   <script>
     const STORAGE_KEY = 'settings.theme';
     const DEFAULT_THEME = 'light';
@@ -144,6 +233,66 @@
     }
 
     applyTheme(loadTheme());
+
+    async function checkGemini() {
+      const btn = document.getElementById('btn-check-gemini');
+      const badge = document.getElementById('gemini-status');
+      const versionEl = document.getElementById('gemini-version');
+
+      btn.disabled = true;
+      badge.className = 'status-badge idle';
+      badge.textContent = '확인 중…';
+      versionEl.textContent = '';
+
+      try {
+        const res = await fetch('/api/gemini-check');
+        const data = await res.json();
+        if (data.ok) {
+          badge.className = 'status-badge ok';
+          badge.textContent = '연결됨';
+          versionEl.textContent = data.version;
+        } else {
+          badge.className = 'status-badge fail';
+          badge.textContent = '연결 실패';
+          versionEl.textContent = data.error;
+        }
+      } catch {
+        badge.className = 'status-badge fail';
+        badge.textContent = '서버 오류';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function checkCli() {
+      const btn = document.getElementById('btn-check-cli');
+      const badge = document.getElementById('cli-status');
+      const versionEl = document.getElementById('cli-version');
+
+      btn.disabled = true;
+      badge.className = 'status-badge idle';
+      badge.textContent = '확인 중…';
+      versionEl.textContent = '';
+
+      try {
+        const res = await fetch('/api/claude-check');
+        const data = await res.json();
+        if (data.ok) {
+          badge.className = 'status-badge ok';
+          badge.textContent = '연결됨';
+          versionEl.textContent = data.version;
+        } else {
+          badge.className = 'status-badge fail';
+          badge.textContent = '연결 실패';
+          versionEl.textContent = data.error;
+        }
+      } catch {
+        badge.className = 'status-badge fail';
+        badge.textContent = '서버 오류';
+      } finally {
+        btn.disabled = false;
+      }
+    }
   </script>
 </body>
 </html>
