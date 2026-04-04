@@ -7,5 +7,6 @@
       "runtimeArgs": ["/Volumes/ADATA HV620S/AIMARKED/Harness_/Millestone/apps/server.py"],
       "port": 5500
     }
-  ]
+  ],
+  "autoVerify": false
 }

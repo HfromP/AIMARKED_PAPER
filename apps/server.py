@@ -2,8 +2,10 @@
 import json
 import os
 import re
+import signal
 import subprocess
 import threading
+import time
 import webbrowser
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
@@ -13,6 +15,9 @@ BASE_DIR = Path(__file__).parent          # apps/
 DATA_FILE = BASE_DIR / 'data.json'
 CLAUDE_BIN = Path.home() / '.local' / 'bin' / 'claude'
 _server_instance = None
+_last_heartbeat = None
+HEARTBEAT_TIMEOUT = 10  # 초: 마지막 heartbeat 후 이 시간이 지나면 종료
+STARTUP_GRACE = 25      # 초: 서버 시작 직후 watchdog 대기 시간
 
 
 def read_data():
@@ -141,6 +146,9 @@ class Handler(SimpleHTTPRequestHandler):
         if self.path == '/api/shutdown':
             self._handle_shutdown()
             return
+        if self.path == '/api/heartbeat':
+            self._handle_heartbeat()
+            return
         self._send_json(404, {'error': 'Not found'})
 
     # ── 핸들러 구현 ────────────────────────────────────────
@@ -148,6 +156,11 @@ class Handler(SimpleHTTPRequestHandler):
     def _handle_shutdown(self):
         self._send_json(200, {'ok': True})
         threading.Thread(target=_server_instance.shutdown, daemon=True).start()
+
+    def _handle_heartbeat(self):
+        global _last_heartbeat
+        _last_heartbeat = time.time()
+        self._send_json(200, {'ok': True})
 
     def _handle_browse_folder(self):
         try:
@@ -462,32 +475,78 @@ class Handler(SimpleHTTPRequestHandler):
             self._send_json(500, {'error': str(e)})
 
 
-def _close_terminal():
-    script = '''
-tell application "System Events"
-    set termApps to {"Terminal", "iTerm2", "Warp"}
-    repeat with appName in termApps
-        if exists (process appName) then
-            tell application appName
-                try
-                    close front window
-                end try
-            end tell
-        end if
-    end repeat
-end tell'''
+def _watchdog():
+    """heartbeat가 HEARTBEAT_TIMEOUT 초 이상 없으면 서버 종료."""
+    print(f'[watchdog] 시작 (grace {STARTUP_GRACE}s 대기 중...)')
+    time.sleep(STARTUP_GRACE)
+    print('[watchdog] 감시 시작')
+    while True:
+        time.sleep(3)
+        if _last_heartbeat is None:
+            print('[watchdog] heartbeat 아직 미수신')
+            continue
+        elapsed = time.time() - _last_heartbeat
+        print(f'[watchdog] 마지막 heartbeat {elapsed:.1f}s 전')
+        if elapsed > HEARTBEAT_TIMEOUT:
+            print('[watchdog] 페이지 닫힘 감지 → 서버 종료')
+            threading.Thread(target=_server_instance.shutdown, daemon=True).start()
+            return
+
+
+def _get_my_tty():
+    try:
+        return os.ttyname(0)
+    except Exception:
+        return None
+
+
+def _close_terminal(tty):
+    if not tty:
+        return
+    script = f'''
+set myTTY to "{tty}"
+try
+    tell application "Terminal"
+        repeat with w in windows
+            repeat with t in tabs of w
+                if tty of t is myTTY then
+                    close w
+                    return
+                end if
+            end repeat
+        end repeat
+    end tell
+end try
+try
+    tell application "iTerm2"
+        repeat with w in windows
+            repeat with tb in tabs of w
+                repeat with s in sessions of tb
+                    if tty of s is myTTY then
+                        tell w to close
+                        return
+                    end if
+                end repeat
+            end repeat
+        end repeat
+    end tell
+end try
+'''
     subprocess.Popen(['osascript', '-e', script])
 
 
 if __name__ == '__main__':
     os.chdir(BASE_DIR)
+    my_tty = _get_my_tty()
     _server_instance = HTTPServer(('', PORT), Handler)
     url = f'http://localhost:{PORT}/main.html'
     print(f'Millestone server running at {url}')
     webbrowser.open(url)
+    threading.Thread(target=_watchdog, daemon=True).start()
     try:
         _server_instance.serve_forever()
     except KeyboardInterrupt:
         pass
     print('Server stopped.')
-    _close_terminal()
+    _close_terminal(my_tty)  # Python 종료 직전 → 팝업 없이 창 닫힘
+    os._exit(0)

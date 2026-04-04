@@ -701,7 +701,14 @@
       min-width: 0;
       overflow: hidden;
       display: flex;
+      flex-direction: column;
       padding-top: 16px;
+    }
+    #idea-task-scroll-row {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      overflow: hidden;
     }
 
     #idea-task-scroll {
@@ -1487,12 +1494,14 @@
       </div>
       <div id="idea-detail-body">
         <div id="idea-task-area">
-          <div id="idea-task-scroll">
-            <div id="idea-task-table"></div>
-            <button id="btn-add-task">+ Task 추가</button>
-          </div>
-          <div id="idea-task-scrollbar">
-            <div id="idea-task-scrollbar-thumb"></div>
+          <div id="idea-task-scroll-row">
+            <div id="idea-task-scroll">
+              <div id="idea-task-table"></div>
+              <button id="btn-add-task">+ Task 추가</button>
+            </div>
+            <div id="idea-task-scrollbar">
+              <div id="idea-task-scrollbar-thumb"></div>
+            </div>
           </div>
         </div>
         <div id="idea-panel-resizer"></div>
@@ -2173,10 +2182,10 @@
       });
       // Task 목록
       const table = document.getElementById('idea-task-table');
-      const scrollArea = document.getElementById('idea-task-scroll');
-      scrollArea.querySelectorAll('.btn-run-idea').forEach(b => b.remove());
+      const taskArea = document.getElementById('idea-task-area');
+      taskArea.querySelectorAll('.btn-run-idea').forEach(b => b.remove());
       runBtn.classList.add('btn-run-idea');
-      scrollArea.insertBefore(runBtn, table);
+      taskArea.insertBefore(runBtn, taskArea.firstChild);
       table.innerHTML = '';
       idea.tasks.forEach(task => {
         const row = document.createElement('div');
@@ -3330,6 +3339,11 @@
         refineBtn.textContent = '수정';
       }
     }
+
+    // ──────────────────────────────────────────
+    // Heartbeat (페이지 살아있음 알림)
+    // ──────────────────────────────────────────
+    setInterval(() => fetch('/api/heartbeat', { method: 'POST' }).catch(() => {}), 3000);
 
     // ──────────────────────────────────────────
     // Collapsible 헬퍼

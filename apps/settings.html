@@ -172,6 +172,20 @@
       border-color: #eee;
     }
 
+    .btn-danger {
+      padding: 6px 16px;
+      border-radius: 6px;
+      border: 1px solid #e0b0b0;
+      background: none;
+      cursor: pointer;
+      font-size: calc(13px * var(--fs, 1));
+      color: #c0392b;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+    .btn-danger:hover { background-color: rgba(192,57,43,0.08); border-color: #c0392b; }
+    body.dark .btn-danger { border-color: #6b2c2c; color: #e07070; }
+    body.dark .btn-danger:hover { background-color: rgba(224,112,112,0.1); border-color: #e07070; }
+
   </style>
 </head>
 <body>
@@ -233,6 +247,14 @@
 
   <main>
     <div class="settings-section">
+      <h2>데이터</h2>
+      <div class="settings-row">
+        <span class="settings-label">전체 데이터 초기화</span>
+        <button class="btn-danger" id="btn-reset-data" onclick="resetData()">초기화</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
       <h2>폰트 크기</h2>
       <div class="font-scale-row">
         <button class="btn-font-scale" data-scale="0.8">아주 작게</button>
@@ -244,16 +266,6 @@
     </div>
 
     <div class="settings-section">
-      <h2>Gemini CLI</h2>
-      <div class="settings-row">
-        <span class="settings-label">연결 상태</span>
-        <button class="btn-action" id="btn-check-gemini" onclick="checkGemini()">연결 확인</button>
-        <span class="status-badge idle" id="gemini-status">미확인</span>
-      </div>
-      <div id="gemini-version" style="font-size:calc(12px * var(--fs, 1)); color:#888; text-align:center;"></div>
-    </div>
-
-    <div class="settings-section">
       <h2>Claude CLI</h2>
       <div class="settings-row">
         <span class="settings-label">연결 상태</span>
@@ -262,9 +274,21 @@
       </div>
       <div id="cli-version" style="font-size:calc(12px * var(--fs, 1)); color:#888; text-align:center;"></div>
     </div>
+
+    <div class="settings-section">
+      <h2>Gemini CLI</h2>
+      <div class="settings-row">
+        <span class="settings-label">연결 상태</span>
+        <button class="btn-action" id="btn-check-gemini" onclick="checkGemini()">연결 확인</button>
+        <span class="status-badge idle" id="gemini-status">미확인</span>
+      </div>
+      <div id="gemini-version" style="font-size:calc(12px * var(--fs, 1)); color:#888; text-align:center;"></div>
+    </div>
   </main>
 
   <script>
+    setInterval(() => fetch('/api/heartbeat', { method: 'POST' }).catch(() => {}), 3000);
+
     const STORAGE_KEY = 'settings.theme';
     const DEFAULT_THEME = 'light';
     const FONT_SCALE_KEY = 'settings.fontScale';
@@ -305,6 +329,24 @@
     applyTheme(loadTheme());
     applyFontScale(loadFontScale());
     initFontScaleUI();
+
+    async function resetData() {
+      if (!confirm('모든 데이터가 삭제됩니다. 정말 초기화할까요?')) return;
+      const btn = document.getElementById('btn-reset-data');
+      btn.disabled = true;
+      try {
+        await fetch('/api/workspaces', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ workspaces: [] })
+        });
+        alert('초기화 완료.');
+      } catch {
+        alert('초기화 실패: 서버 오류');
+      } finally {
+        btn.disabled = false;
+      }
+    }
 
     async function checkGemini() {
       const btn = document.getElementById('btn-check-gemini');
