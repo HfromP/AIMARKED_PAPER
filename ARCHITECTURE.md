@@ -18,12 +18,15 @@
 ├── apps/
 │   ├── main.html               # SPA 진입점. 렌더링 전담, fetch로 Python API 호출
 │   ├── settings.html           # 설정 페이지. 좌: 4개 아이콘 / 우: 나가기(X) → main.html
-│   ├── server.py               # HTTP 서버: 정적 파일 서빙(port 5500) + REST API + Claude CLI 브리지
+│   ├── server.py               # HTTP 서버: 정적 파일 서빙(port 5500) + REST API + AI 브리지
 │   │                           #   GET  /api/workspaces       → data.json 반환
 │   │                           #   PUT  /api/workspaces       → data.json 저장
-│   │                           #   POST /api/ideas/{id}/run   → Claude CLI 호출 → tasks 생성
+│   │                           #   GET  /api/settings         → settings.config 반환
+│   │                           #   PUT  /api/settings         → settings.config 저장 (부분 병합)
+│   │                           #   POST /api/ideas/{id}/run   → call_ai() → tasks 생성
+│   │                           #   call_ai(): ai_provider에 따라 OpenAI/Anthropic API/Gemini API/Claude CLI/Gemini CLI 분기
 │   ├── data.json               # 데이터 영속 파일 (workspaces 배열)
-│   └── settings.config         # 앱 기본값 정의 (JSON). 테마는 여전히 localStorage 사용
+│   └── settings.config         # 앱 설정 (JSON): theme, ai_provider, api_keys{openai,anthropic,gemini}
 ├── ARCHITECTURE.md             # (이 파일) 프로젝트 구조 나침반 — AI 전용
 ├── CLAUDE.md                   # Claude Code 행동 규칙 및 제약 조건
 ├── README.md                   # 프로젝트 소개

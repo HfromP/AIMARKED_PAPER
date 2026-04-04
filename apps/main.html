@@ -3342,8 +3342,13 @@
 
     // ──────────────────────────────────────────
     // Heartbeat (페이지 살아있음 알림)
+    // 브라우저 백그라운드 시 setInterval이 ~60s로 throttle되므로
+    // visibilitychange/focus 시 즉시 전송해 watchdog 오탐 방지
     // ──────────────────────────────────────────
-    setInterval(() => fetch('/api/heartbeat', { method: 'POST' }).catch(() => {}), 3000);
+    function _sendHeartbeat() { fetch('/api/heartbeat', { method: 'POST' }).catch(() => {}); }
+    setInterval(_sendHeartbeat, 3000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') _sendHeartbeat(); });
+    window.addEventListener('focus', _sendHeartbeat);
 
     // ──────────────────────────────────────────
     // Collapsible 헬퍼
@@ -3386,20 +3391,21 @@
 
     document.getElementById('shutdown-btn').addEventListener('click', async () => {
       if (!confirm('서버를 종료할까요?')) return;
-      await fetch('/api/shutdown', { method: 'POST' }).catch(() => {});
-      let count = 3;
+      const isDark = document.body.classList.contains('dark');
+      const bg = isDark ? '#121212' : '#ffffff';
+      const fg = isDark ? '#555' : '#bbb';
       document.body.innerHTML = `
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
-          height:100vh;font-family:sans-serif;color:#888;gap:10px;">
-          <div style="font-size:15px;">서버가 종료되었습니다.</div>
-          <div style="font-size:13px;"><span id="shutdown-count">3</span>초 뒤에 닫힙니다.</div>
+          height:100vh;font-family:sans-serif;background:${bg};color:${fg};gap:8px;">
+          <div style="font-size:15px;">서버를 종료하는 중…</div>
         </div>`;
-      const countEl = document.getElementById('shutdown-count');
-      const timer = setInterval(() => {
-        count--;
-        if (countEl) countEl.textContent = count;
-        if (count <= 0) { clearInterval(timer); window.close(); }
-      }, 1000);
+      try { await fetch('/api/shutdown', { method: 'POST' }); } catch (_) {}
+      document.body.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+          height:100vh;font-family:sans-serif;background:${bg};color:${fg};gap:8px;">
+          <div style="font-size:15px;">서버가 종료되었습니다.</div>
+        </div>`;
+      setTimeout(() => window.close(), 500);
     });
 
     document.getElementById('task-chat-close').addEventListener('click', closeTaskChat);

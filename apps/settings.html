@@ -186,6 +186,52 @@
     body.dark .btn-danger { border-color: #6b2c2c; color: #e07070; }
     body.dark .btn-danger:hover { background-color: rgba(224,112,112,0.1); border-color: #e07070; }
 
+    .provider-tabs {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-provider {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      background: none;
+      cursor: pointer;
+      font-size: calc(13px * var(--fs, 1));
+      color: inherit;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+    .btn-provider:hover { background-color: rgba(0,0,0,0.06); }
+    .btn-provider.active {
+      background: #222;
+      color: #fff;
+      border-color: #222;
+    }
+    body.dark .btn-provider { border-color: #444; }
+    body.dark .btn-provider:hover { background-color: rgba(255,255,255,0.08); }
+    body.dark .btn-provider.active {
+      background: #eee;
+      color: #111;
+      border-color: #eee;
+    }
+
+    .api-key-input {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      font-size: calc(13px * var(--fs, 1));
+      background: none;
+      color: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .api-key-input:focus { border-color: #888; }
+    body.dark .api-key-input { border-color: #444; background: #1e1e1e; }
+    body.dark .api-key-input:focus { border-color: #aaa; }
+
   </style>
 </head>
 <body>
@@ -235,6 +281,32 @@
 
     <!-- 나가기 버튼 (오른쪽) -->
     <div class="nav-right">
+      <button class="nav-icon-btn" id="theme-toggle" title="테마 전환" aria-label="테마 전환">
+        <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          style="display:none;">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+      <button class="nav-icon-btn" id="shutdown-btn" title="서버 종료" aria-label="서버 종료">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
+          <line x1="12" y1="2" x2="12" y2="12"/>
+        </svg>
+      </button>
       <button class="nav-icon-btn" title="나가기" aria-label="나가기" onclick="location.href='main.html'">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -266,7 +338,26 @@
     </div>
 
     <div class="settings-section">
-      <h2>Claude CLI</h2>
+      <h2>AI 프로바이더</h2>
+      <div class="provider-tabs" id="provider-tabs">
+        <button class="btn-provider" data-provider="claude_cli">Claude CLI</button>
+        <button class="btn-provider" data-provider="claude_api">Claude API</button>
+        <button class="btn-provider" data-provider="openai">GPT-4o</button>
+        <button class="btn-provider" data-provider="gemini">Gemini API</button>
+        <button class="btn-provider" data-provider="gemini_cli">Gemini CLI</button>
+      </div>
+      <div id="api-key-row" style="display:none; width:100%; max-width:400px; flex-direction:column; gap:6px;">
+        <label id="api-key-label" style="font-size:calc(12px * var(--fs,1)); color:#888; text-align:center;"></label>
+        <input type="password" id="api-key-input" class="api-key-input" placeholder="API 키를 입력하세요">
+      </div>
+      <div style="width:100%; max-width:400px; display:flex; flex-direction:column; align-items:center; gap:6px;">
+        <button class="btn-action" id="btn-save-provider" onclick="saveProvider()" style="width:100%; padding:8px 0;">저장</button>
+        <span id="provider-save-msg" style="font-size:calc(12px * var(--fs,1)); color:#888; min-height:1em;"></span>
+      </div>
+    </div>
+
+    <div class="settings-section" id="claude-cli-check" style="display:none;">
+      <h2>Claude CLI 연결 확인</h2>
       <div class="settings-row">
         <span class="settings-label">연결 상태</span>
         <button class="btn-action" id="btn-check-cli" onclick="checkCli()">연결 확인</button>
@@ -275,8 +366,8 @@
       <div id="cli-version" style="font-size:calc(12px * var(--fs, 1)); color:#888; text-align:center;"></div>
     </div>
 
-    <div class="settings-section">
-      <h2>Gemini CLI</h2>
+    <div class="settings-section" id="gemini-cli-check" style="display:none;">
+      <h2>Gemini CLI 연결 확인</h2>
       <div class="settings-row">
         <span class="settings-label">연결 상태</span>
         <button class="btn-action" id="btn-check-gemini" onclick="checkGemini()">연결 확인</button>
@@ -287,7 +378,10 @@
   </main>
 
   <script>
-    setInterval(() => fetch('/api/heartbeat', { method: 'POST' }).catch(() => {}), 3000);
+    function _sendHeartbeat() { fetch('/api/heartbeat', { method: 'POST' }).catch(() => {}); }
+    setInterval(_sendHeartbeat, 3000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') _sendHeartbeat(); });
+    window.addEventListener('focus', _sendHeartbeat);
 
     const STORAGE_KEY = 'settings.theme';
     const DEFAULT_THEME = 'light';
@@ -318,7 +412,10 @@
     }
 
     function applyTheme(theme) {
-      document.body.classList.toggle('dark', theme === 'dark');
+      const isDark = theme === 'dark';
+      document.body.classList.toggle('dark', isDark);
+      document.getElementById('icon-moon').style.display = isDark ? 'none' : '';
+      document.getElementById('icon-sun').style.display  = isDark ? ''     : 'none';
     }
 
     function loadTheme() {
@@ -327,6 +424,13 @@
     }
 
     applyTheme(loadTheme());
+
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const isDark = document.body.classList.contains('dark');
+      const next = isDark ? 'light' : 'dark';
+      localStorage.setItem(STORAGE_KEY, next);
+      applyTheme(next);
+    });
     applyFontScale(loadFontScale());
     initFontScaleUI();
 
@@ -407,6 +511,115 @@
         btn.disabled = false;
       }
     }
+
+    // ── AI 프로바이더 ──────────────────────────────────────
+    const PROVIDER_LABELS = {
+      claude_cli: null,
+      claude_api: 'Anthropic API 키 (sk-ant-...)',
+      openai: 'OpenAI API 키 (sk-...)',
+      gemini: 'Google Gemini API 키',
+      gemini_cli: null
+    };
+
+    let _currentSettings = { ai_provider: 'claude_cli', api_keys: { openai: '', anthropic: '', gemini: '' } };
+    let _selectedProvider = 'claude_cli';
+
+    function _providerToKeyName(provider) {
+      return { claude_api: 'anthropic', openai: 'openai', gemini: 'gemini' }[provider] || null;
+    }
+
+    function _updateProviderUI(provider) {
+      _selectedProvider = provider;
+      document.querySelectorAll('.btn-provider').forEach(btn =>
+        btn.classList.toggle('active', btn.dataset.provider === provider)
+      );
+      const keyRow = document.getElementById('api-key-row');
+      const label = document.getElementById('api-key-label');
+      const input = document.getElementById('api-key-input');
+      const keyName = _providerToKeyName(provider);
+      if (keyName) {
+        keyRow.style.display = 'flex';
+        label.textContent = PROVIDER_LABELS[provider];
+        input.value = _currentSettings.api_keys[keyName] || '';
+      } else {
+        keyRow.style.display = 'none';
+        input.value = '';
+      }
+      document.getElementById('claude-cli-check').style.display = provider === 'claude_cli' ? '' : 'none';
+      document.getElementById('gemini-cli-check').style.display = provider === 'gemini_cli' ? '' : 'none';
+      document.getElementById('provider-save-msg').textContent = '';
+    }
+
+    async function loadProviderSettings() {
+      try {
+        const res = await fetch('/api/settings');
+        const data = await res.json();
+        _currentSettings = data;
+        _updateProviderUI(data.ai_provider || 'claude_cli');
+      } catch {
+        // 서버 미연결 상태에서도 UI는 초기값으로 표시
+        _updateProviderUI('claude_cli');
+      }
+    }
+
+    async function saveProvider() {
+      const btn = document.getElementById('btn-save-provider');
+      const msg = document.getElementById('provider-save-msg');
+      btn.disabled = true;
+      msg.textContent = '저장 중…';
+
+      const keyName = _providerToKeyName(_selectedProvider);
+      const updatedKeys = { ..._currentSettings.api_keys };
+      if (keyName) {
+        updatedKeys[keyName] = document.getElementById('api-key-input').value.trim();
+      }
+
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ai_provider: _selectedProvider, api_keys: updatedKeys })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          _currentSettings.ai_provider = _selectedProvider;
+          _currentSettings.api_keys = updatedKeys;
+          msg.textContent = '저장됨';
+          setTimeout(() => { msg.textContent = ''; }, 2000);
+        } else {
+          msg.textContent = '저장 실패';
+        }
+      } catch {
+        msg.textContent = '서버 오류';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    document.querySelectorAll('.btn-provider').forEach(btn => {
+      btn.addEventListener('click', () => _updateProviderUI(btn.dataset.provider));
+    });
+
+    loadProviderSettings();
+
+    document.getElementById('shutdown-btn').addEventListener('click', async () => {
+      if (!confirm('서버를 종료할까요?')) return;
+      const isDark = document.body.classList.contains('dark');
+      const bg = isDark ? '#121212' : '#ffffff';
+      const fg = isDark ? '#555' : '#bbb';
+      document.body.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+          height:100vh;font-family:sans-serif;background:${bg};color:${fg};gap:8px;">
+          <div style="font-size:15px;">서버를 종료하는 중…</div>
+        </div>`;
+      try { await fetch('/api/shutdown', { method: 'POST' }); } catch (_) {}
+      document.body.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+          height:100vh;font-family:sans-serif;background:${bg};color:${fg};gap:8px;">
+          <div style="font-size:15px;">서버가 종료되었습니다.</div>
+        </div>`;
+      setTimeout(() => window.close(), 500);
+    });
   </script>
 </body>
 </html>

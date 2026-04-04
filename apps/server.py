@@ -4,6 +4,7 @@ import os
 import re
 import signal
 import subprocess
+import sys
 import threading
 import time
 import webbrowser
@@ -13,11 +14,12 @@ from pathlib import Path
 PORT = 5500
 BASE_DIR = Path(__file__).parent          # apps/
 DATA_FILE = BASE_DIR / 'data.json'
+SETTINGS_FILE = BASE_DIR / 'settings.config'
 CLAUDE_BIN = Path.home() / '.local' / 'bin' / 'claude'
 _server_instance = None
 _last_heartbeat = None
-HEARTBEAT_TIMEOUT = 10  # 초: 마지막 heartbeat 후 이 시간이 지나면 종료
-STARTUP_GRACE = 25      # 초: 서버 시작 직후 watchdog 대기 시간
+HEARTBEAT_TIMEOUT = 75  # 초: 마지막 heartbeat 후 이 시간이 지나면 종료 (브라우저 백그라운드 throttle ~60s 고려)
+STARTUP_GRACE = 30      # 초: 서버 시작 직후 watchdog 대기 시간
 
 
 def read_data():
@@ -30,6 +32,99 @@ def read_data():
 def write_data(data):
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def read_settings():
+    if not SETTINGS_FILE.exists():
+        return {'theme': 'light', 'ai_provider': 'claude_cli', 'api_keys': {'openai': '', 'anthropic': '', 'gemini': ''}}
+    with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+
+def write_settings(settings):
+    with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(settings, f, ensure_ascii=False, indent=2)
+
+
+def call_ai(prompt, timeout=120):
+    """settings.config의 ai_provider에 따라 AI 호출. 텍스트 응답 반환."""
+    settings = read_settings()
+    provider = settings.get('ai_provider', 'claude_cli')
+    keys = settings.get('api_keys', {})
+
+    if provider == 'openai':
+        try:
+            import openai
+        except ImportError:
+            raise RuntimeError('openai 패키지가 설치되지 않았습니다. 서버를 재시작해주세요.')
+        api_key = keys.get('openai', '').strip()
+        if not api_key:
+            raise ValueError('OpenAI API 키가 설정되지 않았습니다.')
+        client = openai.OpenAI(api_key=api_key, timeout=timeout)
+        resp = client.chat.completions.create(
+            model='gpt-4o',
+            messages=[{'role': 'user', 'content': prompt}]
+        )
+        return resp.choices[0].message.content.strip()
+
+    elif provider == 'claude_api':
+        try:
+            import anthropic
+        except ImportError:
+            raise RuntimeError('anthropic 패키지가 설치되지 않았습니다. 서버를 재시작해주세요.')
+        api_key = keys.get('anthropic', '').strip()
+        if not api_key:
+            raise ValueError('Anthropic API 키가 설정되지 않았습니다.')
+        client = anthropic.Anthropic(api_key=api_key, timeout=timeout)
+        msg = client.messages.create(
+            model='claude-sonnet-4-6',
+            max_tokens=4096,
+            messages=[{'role': 'user', 'content': prompt}]
+        )
+        return msg.content[0].text.strip()
+
+    elif provider == 'gemini':
+        try:
+            import google.generativeai as genai
+        except ImportError:
+            raise RuntimeError('google-generativeai 패키지가 설치되지 않았습니다. 서버를 재시작해주세요.')
+        api_key = keys.get('gemini', '').strip()
+        if not api_key:
+            raise ValueError('Gemini API 키가 설정되지 않았습니다.')
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-2.0-flash')
+        resp = model.generate_content(prompt)
+        return resp.text.strip()
+
+    elif provider == 'gemini_cli':
+        result = subprocess.run(
+            ['gemini', '-p', prompt],
+            capture_output=True, text=True, timeout=timeout
+        )
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip() or 'Gemini CLI 오류')
+        return result.stdout.strip()
+
+    else:  # claude_cli (default)
+        result = subprocess.run(
+            [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
+            capture_output=True, text=True, timeout=timeout
+        )
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
+        return result.stdout.strip()
+
+
+def _ensure_packages():
+    """백그라운드에서 AI API 패키지 설치."""
+    for pkg in ['openai', 'anthropic', 'google-generativeai']:
+        try:
+            subprocess.check_call(
+                [sys.executable, '-m', 'pip', 'install', pkg, '-q'],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+        except Exception:
+            pass
 
 
 def extract_json(text):
@@ -106,6 +201,8 @@ class Handler(SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/api/workspaces':
             self._handle_get_workspaces()
+        elif self.path == '/api/settings':
+            self._handle_get_settings()
         elif self.path == '/api/claude-check':
             self._handle_claude_check()
         elif self.path == '/api/gemini-check':
@@ -118,6 +215,8 @@ class Handler(SimpleHTTPRequestHandler):
     def do_PUT(self):
         if self.path == '/api/workspaces':
             self._handle_put_workspaces()
+        elif self.path == '/api/settings':
+            self._handle_put_settings()
         else:
             self._send_json(404, {'error': 'Not found'})
 
@@ -155,7 +254,10 @@ class Handler(SimpleHTTPRequestHandler):
 
     def _handle_shutdown(self):
         self._send_json(200, {'ok': True})
-        threading.Thread(target=_server_instance.shutdown, daemon=True).start()
+        def _delayed_shutdown():
+            time.sleep(0.5)  # 응답이 클라이언트에 완전히 전달된 뒤 종료
+            _server_instance.shutdown()
+        threading.Thread(target=_delayed_shutdown, daemon=True).start()
 
     def _handle_heartbeat(self):
         global _last_heartbeat
@@ -215,6 +317,23 @@ class Handler(SimpleHTTPRequestHandler):
         except Exception as e:
             self._send_json(200, {'ok': False, 'error': str(e)})
 
+    def _handle_get_settings(self):
+        self._send_json(200, read_settings())
+
+    def _handle_put_settings(self):
+        try:
+            body = self._read_body()
+            incoming = json.loads(body)
+            current = read_settings()
+            # 부분 병합: api_keys는 내부 딕셔너리 단위로 병합
+            if 'api_keys' in incoming and 'api_keys' in current:
+                current['api_keys'].update(incoming.pop('api_keys'))
+            current.update(incoming)
+            write_settings(current)
+            self._send_json(200, {'ok': True})
+        except Exception as e:
+            self._send_json(500, {'error': str(e)})
+
     def _handle_get_workspaces(self):
         self._send_json(200, read_data())
 
@@ -253,15 +372,8 @@ class Handler(SimpleHTTPRequestHandler):
             )
             prompt = "\n\n".join(parts)
 
-            result = subprocess.run(
-                [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
-                capture_output=True, text=True, timeout=120
-            )
-
-            if result.returncode != 0:
-                raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
-
-            tasks = extract_json(result.stdout)
+            response_text = call_ai(prompt, timeout=120)
+            tasks = extract_json(response_text)
 
             # 기존 tasks에 추가 (id는 JS가 없으므로 timestamp 기반 생성)
             import time
@@ -274,8 +386,6 @@ class Handler(SimpleHTTPRequestHandler):
             write_data(data)
             self._send_json(200, idea)
 
-        except subprocess.TimeoutExpired:
-            self._send_json(500, {'error': 'Claude CLI 응답 시간 초과'})
         except Exception as e:
             self._send_json(500, {'error': str(e)})
 
@@ -535,9 +645,54 @@ end try
     subprocess.Popen(['osascript', '-e', script])
 
 
+def _close_browser_tab():
+    """AppleScript으로 localhost:PORT 탭을 닫음 (Chrome / Safari / Arc 지원)."""
+    script = f'''
+set theURL to "http://localhost:{PORT}/"
+try
+    tell application "Google Chrome"
+        if it is running then
+            repeat with w in windows
+                repeat with t in tabs of w
+                    if URL of t starts with theURL then close t
+                end repeat
+            end repeat
+        end if
+    end tell
+end try
+try
+    tell application "Safari"
+        if it is running then
+            repeat with w in windows
+                repeat with t in tabs of w
+                    if URL of t starts with theURL then close t
+                end repeat
+            end repeat
+        end if
+    end tell
+end try
+try
+    tell application "Arc"
+        if it is running then
+            repeat with w in windows
+                repeat with t in tabs of w
+                    if URL of t starts with theURL then close t
+                end repeat
+            end repeat
+        end if
+    end tell
+end try
+'''
+    try:
+        subprocess.Popen(['osascript', '-e', script])
+    except Exception:
+        pass
+
+
 if __name__ == '__main__':
     os.chdir(BASE_DIR)
     my_tty = _get_my_tty()
+    threading.Thread(target=_ensure_packages, daemon=True).start()
     _server_instance = HTTPServer(('', PORT), Handler)
     url = f'http://localhost:{PORT}/main.html'
     print(f'Millestone server running at {url}')
@@ -548,5 +703,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         pass
     print('Server stopped.')
-    _close_terminal(my_tty)  # Python 종료 직전 → 팝업 없이 창 닫힘
+    _close_browser_tab()
+    _close_terminal(my_tty)
     os._exit(0)
