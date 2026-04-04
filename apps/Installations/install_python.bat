@@ -9,8 +9,10 @@ setlocal EnableDelayedExpansion
 set "SCRIPT_DIR=%~dp0"
 if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
 
-for %%I in ("%SCRIPT_DIR%\..\dependencies") do set "DEP_DIR=%%~fI"
-for %%I in ("%SCRIPT_DIR%\..") do set "SERVER_DIR=%%~fI"
+pushd "%SCRIPT_DIR%\.."
+set "SERVER_DIR=%CD%"
+popd
+set "DEP_DIR=%SERVER_DIR%\dependencies"
 set "PYTHON_DIR=%DEP_DIR%\local_python"
 set "CONFIG_FILE=%SERVER_DIR%\system.config"
 
