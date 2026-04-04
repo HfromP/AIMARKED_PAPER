@@ -11,7 +11,9 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      user-select: none;
     }
+    input, textarea { user-select: text; }
     body {
       background-color: #ffffff;
       color: #000000;
@@ -342,7 +344,7 @@
           <line x1="12" y1="2" x2="12" y2="12"/>
         </svg>
       </button>
-      <button class="nav-icon-btn" title="나가기" aria-label="나가기" onclick="location.href='main.html'">
+      <button class="nav-icon-btn" title="나가기" aria-label="나가기" onclick="location.replace('main.html')">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"/>
@@ -744,10 +746,10 @@
 
     function restartOnboarding() {
       localStorage.removeItem('onboarding.done');
-      location.href = 'onboarding.html';
+      location.replace('onboarding.html');
     }
 
-    document.getElementById('shutdown-btn').addEventListener('click', async () => {
+    document.getElementById('shutdown-btn').addEventListener('click', () => {
       if (!confirm('서버를 종료할까요?')) return;
       const isDark = document.body.classList.contains('dark');
       const bg = isDark ? '#121212' : '#ffffff';
@@ -757,13 +759,8 @@
           height:100vh;font-family:sans-serif;background:${bg};color:${fg};gap:8px;">
           <div style="font-size:15px;">서버를 종료하는 중…</div>
         </div>`;
-      try { await fetch('/api/shutdown', { method: 'POST' }); } catch (_) {}
-      document.body.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
-          height:100vh;font-family:sans-serif;background:${bg};color:${fg};gap:8px;">
-          <div style="font-size:15px;">서버가 종료되었습니다.</div>
-        </div>`;
-      setTimeout(() => window.close(), 500);
+      navigator.sendBeacon('/api/shutdown', '');
+      window.close();
     });
   </script>
 </body>

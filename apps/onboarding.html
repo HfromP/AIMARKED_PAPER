@@ -7,7 +7,8 @@
   <style>
     :root { --fs: 1; }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    input, textarea { user-select: text; }
 
     body {
       background-color: #ffffff;
@@ -91,6 +92,12 @@
     }
     [data-tooltip]:hover::after { opacity: 1; }
     body.dark [data-tooltip]::after { background: #e0e0e0; color: #111; }
+
+    /* nav-right 버튼 툴팁은 아래쪽으로 */
+    .nav-right [data-tooltip]::after {
+      bottom: auto;
+      top: calc(100% + 6px);
+    }
 
     /* ── 언어 선택 (nav-right 안에 들어감) ─── */
     .lang-select {
@@ -382,21 +389,21 @@
   <!-- 왼쪽: 툴 정체성 아이콘 3개 + 온보딩 아이콘 -->
   <div class="nav-left">
     <!-- 구름 -->
-    <button class="nav-icon-btn" data-tooltip="Millestone" aria-label="구름">
+    <button class="nav-icon-btn" aria-label="구름">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
       </svg>
     </button>
     <!-- 번개 -->
-    <button class="nav-icon-btn" data-tooltip="Millestone" aria-label="번개">
+    <button class="nav-icon-btn" aria-label="번개">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
       </svg>
     </button>
     <!-- 전구 -->
-    <button class="nav-icon-btn" data-tooltip="Millestone" aria-label="전구">
+    <button class="nav-icon-btn" aria-label="전구">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="9" y1="18" x2="15" y2="18"/>
@@ -405,7 +412,7 @@
       </svg>
     </button>
     <!-- 깃발 (온보딩 전용 아이콘) -->
-    <button class="nav-icon-btn current" data-tooltip="Setup" aria-label="셋업">
+    <button class="nav-icon-btn current" aria-label="셋업">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
@@ -419,8 +426,8 @@
     <!-- 언어 선택 -->
     <div class="lang-select">
       <button class="lang-btn" data-lang="ko" onclick="setLang('ko')">한국어</button>
-      <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
-      <button class="lang-btn" data-lang="vi" onclick="setLang('vi')">VI</button>
+      <button class="lang-btn" data-lang="en" onclick="setLang('en')">English</button>
+      <button class="lang-btn" data-lang="vi" onclick="setLang('vi')">Tiếng Việt</button>
     </div>
 
     <!-- 테마 토글 -->
@@ -577,6 +584,10 @@ const T = {
   ko: {
     'theme.tooltip':     '테마 전환',
     'shutdown.tooltip':  '서버 종료',
+    'shutdown.confirm':   '서버를 종료할까요?',
+    'shutdown.ing':       '서버를 종료하는 중…',
+    'shutdown.done':      '서버가 종료되었습니다.',
+    'shutdown.close-tab': '탭을 닫아 주세요.',
     's1-heading': 'Python 환경',
     's1-title':   'Python 환경 준비',
     's1-desc':    '앱 실행에 필요한 로컬 Python 환경을 설치합니다. 인터넷 연결이 필요합니다.',
@@ -609,6 +620,10 @@ const T = {
   en: {
     'theme.tooltip':    'Toggle theme',
     'shutdown.tooltip': 'Shut down server',
+    'shutdown.confirm':   'Shut down the server?',
+    'shutdown.ing':       'Shutting down…',
+    'shutdown.done':      'Server has been shut down.',
+    'shutdown.close-tab': 'You can close this tab.',
     's1-heading': 'Python Environment',
     's1-title':   'Prepare Python Environment',
     's1-desc':    'Installs a local Python environment required to run the app. Internet connection needed.',
@@ -641,6 +656,10 @@ const T = {
   vi: {
     'theme.tooltip':    'Đổi giao diện',
     'shutdown.tooltip': 'Tắt máy chủ',
+    'shutdown.confirm':   'Tắt máy chủ?',
+    'shutdown.ing':       'Đang tắt máy chủ…',
+    'shutdown.done':      'Máy chủ đã tắt.',
+    'shutdown.close-tab': 'Bạn có thể đóng tab này.',
     's1-heading': 'Môi trường Python',
     's1-title':   'Chuẩn bị môi trường Python',
     's1-desc':    'Cài đặt môi trường Python cục bộ cần thiết để chạy ứng dụng. Cần kết nối Internet.',
@@ -740,28 +759,24 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
 });
 
 // ── 종료 / Heartbeat ────────────────────────────────────────────────
-document.getElementById('shutdown-btn').addEventListener('click', async () => {
-  if (!confirm('서버를 종료할까요?')) return;
+document.getElementById('shutdown-btn').addEventListener('click', () => {
+  if (!confirm(t('shutdown.confirm'))) return;
   const isDark = document.body.classList.contains('dark');
   const bg = isDark ? '#121212' : '#ffffff';
   const fg = isDark ? '#555' : '#bbb';
   document.body.innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
       height:100vh;font-family:sans-serif;background:${bg};color:${fg};gap:8px;">
-      <div style="font-size:15px;">서버를 종료하는 중…</div>
+      <div style="font-size:15px;">${t('shutdown.ing')}</div>
     </div>`;
-  try { await fetch('/api/shutdown', { method: 'POST' }); } catch (_) {}
-  document.body.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
-      height:100vh;font-family:sans-serif;background:${bg};color:${fg};gap:8px;">
-      <div style="font-size:15px;">서버가 종료되었습니다.</div>
-    </div>`;
-  setTimeout(() => window.close(), 500);
+  navigator.sendBeacon('/api/shutdown', '');
+  window.close();
 });
 
-setInterval(() => {
-  fetch('/api/heartbeat', { method: 'POST' }).catch(() => {});
-}, 3000);
+function _sendHeartbeat() { fetch('/api/heartbeat', { method: 'POST' }).catch(() => {}); }
+setInterval(_sendHeartbeat, 3000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') _sendHeartbeat(); });
+window.addEventListener('focus', _sendHeartbeat);
 
 // ── 스텝 관리 ───────────────────────────────────────────────────────
 let currentStep = 1;
@@ -983,7 +998,7 @@ async function saveAI() {
 // ── 완료 ────────────────────────────────────────────────────────────
 function goMain() {
   localStorage.setItem('onboarding.done', '1');
-  window.location.href = 'main.html';
+  window.location.replace('main.html');
 }
 
 // ── 초기화 ──────────────────────────────────────────────────────────
