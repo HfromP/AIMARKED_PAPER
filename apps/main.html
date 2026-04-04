@@ -847,6 +847,57 @@
     body.dark #btn-idea-add-file { border-color: #444; }
     body.dark #btn-idea-add-file:hover { border-color: #888; color: #ccc; }
 
+    /* ── Collapsible 섹션 공통 ─────────────────── */
+    .collapsible-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+      padding: 6px 0 2px;
+    }
+    .collapsible-arrow {
+      font-size: 9px;
+      color: #aaa;
+      transition: transform 0.15s;
+      display: inline-block;
+      line-height: 1;
+    }
+    .collapsible-header.open .collapsible-arrow { transform: rotate(90deg); }
+    .collapsible-label {
+      font-size: calc(11px * var(--fs,1));
+      font-weight: 600;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .collapsible-body { display: none; padding-top: 4px; }
+    .collapsible-body.open { display: block; }
+
+    /* ── 그리드 뷰 시스템 프롬프트 블록 ─────────── */
+    .ctx-sysprompt-block {
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #eee;
+    }
+    body.dark .ctx-sysprompt-block { border-bottom-color: #2a2a2a; }
+    .ctx-sysprompt-textarea {
+      font-size: calc(13px * var(--fs,1));
+      font-family: inherit;
+      color: inherit;
+      background: none;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 6px 8px;
+      resize: none;
+      line-height: 1.5;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .ctx-sysprompt-textarea:focus { outline: none; border-color: #888; }
+    body.dark .ctx-sysprompt-textarea { border-color: #333; }
+    body.dark .ctx-sysprompt-textarea:focus { border-color: #888; }
+
     #idea-task-table {
       display: flex;
       flex-direction: column;
@@ -1293,6 +1344,13 @@
     </button>
 
     <!-- 설정 -->
+    <button class="nav-icon-btn" id="shutdown-btn" data-tooltip="서버 종료" aria-label="서버 종료">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
+        <line x1="12" y1="2" x2="12" y2="12"/>
+      </svg>
+    </button>
     <button class="nav-icon-btn" id="settings-btn" data-tooltip="설정" aria-label="설정" onclick="location.href='settings.html'">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1375,22 +1433,56 @@
       </div>
     </div>
     <div id="ws-grid"></div>
+    <div id="ws-sysprompt-block" class="ctx-sysprompt-block" style="display:none;">
+      <div class="collapsible-header" id="ws-sysprompt-toggle">
+        <span class="collapsible-arrow">▶</span>
+        <span class="collapsible-label">워크스페이스 시스템 프롬프트</span>
+      </div>
+      <div class="collapsible-body" id="ws-sysprompt-body">
+        <textarea id="ws-ctx-sysprompt" class="ctx-sysprompt-textarea" rows="3" placeholder="이 워크스페이스 내 AI 동작의 기본 맥락 (선택)"></textarea>
+      </div>
+    </div>
     <div id="proj-grid" style="display:none;"></div>
+    <div id="proj-sysprompt-block" class="ctx-sysprompt-block" style="display:none;">
+      <div class="collapsible-header" id="proj-sysprompt-toggle">
+        <span class="collapsible-arrow">▶</span>
+        <span class="collapsible-label">프로젝트 시스템 프롬프트</span>
+      </div>
+      <div class="collapsible-body" id="proj-sysprompt-body">
+        <textarea id="proj-ctx-sysprompt" class="ctx-sysprompt-textarea" rows="3" placeholder="이 프로젝트 내 AI 동작의 맥락 (선택)"></textarea>
+      </div>
+    </div>
+    <div id="ms-sysprompt-block" class="ctx-sysprompt-block" style="display:none;">
+      <div class="collapsible-header" id="ms-sysprompt-toggle">
+        <span class="collapsible-arrow">▶</span>
+        <span class="collapsible-label">마일스톤 시스템 프롬프트</span>
+      </div>
+      <div class="collapsible-body" id="ms-sysprompt-body">
+        <textarea id="ms-ctx-sysprompt" class="ctx-sysprompt-textarea" rows="3" placeholder="이 마일스톤 내 AI 동작의 맥락 (선택)"></textarea>
+      </div>
+    </div>
     <div id="idea-grid" style="display:none;"></div>
     <div id="idea-detail" style="display:none;">
       <div id="idea-detail-header">
         <div id="idea-detail-title"></div>
         <div id="idea-detail-desc"></div>
         <div id="idea-detail-meta"></div>
-        <div id="idea-detail-sysprompt-wrap">
-          <label for="idea-detail-sysprompt" id="idea-detail-sysprompt-label">시스템 프롬프트</label>
-          <textarea id="idea-detail-sysprompt" rows="2" placeholder="이 아이디어 내 AI 동작의 맥락 (선택)"></textarea>
-        </div>
-        <div id="idea-detail-files-wrap">
-          <span id="idea-detail-files-label">참고 파일 (MD, 최대 3개)</span>
-          <div id="idea-detail-files-list"></div>
-          <button id="btn-idea-add-file">+ MD 파일 추가</button>
-          <input id="idea-file-input" type="file" accept=".md,text/markdown" multiple style="display:none">
+        <div id="idea-sysprompt-section">
+          <div class="collapsible-header" id="idea-sysprompt-toggle">
+            <span class="collapsible-arrow">▶</span>
+            <span class="collapsible-label">시스템 프롬프트 &amp; 참고 파일</span>
+          </div>
+          <div class="collapsible-body" id="idea-sysprompt-body">
+            <div id="idea-detail-sysprompt-wrap">
+              <textarea id="idea-detail-sysprompt" rows="2" placeholder="이 아이디어 내 AI 동작의 맥락 (선택)"></textarea>
+            </div>
+            <div id="idea-detail-files-wrap">
+              <span id="idea-detail-files-label">참고 파일 (MD, 최대 3개)</span>
+              <div id="idea-detail-files-list"></div>
+              <button id="btn-idea-add-file">+ MD 파일 추가</button>
+              <input id="idea-file-input" type="file" accept=".md,text/markdown" multiple style="display:none">
+            </div>
+          </div>
         </div>
       </div>
       <div id="idea-detail-body">
@@ -1730,6 +1822,8 @@
       document.getElementById('btn-add-proj').style.display = '';
       document.getElementById('ws-grid').style.display = 'none';
       document.getElementById('proj-grid').style.display = '';
+      document.getElementById('ws-sysprompt-block').style.display = '';
+      document.getElementById('ws-ctx-sysprompt').value = ws.systemPrompt || '';
       renderProjects(ws);
     }
 
@@ -1741,6 +1835,7 @@
       document.getElementById('btn-add-proj').style.display = 'none';
       document.getElementById('ws-grid').style.display = '';
       document.getElementById('proj-grid').style.display = 'none';
+      document.getElementById('ws-sysprompt-block').style.display = 'none';
     }
 
     function renderWorkspaces() {
@@ -1855,8 +1950,11 @@
       document.querySelector('.content-header h1').textContent = `${ws.name} - 프로젝트: ${proj.name}`;
       document.getElementById('btn-add-proj').style.display = 'none';
       document.getElementById('proj-grid').style.display = 'none';
+      document.getElementById('ws-sysprompt-block').style.display = 'none';
       document.getElementById('btn-add-milestone').style.display = '';
       document.getElementById('milestone-grid').style.display = '';
+      document.getElementById('proj-sysprompt-block').style.display = '';
+      document.getElementById('proj-ctx-sysprompt').value = proj.systemPrompt || '';
       renderMilestones(ws, proj);
     }
 
@@ -1866,8 +1964,11 @@
       document.querySelector('.content-header h1').textContent = `워크스페이스: ${ws.name}`;
       document.getElementById('btn-add-proj').style.display = '';
       document.getElementById('proj-grid').style.display = '';
+      document.getElementById('proj-sysprompt-block').style.display = 'none';
       document.getElementById('btn-add-milestone').style.display = 'none';
       document.getElementById('milestone-grid').style.display = 'none';
+      document.getElementById('ws-sysprompt-block').style.display = '';
+      document.getElementById('ws-ctx-sysprompt').value = ws.systemPrompt || '';
     }
 
     // ──────────────────────────────────────────
@@ -1881,6 +1982,7 @@
       document.querySelector('.content-header h1').textContent = `${ms.name} — ${idea.title}`;
       document.getElementById('btn-add-idea').style.display = 'none';
       document.getElementById('idea-grid').style.display = 'none';
+      document.getElementById('ms-sysprompt-block').style.display = 'none';
       document.getElementById('idea-detail').style.display = '';
       document.getElementById('content').classList.add('idea-active');
       renderIdeaDetail(ws, proj, ms, idea);
@@ -1901,6 +2003,8 @@
       document.getElementById('btn-add-idea').style.display = '';
       document.getElementById('idea-grid').style.display = '';
       document.getElementById('idea-detail').style.display = 'none';
+      document.getElementById('ms-sysprompt-block').style.display = '';
+      document.getElementById('ms-ctx-sysprompt').value = ms.systemPrompt || '';
       document.getElementById('content').classList.remove('idea-active');
       renderIdeas(ws, proj, ms);
     }
@@ -2244,9 +2348,12 @@
       document.querySelector('.content-header h1').textContent = `${proj.name} - 마일스톤: ${ms.name}`;
       document.getElementById('btn-add-milestone').style.display = 'none';
       document.getElementById('milestone-grid').style.display = 'none';
+      document.getElementById('proj-sysprompt-block').style.display = 'none';
       document.getElementById('btn-add-idea').style.display = '';
       document.getElementById('idea-grid').style.display = '';
       document.getElementById('idea-detail').style.display = 'none';
+      document.getElementById('ms-sysprompt-block').style.display = '';
+      document.getElementById('ms-ctx-sysprompt').value = ms.systemPrompt || '';
       document.getElementById('content').classList.remove('idea-active');
       renderIdeas(ws, proj, ms);
     }
@@ -2259,9 +2366,12 @@
       document.querySelector('.content-header h1').textContent = `${ws.name} - 프로젝트: ${proj.name}`;
       document.getElementById('btn-add-milestone').style.display = '';
       document.getElementById('milestone-grid').style.display = '';
+      document.getElementById('ms-sysprompt-block').style.display = 'none';
       document.getElementById('btn-add-idea').style.display = 'none';
       document.getElementById('idea-grid').style.display = 'none';
       document.getElementById('idea-detail').style.display = 'none';
+      document.getElementById('proj-sysprompt-block').style.display = '';
+      document.getElementById('proj-ctx-sysprompt').value = proj.systemPrompt || '';
       document.getElementById('content').classList.remove('idea-active');
     }
 
@@ -3220,6 +3330,63 @@
         refineBtn.textContent = '수정';
       }
     }
+
+    // ──────────────────────────────────────────
+    // Collapsible 헬퍼
+    // ──────────────────────────────────────────
+    function setupCollapsible(toggleId, bodyId, storageKey) {
+      const toggle = document.getElementById(toggleId);
+      const body = document.getElementById(bodyId);
+      if (localStorage.getItem(storageKey) === 'open') {
+        toggle.classList.add('open');
+        body.classList.add('open');
+      }
+      toggle.addEventListener('click', () => {
+        const isOpen = toggle.classList.toggle('open');
+        body.classList.toggle('open', isOpen);
+        localStorage.setItem(storageKey, isOpen ? 'open' : 'closed');
+      });
+    }
+
+    setupCollapsible('idea-sysprompt-toggle', 'idea-sysprompt-body', 'idea.sysprompt.open');
+    setupCollapsible('ws-sysprompt-toggle',   'ws-sysprompt-body',   'ws.sysprompt.open');
+    setupCollapsible('proj-sysprompt-toggle', 'proj-sysprompt-body', 'proj.sysprompt.open');
+    setupCollapsible('ms-sysprompt-toggle',   'ms-sysprompt-body',   'ms.sysprompt.open');
+
+    // ctx sysprompt textarea 변경 → 저장
+    document.getElementById('ws-ctx-sysprompt').addEventListener('change', function() {
+      const ws = workspaces.find(w => w.id === _selectedWsId);
+      if (ws) { ws.systemPrompt = this.value.trim(); saveWorkspaces(); }
+    });
+    document.getElementById('proj-ctx-sysprompt').addEventListener('change', function() {
+      const ws = workspaces.find(w => w.id === _selectedWsId);
+      const proj = ws?.projects.find(p => p.id === _selectedProjId);
+      if (proj) { proj.systemPrompt = this.value.trim(); saveWorkspaces(); }
+    });
+    document.getElementById('ms-ctx-sysprompt').addEventListener('change', function() {
+      const ws = workspaces.find(w => w.id === _selectedWsId);
+      const proj = ws?.projects.find(p => p.id === _selectedProjId);
+      const ms = proj?.milestones.find(m => m.id === _selectedMilestoneId);
+      if (ms) { ms.systemPrompt = this.value.trim(); saveWorkspaces(); }
+    });
+
+    document.getElementById('shutdown-btn').addEventListener('click', async () => {
+      if (!confirm('서버를 종료할까요?')) return;
+      await fetch('/api/shutdown', { method: 'POST' }).catch(() => {});
+      let count = 3;
+      document.body.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+          height:100vh;font-family:sans-serif;color:#888;gap:10px;">
+          <div style="font-size:15px;">서버가 종료되었습니다.</div>
+          <div style="font-size:13px;"><span id="shutdown-count">3</span>초 뒤에 닫힙니다.</div>
+        </div>`;
+      const countEl = document.getElementById('shutdown-count');
+      const timer = setInterval(() => {
+        count--;
+        if (countEl) countEl.textContent = count;
+        if (count <= 0) { clearInterval(timer); window.close(); }
+      }, 1000);
+    });
 
     document.getElementById('task-chat-close').addEventListener('click', closeTaskChat);
     document.getElementById('task-chat-send').addEventListener('click', sendChatMessage);

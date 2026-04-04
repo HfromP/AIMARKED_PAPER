@@ -3,6 +3,8 @@ import json
 import os
 import re
 import subprocess
+import threading
+import webbrowser
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 
@@ -10,6 +12,7 @@ PORT = 5500
 BASE_DIR = Path(__file__).parent          # apps/
 DATA_FILE = BASE_DIR / 'data.json'
 CLAUDE_BIN = Path.home() / '.local' / 'bin' / 'claude'
+_server_instance = None
 
 
 def read_data():
@@ -135,9 +138,16 @@ class Handler(SimpleHTTPRequestHandler):
         if self.path == '/api/refine-prompt':
             self._handle_refine_prompt()
             return
+        if self.path == '/api/shutdown':
+            self._handle_shutdown()
+            return
         self._send_json(404, {'error': 'Not found'})
 
     # ── 핸들러 구현 ────────────────────────────────────────
+
+    def _handle_shutdown(self):
+        self._send_json(200, {'ok': True})
+        threading.Thread(target=_server_instance.shutdown, daemon=True).start()
 
     def _handle_browse_folder(self):
         try:
@@ -452,11 +462,32 @@ class Handler(SimpleHTTPRequestHandler):
             self._send_json(500, {'error': str(e)})
 
 
+def _close_terminal():
+    script = '''
+tell application "System Events"
+    set termApps to {"Terminal", "iTerm2", "Warp"}
+    repeat with appName in termApps
+        if exists (process appName) then
+            tell application appName
+                try
+                    close front window
+                end try
+            end tell
+        end if
+    end repeat
+end tell'''
+    subprocess.Popen(['osascript', '-e', script])
+
+
 if __name__ == '__main__':
     os.chdir(BASE_DIR)
-    server = HTTPServer(('', PORT), Handler)
-    print(f'Millestone server running at http://localhost:{PORT}/main.html')
+    _server_instance = HTTPServer(('', PORT), Handler)
+    url = f'http://localhost:{PORT}/main.html'
+    print(f'Millestone server running at {url}')
+    webbrowser.open(url)
     try:
-        server.serve_forever()
+        _server_instance.serve_forever()
     except KeyboardInterrupt:
-        print('\nServer stopped.')
+        pass
+    print('Server stopped.')
+    _close_terminal()
