@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Millestone — Setup</title>
+  <style>
+    :root { --fs: 1; }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: #ffffff;
+      color: #000000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.dark {
+      background-color: #121212;
+      color: #ffffff;
+    }
+
+    /* ── nav (main.html과 동일) ─── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 72px;
+      border-bottom: 1px solid #e0e0e0;
+      transition: border-color 0.3s, background-color 0.3s;
+      position: sticky;
+      top: 0;
+      background: inherit;
+      z-index: 100;
+    }
+    body.dark nav { border-bottom-color: #2e2e2e; }
+
+    .nav-left  { display: flex; align-items: center; gap: 0; }
+    .nav-right { display: flex; align-items: center; gap: 8px; }
+
+    .nav-icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #555;
+      transition: background-color 0.2s, color 0.2s;
+    }
+    .nav-icon-btn:hover { background-color: rgba(0,0,0,.07); }
+    body.dark .nav-icon-btn { color: #aaa; }
+    body.dark .nav-icon-btn:hover { background-color: rgba(255,255,255,.1); }
+    .nav-icon-btn svg { width: 22px; height: 22px; }
+
+    /* 온보딩 아이콘 (현재 페이지 — 파란색) */
+    .nav-icon-btn.current { color: #0071e3; }
+    body.dark .nav-icon-btn.current { color: #4ca3ff; }
+
+    /* 종료 버튼 */
+    #shutdown-btn { color: #e0453a; }
+    #shutdown-btn:hover { background-color: rgba(224,69,58,.1) !important; color: #c0392b; }
+    body.dark #shutdown-btn { color: #eb5757; }
+    body.dark #shutdown-btn:hover { background-color: rgba(235,87,87,.12) !important; color: #ff6b6b; }
+
+    /* ── 툴팁 (main.html과 동일) ─── */
+    [data-tooltip] { position: relative; }
+    [data-tooltip]::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a1a1a;
+      color: #fff;
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 400;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+      z-index: 200;
+    }
+    [data-tooltip]:hover::after { opacity: 1; }
+    body.dark [data-tooltip]::after { background: #e0e0e0; color: #111; }
+
+    /* ── 언어 선택 (nav-right 안에 들어감) ─── */
+    .lang-select {
+      display: flex;
+      gap: 2px;
+      background: rgba(0,0,0,.04);
+      border-radius: 8px;
+      padding: 3px;
+    }
+    body.dark .lang-select { background: rgba(255,255,255,.07); }
+    .lang-btn {
+      background: none;
+      border: none;
+      border-radius: 6px;
+      padding: 3px 9px;
+      font-size: 12px;
+      cursor: pointer;
+      color: #888;
+      transition: all .15s;
+      font-family: inherit;
+    }
+    .lang-btn.active {
+      background: #ffffff;
+      color: #000;
+      box-shadow: 0 1px 3px rgba(0,0,0,.12);
+    }
+    body.dark .lang-btn { color: #666; }
+    body.dark .lang-btn.active { background: #2a2a2a; color: #eee; box-shadow: none; }
+
+    /* ── 메인 컨텐츠 ─── */
+    main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 20px 80px;
+      gap: 24px;
+      height: calc(100vh - 72px);
+      overflow-y: auto;
+    }
+
+    /* settings.html과 동일한 섹션 스타일 */
+    .settings-section {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .settings-section h2 {
+      font-size: calc(13px * var(--fs, 1));
+      font-weight: 600;
+      color: #888;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    /* 스텝 카드 */
+    .step-card {
+      width: 100%;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    body.dark .step-card { border-color: #2e2e2e; }
+    .step-card.active { border-color: #0071e3; }
+    body.dark .step-card.active { border-color: #4ca3ff; }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+    }
+
+    .step-num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: #e0e0e0;
+      color: #888;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background .2s, color .2s;
+    }
+    body.dark .step-num { background: #2e2e2e; color: #666; }
+    .step-card.active .step-num { background: #0071e3; color: #fff; }
+    .step-card.done .step-num   { background: #34c759; color: #fff; }
+
+    .step-title {
+      font-size: calc(14px * var(--fs, 1));
+      font-weight: 600;
+    }
+
+    .step-body {
+      padding: 0 20px 20px;
+      display: none;
+    }
+    .step-card.active .step-body { display: block; }
+    /* 완료된 단계는 헤더만 보임 (접힘) */
+
+    /* 설명 텍스트 */
+    .desc {
+      font-size: calc(13px * var(--fs, 1));
+      color: #888;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+    body.dark .desc { color: #666; }
+
+    /* 상태 행 */
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      font-size: calc(13px * var(--fs, 1));
+    }
+
+    /* 버튼 — settings.html의 btn-action과 동일 */
+    .btn-action {
+      padding: 6px 16px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      background: none;
+      cursor: pointer;
+      font-size: calc(13px * var(--fs, 1));
+      color: inherit;
+      transition: background-color 0.15s;
+      font-family: inherit;
+    }
+    .btn-action:hover:not(:disabled) { background-color: rgba(0,0,0,.06); }
+    .btn-action:disabled { opacity: .45; cursor: not-allowed; }
+    body.dark .btn-action { border-color: #444; }
+    body.dark .btn-action:hover:not(:disabled) { background-color: rgba(255,255,255,.08); }
+
+    .btn-action.primary {
+      background: #0071e3;
+      color: #fff;
+      border-color: #0071e3;
+    }
+    .btn-action.primary:hover:not(:disabled) { background: #0077ed; border-color: #0077ed; }
+
+    /* 버튼 행 */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    /* 인라인 스피너 */
+    .spinner {
+      display: inline-block;
+      width: 13px; height: 13px;
+      border: 2px solid rgba(255,255,255,.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 4px;
+    }
+    .spinner.dark-spin {
+      border-color: rgba(0,0,0,.15);
+      border-top-color: #333;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 메시지 박스 */
+    .msg-box {
+      margin-top: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: calc(12px * var(--fs, 1));
+      line-height: 1.5;
+      display: none;
+    }
+    .msg-box.visible { display: block; }
+    .msg-box.success { background: #e6f4ea; color: #2d7a3a; }
+    .msg-box.error   { background: #fce8e6; color: #c5221f; }
+    .msg-box.info    { background: #e8f0fe; color: #1a4f9c; }
+    body.dark .msg-box.success { background: #1e3a26; color: #6fcf97; }
+    body.dark .msg-box.error   { background: #3a1e1e; color: #eb5757; }
+    body.dark .msg-box.info    { background: #1a2540; color: #7eaaff; }
+
+    /* status badge — settings.html과 동일 */
+    .status-badge {
+      font-size: calc(12px * var(--fs, 1));
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    .status-badge.ok   { background: #e6f4ea; color: #2d7a3a; }
+    .status-badge.fail { background: #fce8e6; color: #c5221f; }
+    .status-badge.idle { background: #f1f1f1; color: #888; }
+    body.dark .status-badge.ok   { background: #1e3a26; color: #6fcf97; }
+    body.dark .status-badge.fail { background: #3a1e1e; color: #eb5757; }
+    body.dark .status-badge.idle { background: #2a2a2a; color: #888; }
+
+    /* ── Step2: provider 그리드 ─── */
+    .provider-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      width: 100%;
+      margin-bottom: 14px;
+    }
+    .provider-btn {
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: none;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color .15s, background .15s;
+      font-family: inherit;
+      color: inherit;
+    }
+    .provider-btn:hover { border-color: #0071e3; }
+    .provider-btn.selected { border-color: #0071e3; background: #e8f0fe; }
+    body.dark .provider-btn { border-color: #444; }
+    body.dark .provider-btn:hover { border-color: #4ca3ff; }
+    body.dark .provider-btn.selected { border-color: #4ca3ff; background: #1a2540; }
+    .provider-btn .pname { font-size: calc(13px * var(--fs, 1)); font-weight: 600; }
+    .provider-btn .ptype { font-size: calc(11px * var(--fs, 1)); color: #888; margin-top: 2px; }
+
+    /* API 키 입력 */
+    .api-key-input {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      font-size: calc(13px * var(--fs, 1));
+      background: none;
+      color: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+      font-family: inherit;
+      margin-bottom: 10px;
+    }
+    .api-key-input:focus { border-color: #888; }
+    body.dark .api-key-input { border-color: #444; background: #1e1e1e; }
+    body.dark .api-key-input:focus { border-color: #aaa; }
+
+    .api-key-label {
+      font-size: calc(12px * var(--fs, 1));
+      color: #888;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .pkg-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    /* ── 완료 ─── */
+    .finish-area {
+      text-align: center;
+      padding: 8px 0 4px;
+    }
+    .finish-area .big-check { font-size: 40px; margin-bottom: 10px; }
+    .finish-area p {
+      font-size: calc(13px * var(--fs, 1));
+      color: #888;
+      margin-bottom: 18px;
+      line-height: 1.6;
+    }
+
+    /* 구분선 */
+    .divider {
+      width: 100%;
+      border: none;
+      border-top: 1px solid #e0e0e0;
+      margin: 4px 0;
+    }
+    body.dark .divider { border-top-color: #2e2e2e; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <!-- 왼쪽: 툴 정체성 아이콘 3개 + 온보딩 아이콘 -->
+  <div class="nav-left">
+    <!-- 구름 -->
+    <button class="nav-icon-btn" data-tooltip="Millestone" aria-label="구름">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+      </svg>
+    </button>
+    <!-- 번개 -->
+    <button class="nav-icon-btn" data-tooltip="Millestone" aria-label="번개">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+      </svg>
+    </button>
+    <!-- 전구 -->
+    <button class="nav-icon-btn" data-tooltip="Millestone" aria-label="전구">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="9" y1="18" x2="15" y2="18"/>
+        <line x1="10" y1="22" x2="14" y2="22"/>
+        <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/>
+      </svg>
+    </button>
+    <!-- 깃발 (온보딩 전용 아이콘) -->
+    <button class="nav-icon-btn current" data-tooltip="Setup" aria-label="셋업">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+        <line x1="4" y1="22" x2="4" y2="15"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- 오른쪽: 언어 선택 + 테마 토글 + 종료 -->
+  <div class="nav-right">
+    <!-- 언어 선택 -->
+    <div class="lang-select">
+      <button class="lang-btn" data-lang="ko" onclick="setLang('ko')">한국어</button>
+      <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" data-lang="vi" onclick="setLang('vi')">VI</button>
+    </div>
+
+    <!-- 테마 토글 -->
+    <button class="nav-icon-btn" id="theme-toggle" data-tooltip="테마 전환" aria-label="테마 전환">
+      <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+      <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        style="display:none;">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/>
+        <line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/>
+        <line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+    </button>
+
+    <!-- 종료 -->
+    <button class="nav-icon-btn" id="shutdown-btn" data-tooltip="서버 종료" aria-label="서버 종료">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
+        <line x1="12" y1="2" x2="12" y2="12"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+  <!-- Step 1: Python 환경 -->
+  <div class="settings-section">
+    <h2 id="s1-heading">Python 환경</h2>
+    <div class="step-card" id="step1">
+      <div class="step-header">
+        <div class="step-num" id="step1-num">1</div>
+        <div class="step-title" id="s1-title">Python 환경 준비</div>
+      </div>
+      <div class="step-body">
+        <p class="desc" id="s1-desc">앱 실행에 필요한 로컬 Python 환경을 설치합니다. 인터넷 연결이 필요합니다.</p>
+        <div class="status-row">
+          <span id="py-icon">⏳</span>
+          <span id="py-status-text">확인 중...</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn-action primary" id="py-install-btn" onclick="installPython()" disabled>
+            <span id="py-install-label">Python 환경 설치</span>
+          </button>
+          <button class="btn-action" id="step1-next" onclick="goStep(2)" disabled>
+            <span id="s1-next-label">다음</span> →
+          </button>
+        </div>
+        <div class="msg-box" id="py-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Step 2: AI 설정 -->
+  <div class="settings-section">
+    <h2 id="s2-heading">AI 연결</h2>
+    <div class="step-card" id="step2">
+      <div class="step-header">
+        <div class="step-num" id="step2-num">2</div>
+        <div class="step-title" id="s2-title">AI 연결</div>
+      </div>
+      <div class="step-body">
+        <p class="desc" id="s2-desc">사용할 AI를 선택하고 연결합니다. 하나라도 연결하면 됩니다.</p>
+
+        <div class="provider-grid">
+          <button class="provider-btn" data-provider="claude_api" onclick="selectProvider('claude_api')">
+            <div class="pname">Claude API</div>
+            <div class="ptype" id="ptype-ca">API 키 필요</div>
+          </button>
+          <button class="provider-btn" data-provider="openai" onclick="selectProvider('openai')">
+            <div class="pname">OpenAI</div>
+            <div class="ptype" id="ptype-oa">API 키 필요</div>
+          </button>
+          <button class="provider-btn" data-provider="gemini" onclick="selectProvider('gemini')">
+            <div class="pname">Gemini API</div>
+            <div class="ptype" id="ptype-ga">API 키 필요</div>
+          </button>
+          <button class="provider-btn" data-provider="claude_cli" onclick="selectProvider('claude_cli')">
+            <div class="pname">Claude CLI</div>
+            <div class="ptype" id="ptype-cc">CLI 설치 필요</div>
+          </button>
+          <button class="provider-btn" data-provider="gemini_cli" onclick="selectProvider('gemini_cli')">
+            <div class="pname">Gemini CLI</div>
+            <div class="ptype" id="ptype-gc">CLI 설치 필요</div>
+          </button>
+        </div>
+
+        <!-- API 타입 UI -->
+        <div id="api-setup" style="display:none;">
+          <div class="pkg-row">
+            <button class="btn-action" id="pkg-install-btn" onclick="installPackage()">
+              <span id="pkg-install-label">패키지 설치</span>
+            </button>
+            <span class="status-badge idle" id="pkg-badge">미확인</span>
+          </div>
+          <label class="api-key-label" id="api-key-label">API 키</label>
+          <input type="password" class="api-key-input" id="api-key-input" placeholder="sk-..." oninput="checkSaveReady()">
+        </div>
+
+        <!-- CLI 타입 UI -->
+        <div id="cli-setup" style="display:none;">
+          <div class="msg-box info visible" id="cli-msg">CLI가 설치되어 있다면 바로 다음으로 진행하세요.</div>
+        </div>
+
+        <div class="btn-row" style="margin-top:14px;">
+          <button class="btn-action primary" id="step2-save" onclick="saveAI()" disabled>
+            <span id="s2-save-label">연결하기</span>
+          </button>
+        </div>
+        <div class="msg-box" id="ai-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Step 3: 완료 -->
+  <div class="settings-section">
+    <h2 id="s3-heading">완료</h2>
+    <div class="step-card" id="step3">
+      <div class="step-header">
+        <div class="step-num" id="step3-num">3</div>
+        <div class="step-title" id="s3-title">준비 완료</div>
+      </div>
+      <div class="step-body">
+        <div class="finish-area">
+          <div class="big-check">🎉</div>
+          <p id="s3-desc">모든 설정이 완료되었습니다. 이제 Millestone을 사용할 수 있습니다.</p>
+          <button class="btn-action primary" onclick="goMain()">
+            <span id="s3-go-label">메인으로 이동</span> →
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── 번역 ──────────────────────────────────────────────────────────
+const T = {
+  ko: {
+    'theme.tooltip':     '테마 전환',
+    'shutdown.tooltip':  '서버 종료',
+    's1-heading': 'Python 환경',
+    's1-title':   'Python 환경 준비',
+    's1-desc':    '앱 실행에 필요한 로컬 Python 환경을 설치합니다. 인터넷 연결이 필요합니다.',
+    's1-next':    '다음',
+    'py.checking':   '확인 중...',
+    'py.ready':      '로컬 Python 환경이 준비되었습니다.',
+    'py.needed':     '로컬 Python 환경이 없습니다. 설치를 눌러주세요.',
+    'py.installing': 'Python 설치 중...',
+    'py.install':    'Python 환경 설치',
+    'py.done':       'Python 환경 설치 완료!',
+    'py.fail':       '설치에 실패했습니다.',
+    's2-heading': 'AI 연결',
+    's2-title':   'AI 연결',
+    's2-desc':    '사용할 AI를 선택하고 연결합니다. 하나라도 연결하면 됩니다.',
+    'ptype.api':  'API 키 필요',
+    'ptype.cli':  'CLI 설치 필요',
+    'pkg.install': '패키지 설치',
+    'pkg.idle':    '미확인',
+    'pkg.done':    '설치 완료',
+    'pkg.fail':    '설치 실패',
+    'api-key-label': 'API 키',
+    'cli.msg':    'CLI가 설치되어 있다면 바로 다음으로 진행하세요.',
+    's2-save':    '연결하기',
+    's3-heading': '완료',
+    's3-title':   '준비 완료',
+    's3-desc':    '모든 설정이 완료되었습니다. 이제 Millestone을 사용할 수 있습니다.',
+    's3-go':      '메인으로 이동',
+    'done':       '완료',
+  },
+  en: {
+    'theme.tooltip':    'Toggle theme',
+    'shutdown.tooltip': 'Shut down server',
+    's1-heading': 'Python Environment',
+    's1-title':   'Prepare Python Environment',
+    's1-desc':    'Installs a local Python environment required to run the app. Internet connection needed.',
+    's1-next':    'Next',
+    'py.checking':   'Checking...',
+    'py.ready':      'Local Python environment is ready.',
+    'py.needed':     'No local Python environment found. Please install it.',
+    'py.installing': 'Installing Python...',
+    'py.install':    'Install Python Environment',
+    'py.done':       'Python environment installed!',
+    'py.fail':       'Installation failed.',
+    's2-heading': 'Connect AI',
+    's2-title':   'Connect AI',
+    's2-desc':    'Choose an AI provider and connect it. You only need one.',
+    'ptype.api':  'API key required',
+    'ptype.cli':  'CLI required',
+    'pkg.install': 'Install Package',
+    'pkg.idle':    'Not checked',
+    'pkg.done':    'Installed',
+    'pkg.fail':    'Failed',
+    'api-key-label': 'API Key',
+    'cli.msg':    'If the CLI is already installed, proceed to the next step.',
+    's2-save':    'Connect',
+    's3-heading': 'Done',
+    's3-title':   'All Set!',
+    's3-desc':    'Setup is complete. You can now start using Millestone.',
+    's3-go':      'Go to Main',
+    'done':       'Done',
+  },
+  vi: {
+    'theme.tooltip':    'Đổi giao diện',
+    'shutdown.tooltip': 'Tắt máy chủ',
+    's1-heading': 'Môi trường Python',
+    's1-title':   'Chuẩn bị môi trường Python',
+    's1-desc':    'Cài đặt môi trường Python cục bộ cần thiết để chạy ứng dụng. Cần kết nối Internet.',
+    's1-next':    'Tiếp theo',
+    'py.checking':   'Đang kiểm tra...',
+    'py.ready':      'Môi trường Python cục bộ đã sẵn sàng.',
+    'py.needed':     'Chưa có môi trường Python cục bộ. Vui lòng cài đặt.',
+    'py.installing': 'Đang cài đặt Python...',
+    'py.install':    'Cài đặt môi trường Python',
+    'py.done':       'Đã cài đặt môi trường Python!',
+    'py.fail':       'Cài đặt thất bại.',
+    's2-heading': 'Kết nối AI',
+    's2-title':   'Kết nối AI',
+    's2-desc':    'Chọn nhà cung cấp AI và kết nối. Chỉ cần một cái là đủ.',
+    'ptype.api':  'Cần API key',
+    'ptype.cli':  'Cần CLI',
+    'pkg.install': 'Cài gói',
+    'pkg.idle':    'Chưa kiểm tra',
+    'pkg.done':    'Đã cài',
+    'pkg.fail':    'Thất bại',
+    'api-key-label': 'API Key',
+    'cli.msg':    'Nếu CLI đã được cài đặt, hãy tiến hành bước tiếp theo.',
+    's2-save':    'Kết nối',
+    's3-heading': 'Hoàn tất',
+    's3-title':   'Hoàn tất!',
+    's3-desc':    'Thiết lập hoàn tất. Bây giờ bạn có thể sử dụng Millestone.',
+    's3-go':      'Đến trang chính',
+    'done':       'Hoàn tất',
+  },
+};
+
+let currentLang = 'ko';
+
+function t(key) { return (T[currentLang] || T.ko)[key] || key; }
+
+function applyLang() {
+  document.querySelectorAll('.lang-btn').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.lang === currentLang)
+  );
+  document.documentElement.lang = currentLang;
+
+  // 번역 적용
+  document.getElementById('s1-heading').textContent   = t('s1-heading');
+  document.getElementById('s1-title').textContent     = t('s1-title');
+  document.getElementById('s1-desc').textContent      = t('s1-desc');
+  document.getElementById('s1-next-label').textContent = t('s1-next');
+  document.getElementById('s2-heading').textContent   = t('s2-heading');
+  document.getElementById('s2-title').textContent     = t('s2-title');
+  document.getElementById('s2-desc').textContent      = t('s2-desc');
+  document.getElementById('ptype-ca').textContent     = t('ptype.api');
+  document.getElementById('ptype-oa').textContent     = t('ptype.api');
+  document.getElementById('ptype-ga').textContent     = t('ptype.api');
+  document.getElementById('ptype-cc').textContent     = t('ptype.cli');
+  document.getElementById('ptype-gc').textContent     = t('ptype.cli');
+  document.getElementById('pkg-install-label').textContent = t('pkg.install');
+  document.getElementById('api-key-label').textContent     = t('api-key-label');
+  document.getElementById('cli-msg').textContent           = t('cli.msg');
+  document.getElementById('s2-save-label').textContent     = t('s2-save');
+  document.getElementById('s3-heading').textContent        = t('s3-heading');
+  document.getElementById('s3-title').textContent          = t('s3-title');
+  document.getElementById('s3-desc').textContent           = t('s3-desc');
+  document.getElementById('s3-go-label').textContent       = t('s3-go');
+  document.getElementById('theme-toggle').dataset.tooltip  = t('theme.tooltip');
+  document.getElementById('shutdown-btn').dataset.tooltip  = t('shutdown.tooltip');
+
+  // Python 상태 텍스트 갱신
+  refreshStatusText();
+}
+
+async function setLang(lang) {
+  currentLang = lang;
+  applyLang();
+  await fetch('/api/settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ language: lang }),
+  }).catch(() => {});
+}
+
+// ── 테마 ───────────────────────────────────────────────────────────
+const STORAGE_KEY = 'settings.theme';
+
+function applyTheme(theme) {
+  const isDark = theme === 'dark';
+  document.body.classList.toggle('dark', isDark);
+  document.getElementById('icon-moon').style.display = isDark ? 'none' : '';
+  document.getElementById('icon-sun').style.display  = isDark ? ''     : 'none';
+}
+
+applyTheme(localStorage.getItem(STORAGE_KEY) || 'light');
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const isDark = document.body.classList.contains('dark');
+  const next = isDark ? 'light' : 'dark';
+  localStorage.setItem(STORAGE_KEY, next);
+  applyTheme(next);
+});
+
+// ── 종료 / Heartbeat ────────────────────────────────────────────────
+document.getElementById('shutdown-btn').addEventListener('click', async () => {
+  if (!confirm('서버를 종료할까요?')) return;
+  const isDark = document.body.classList.contains('dark');
+  const bg = isDark ? '#121212' : '#ffffff';
+  const fg = isDark ? '#555' : '#bbb';
+  document.body.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+      height:100vh;font-family:sans-serif;background:${bg};color:${fg};gap:8px;">
+      <div style="font-size:15px;">서버를 종료하는 중…</div>
+    </div>`;
+  try { await fetch('/api/shutdown', { method: 'POST' }); } catch (_) {}
+  document.body.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+      height:100vh;font-family:sans-serif;background:${bg};color:${fg};gap:8px;">
+      <div style="font-size:15px;">서버가 종료되었습니다.</div>
+    </div>`;
+  setTimeout(() => window.close(), 500);
+});
+
+setInterval(() => {
+  fetch('/api/heartbeat', { method: 'POST' }).catch(() => {});
+}, 3000);
+
+// ── 스텝 관리 ───────────────────────────────────────────────────────
+let currentStep = 1;
+
+function goStep(n) {
+  currentStep = n;
+  [1, 2, 3].forEach(i => {
+    const card  = document.getElementById('step' + i);
+    const num   = document.getElementById('step' + i + '-num');
+    const title = document.getElementById('s' + i + '-title');
+    card.classList.remove('active', 'done');
+    if (i < n) {
+      card.classList.add('done');
+      num.textContent = '✓';
+      // 완료된 단계 헤더 오른쪽에 완료 표시 추가
+      if (!card.querySelector('.done-label')) {
+        const label = document.createElement('span');
+        label.className = 'done-label';
+        label.style.cssText = 'margin-left:auto; font-size:12px; color:#34c759; font-weight:500;';
+        label.textContent = t('done');
+        card.querySelector('.step-header').appendChild(label);
+      }
+    } else if (i === n) {
+      card.classList.add('active');
+      num.textContent = i;
+    } else {
+      num.textContent = i;
+    }
+  });
+}
+
+// ── Step 1: Python ──────────────────────────────────────────────────
+let pyReady = false;
+let _pyStatusState = 'checking'; // 'checking' | 'ready' | 'needed' | 'installing'
+
+function refreshStatusText() {
+  const text = document.getElementById('py-status-text');
+  const map = { checking: 'py.checking', ready: 'py.ready', needed: 'py.needed', installing: 'py.installing' };
+  if (text && map[_pyStatusState]) text.textContent = t(map[_pyStatusState]);
+}
+
+async function checkPythonStatus() {
+  try {
+    const res = await fetch('/api/system-status');
+    const data = await res.json();
+
+    if (data.python_installed) {
+      pyReady = true;
+      _pyStatusState = 'ready';
+      document.getElementById('py-icon').textContent = '✅';
+      refreshStatusText();
+      document.getElementById('py-install-btn').style.display = 'none';
+      document.getElementById('step1-next').disabled = false;
+    } else {
+      _pyStatusState = 'needed';
+      document.getElementById('py-icon').textContent = '⚠️';
+      refreshStatusText();
+      document.getElementById('py-install-btn').disabled = false;
+    }
+
+    // ai_connected여도 온보딩 플로우는 끝까지 진행 (자동 skip 없음)
+  } catch {
+    _pyStatusState = 'needed';
+    document.getElementById('py-status-text').textContent = '서버 연결 오류';
+  }
+}
+
+async function installPython() {
+  const btn = document.getElementById('py-install-btn');
+  const msg = document.getElementById('py-msg');
+
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> <span id="py-install-label">${t('py.installing')}</span>`;
+  _pyStatusState = 'installing';
+  document.getElementById('py-icon').textContent = '⏳';
+  refreshStatusText();
+  msg.className = 'msg-box';
+
+  try {
+    const res = await fetch('/api/install-python', { method: 'POST' });
+    const data = await res.json();
+
+    if (data.success) {
+      pyReady = true;
+      _pyStatusState = 'ready';
+      document.getElementById('py-icon').textContent = '✅';
+      refreshStatusText();
+      btn.style.display = 'none';
+      document.getElementById('step1-next').disabled = false;
+      msg.className = 'msg-box success visible';
+      msg.textContent = t('py.done');
+    } else {
+      _pyStatusState = 'needed';
+      document.getElementById('py-icon').textContent = '❌';
+      refreshStatusText();
+      btn.innerHTML = `<span id="py-install-label">${t('py.install')}</span>`;
+      btn.disabled = false;
+      msg.className = 'msg-box error visible';
+      msg.textContent = data.message || data.error || t('py.fail');
+    }
+  } catch {
+    _pyStatusState = 'needed';
+    document.getElementById('py-icon').textContent = '❌';
+    refreshStatusText();
+    btn.innerHTML = `<span id="py-install-label">${t('py.install')}</span>`;
+    btn.disabled = false;
+    msg.className = 'msg-box error visible';
+    msg.textContent = t('py.fail');
+  }
+}
+
+// ── Step 2: AI ──────────────────────────────────────────────────────
+const API_PROVIDERS = ['claude_api', 'openai', 'gemini'];
+const KEY_PLACEHOLDER = { claude_api: 'sk-ant-...', openai: 'sk-...', gemini: 'AIza...' };
+let selectedProvider = null;
+let pkgInstalled = false;
+
+function selectProvider(provider) {
+  selectedProvider = provider;
+  pkgInstalled = false;
+
+  document.querySelectorAll('.provider-btn').forEach(btn =>
+    btn.classList.toggle('selected', btn.dataset.provider === provider)
+  );
+
+  const isApi = API_PROVIDERS.includes(provider);
+  document.getElementById('api-setup').style.display = isApi ? 'block' : 'none';
+  document.getElementById('cli-setup').style.display = isApi ? 'none' : 'block';
+
+  if (isApi) {
+    document.getElementById('pkg-install-btn').style.display = '';
+    document.getElementById('pkg-install-btn').disabled = false;
+    document.getElementById('pkg-install-label').textContent = t('pkg.install');
+    document.getElementById('pkg-badge').className = 'status-badge idle';
+    document.getElementById('pkg-badge').textContent = t('pkg.idle');
+    document.getElementById('api-key-input').value = '';
+    document.getElementById('api-key-input').placeholder = KEY_PLACEHOLDER[provider] || 'API Key';
+    document.getElementById('step2-save').disabled = true;
+  } else {
+    document.getElementById('step2-save').disabled = false;
+  }
+}
+
+async function installPackage() {
+  const btn   = document.getElementById('pkg-install-btn');
+  const badge = document.getElementById('pkg-badge');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner dark-spin"></span><span>${t('pkg.install')}</span>`;
+  badge.className = 'status-badge idle';
+
+  try {
+    const res = await fetch('/api/install-package', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provider: selectedProvider }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      pkgInstalled = true;
+      badge.className = 'status-badge ok';
+      badge.textContent = t('pkg.done');
+      btn.style.display = 'none';
+      checkSaveReady();
+    } else {
+      badge.className = 'status-badge fail';
+      badge.textContent = t('pkg.fail');
+      btn.innerHTML = `<span id="pkg-install-label">${t('pkg.install')}</span>`;
+      btn.disabled = false;
+    }
+  } catch {
+    badge.className = 'status-badge fail';
+    badge.textContent = t('pkg.fail');
+    btn.innerHTML = `<span id="pkg-install-label">${t('pkg.install')}</span>`;
+    btn.disabled = false;
+  }
+}
+
+function checkSaveReady() {
+  const isApi = API_PROVIDERS.includes(selectedProvider);
+  const key = document.getElementById('api-key-input').value.trim();
+  document.getElementById('step2-save').disabled = isApi ? !(pkgInstalled && key.length > 0) : !selectedProvider;
+}
+
+async function saveAI() {
+  const btn = document.getElementById('step2-save');
+  const msg = document.getElementById('ai-msg');
+  btn.disabled = true;
+  msg.className = 'msg-box';
+
+  const isApi = API_PROVIDERS.includes(selectedProvider);
+  const key = isApi ? document.getElementById('api-key-input').value.trim() : '';
+  const payload = { ai_provider: selectedProvider };
+  if (isApi) {
+    const keyMap = { claude_api: 'anthropic', openai: 'openai', gemini: 'gemini' };
+    payload.api_keys = { [keyMap[selectedProvider]]: key };
+  }
+
+  try {
+    const res = await fetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      goStep(3);
+    } else {
+      msg.className = 'msg-box error visible';
+      msg.textContent = '저장에 실패했습니다.';
+      btn.disabled = false;
+    }
+  } catch {
+    msg.className = 'msg-box error visible';
+    msg.textContent = '서버 오류가 발생했습니다.';
+    btn.disabled = false;
+  }
+}
+
+// ── 완료 ────────────────────────────────────────────────────────────
+function goMain() {
+  localStorage.setItem('onboarding.done', '1');
+  window.location.href = 'main.html';
+}
+
+// ── 초기화 ──────────────────────────────────────────────────────────
+(async function init() {
+  try {
+    const res = await fetch('/api/settings');
+    const s = await res.json();
+    if (s.language && T[s.language]) currentLang = s.language;
+  } catch {}
+
+  applyLang();
+  goStep(1);
+  await checkPythonStatus();
+})();
+</script>
+</body>
+</html>

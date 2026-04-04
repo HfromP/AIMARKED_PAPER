@@ -18,7 +18,7 @@ SETTINGS_FILE = BASE_DIR / 'settings.config'
 CLAUDE_BIN = Path.home() / '.local' / 'bin' / 'claude'
 _server_instance = None
 _last_heartbeat = None
-HEARTBEAT_TIMEOUT = 75  # 초: 마지막 heartbeat 후 이 시간이 지나면 종료 (브라우저 백그라운드 throttle ~60s 고려)
+HEARTBEAT_TIMEOUT = 2   # 초: 마지막 heartbeat 후 이 시간이 지나면 종료 확인 시작
 STARTUP_GRACE = 30      # 초: 서버 시작 직후 watchdog 대기 시간
 
 
@@ -203,6 +203,8 @@ class Handler(SimpleHTTPRequestHandler):
             self._handle_get_workspaces()
         elif self.path == '/api/settings':
             self._handle_get_settings()
+        elif self.path == '/api/system-status':
+            self._handle_system_status()
         elif self.path == '/api/claude-check':
             self._handle_claude_check()
         elif self.path == '/api/gemini-check':
@@ -233,6 +235,12 @@ class Handler(SimpleHTTPRequestHandler):
         if m:
             self._handle_task_execute(m.group(1))
             return
+        if self.path == '/api/install-python':
+            self._handle_install_python()
+            return
+        if self.path == '/api/install-package':
+            self._handle_install_package()
+            return
         if self.path == '/api/reveal-folder':
             self._handle_reveal_folder()
             return
@@ -251,6 +259,93 @@ class Handler(SimpleHTTPRequestHandler):
         self._send_json(404, {'error': 'Not found'})
 
     # ── 핸들러 구현 ────────────────────────────────────────
+
+    def _handle_system_status(self):
+        import platform
+        system_config = BASE_DIR / 'system.config'
+        python_installed = False
+        if system_config.exists():
+            for line in system_config.read_text(encoding='utf-8').splitlines():
+                if line.startswith('PYTHON_BIN='):
+                    python_bin = line[len('PYTHON_BIN='):]
+                    python_installed = Path(python_bin).exists()
+                    break
+
+        settings = read_settings()
+        provider = settings.get('ai_provider', '')
+        keys = settings.get('api_keys', {})
+        if provider in ('claude_cli', 'gemini_cli'):
+            ai_connected = True
+        elif provider == 'claude_api' and keys.get('anthropic', '').strip():
+            ai_connected = True
+        elif provider == 'openai' and keys.get('openai', '').strip():
+            ai_connected = True
+        elif provider == 'gemini' and keys.get('gemini', '').strip():
+            ai_connected = True
+        else:
+            ai_connected = False
+
+        self._send_json(200, {
+            'python_installed': python_installed,
+            'ai_connected': ai_connected,
+            'ai_provider': provider,
+            'os': platform.system(),
+        })
+
+    def _handle_install_python(self):
+        import platform
+        try:
+            if platform.system() == 'Windows':
+                script = BASE_DIR / 'Installations' / 'install_python.bat'
+                cmd = [str(script)]
+            else:
+                script = BASE_DIR / 'Installations' / 'install_python.command'
+                cmd = ['bash', str(script)]
+
+            if not script.exists():
+                self._send_json(200, {'success': False, 'message': f'설치 스크립트를 찾을 수 없습니다: {script}'})
+                return
+
+            result = subprocess.run(
+                cmd,
+                stdin=subprocess.DEVNULL,
+                capture_output=True, text=True, timeout=300
+            )
+            if result.returncode == 0:
+                self._send_json(200, {'success': True, 'message': result.stdout.strip()})
+            else:
+                self._send_json(200, {'success': False, 'message': result.stderr.strip() or result.stdout.strip()})
+        except subprocess.TimeoutExpired:
+            self._send_json(200, {'success': False, 'message': '설치 시간이 초과되었습니다 (5분). 네트워크를 확인해주세요.'})
+        except Exception as e:
+            self._send_json(500, {'error': str(e)})
+
+    def _handle_install_package(self):
+        try:
+            body = json.loads(self._read_body())
+            provider = body.get('provider', '')
+            pkg_map = {
+                'anthropic': 'anthropic',
+                'openai': 'openai',
+                'gemini': 'google-generativeai',
+            }
+            pkg = pkg_map.get(provider)
+            if not pkg:
+                self._send_json(400, {'error': '알 수 없는 provider입니다.'})
+                return
+
+            result = subprocess.run(
+                [sys.executable, '-m', 'pip', 'install', pkg],
+                capture_output=True, text=True, timeout=120
+            )
+            if result.returncode == 0:
+                self._send_json(200, {'success': True, 'message': f'{pkg} 설치 완료'})
+            else:
+                self._send_json(200, {'success': False, 'message': result.stderr.strip()})
+        except subprocess.TimeoutExpired:
+            self._send_json(200, {'success': False, 'message': '설치 시간이 초과되었습니다.'})
+        except Exception as e:
+            self._send_json(500, {'error': str(e)})
 
     def _handle_shutdown(self):
         self._send_json(200, {'ok': True})
@@ -586,7 +681,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 def _watchdog():
-    """heartbeat가 HEARTBEAT_TIMEOUT 초 이상 없으면 서버 종료."""
+    """3초 주기로 heartbeat 확인. 1회 미수신 → 1.5s 재확인 → 1s 재확인 → 종료."""
     print(f'[watchdog] 시작 (grace {STARTUP_GRACE}s 대기 중...)')
     time.sleep(STARTUP_GRACE)
     print('[watchdog] 감시 시작')
@@ -597,10 +692,22 @@ def _watchdog():
             continue
         elapsed = time.time() - _last_heartbeat
         print(f'[watchdog] 마지막 heartbeat {elapsed:.1f}s 전')
-        if elapsed > HEARTBEAT_TIMEOUT:
-            print('[watchdog] 페이지 닫힘 감지 → 서버 종료')
-            threading.Thread(target=_server_instance.shutdown, daemon=True).start()
-            return
+        if elapsed <= HEARTBEAT_TIMEOUT:
+            continue
+        # 1차 재확인: 1.5초 대기
+        print('[watchdog] 미수신 감지 (2s) → 1.5s 후 재확인')
+        time.sleep(1.5)
+        if time.time() - _last_heartbeat <= HEARTBEAT_TIMEOUT:
+            continue
+        # 2차 재확인: 1초 대기
+        print('[watchdog] 재확인 실패 → 1s 후 최종 확인')
+        time.sleep(1.0)
+        if time.time() - _last_heartbeat <= HEARTBEAT_TIMEOUT:
+            continue
+        # 최종 종료
+        print('[watchdog] 페이지 닫힘 확정 → 서버 종료')
+        threading.Thread(target=_server_instance.shutdown, daemon=True).start()
+        return
 
 
 def _get_my_tty():

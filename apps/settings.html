@@ -17,6 +17,7 @@
       color: #000000;
       width: 100vw;
       height: 100vh;
+      overflow: hidden;
       transition: background-color 0.3s, color 0.3s;
     }
     body.dark {
@@ -80,6 +81,8 @@
       align-items: center;
       padding: 48px 20px;
       gap: 24px;
+      height: calc(100vh - 72px);
+      overflow-y: auto;
     }
 
     .settings-section {
@@ -172,6 +175,16 @@
       border-color: #eee;
     }
 
+    /* 현재 페이지 아이콘 강조 */
+    .nav-icon-btn.current { color: #f5a623; }
+    body.dark .nav-icon-btn.current { color: #ffc246; }
+
+    /* 종료 버튼 */
+    #shutdown-btn { color: #e0453a; }
+    #shutdown-btn:hover { background-color: rgba(224,69,58,.1) !important; color: #c0392b; }
+    body.dark #shutdown-btn { color: #eb5757; }
+    body.dark #shutdown-btn:hover { background-color: rgba(235,87,87,.12) !important; color: #ff6b6b; }
+
     .btn-danger {
       padding: 6px 16px;
       border-radius: 6px;
@@ -232,6 +245,28 @@
     body.dark .api-key-input { border-color: #444; background: #1e1e1e; }
     body.dark .api-key-input:focus { border-color: #aaa; }
 
+    .pkg-install-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 4px;
+    }
+    .pkg-status-badge {
+      font-size: calc(12px * var(--fs, 1));
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 500;
+      background: #f1f1f1;
+      color: #888;
+    }
+    .pkg-status-badge.ok   { background: #e6f4ea; color: #2d7a3a; }
+    .pkg-status-badge.fail { background: #fce8e6; color: #c5221f; }
+    body.dark .pkg-status-badge       { background: #2a2a2a; color: #888; }
+    body.dark .pkg-status-badge.ok   { background: #1e3a26; color: #6fcf97; }
+    body.dark .pkg-status-badge.fail { background: #3a1e1e; color: #eb5757; }
+
   </style>
 </head>
 <body>
@@ -262,7 +297,7 @@
         </svg>
       </button>
       <!-- 설정 (현재 페이지) -->
-      <button class="nav-icon-btn" title="설정" aria-label="설정">
+      <button class="nav-icon-btn current" title="설정" aria-label="설정">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"/>
@@ -348,6 +383,10 @@
       </div>
       <div id="api-key-row" style="display:none; width:100%; max-width:400px; flex-direction:column; gap:6px;">
         <label id="api-key-label" style="font-size:calc(12px * var(--fs,1)); color:#888; text-align:center;"></label>
+        <div class="pkg-install-row" id="pkg-install-row">
+          <button class="btn-action" id="btn-install-pkg" onclick="installPackage()">패키지 설치</button>
+          <span class="pkg-status-badge" id="pkg-status-badge">미확인</span>
+        </div>
         <input type="password" id="api-key-input" class="api-key-input" placeholder="API 키를 입력하세요">
       </div>
       <div style="width:100%; max-width:400px; display:flex; flex-direction:column; align-items:center; gap:6px;">
@@ -374,6 +413,35 @@
         <span class="status-badge idle" id="gemini-status">미확인</span>
       </div>
       <div id="gemini-version" style="font-size:calc(12px * var(--fs, 1)); color:#888; text-align:center;"></div>
+    </div>
+
+    <div class="settings-section">
+      <h2>온보딩</h2>
+      <div class="settings-row">
+        <span class="settings-label">초기 설정 화면</span>
+        <button class="btn-action" onclick="restartOnboarding()">온보딩 다시 시작</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>언어 / Language</h2>
+      <div class="settings-row">
+        <button class="btn-font-scale" id="lang-ko" onclick="setLanguage('ko')">한국어</button>
+        <button class="btn-font-scale" id="lang-en" onclick="setLanguage('en')">English</button>
+        <button class="btn-font-scale" id="lang-vi" onclick="setLanguage('vi')">Tiếng Việt</button>
+      </div>
+      <span id="lang-save-msg" style="font-size:calc(12px * var(--fs,1)); color:#888; min-height:1em;"></span>
+    </div>
+
+    <div class="settings-section">
+      <h2>Contact</h2>
+      <div class="settings-row">
+        <a href="mailto:katze9027@gmail.com"
+          style="font-size:calc(13px * var(--fs,1)); color:#888; text-decoration:none; transition:color .15s;"
+          onmouseover="this.style.color='inherit'" onmouseout="this.style.color='#888'">
+          ch.from.p@gmail.com
+        </a>
+      </div>
     </div>
   </main>
 
@@ -541,6 +609,14 @@
         keyRow.style.display = 'flex';
         label.textContent = PROVIDER_LABELS[provider];
         input.value = _currentSettings.api_keys[keyName] || '';
+        // 패키지 설치 상태 리셋
+        const pkgBtn = document.getElementById('btn-install-pkg');
+        const pkgBadge = document.getElementById('pkg-status-badge');
+        pkgBtn.style.display = '';
+        pkgBtn.disabled = false;
+        pkgBtn.textContent = '패키지 설치';
+        pkgBadge.className = 'pkg-status-badge';
+        pkgBadge.textContent = '미확인';
       } else {
         keyRow.style.display = 'none';
         input.value = '';
@@ -559,6 +635,38 @@
       } catch {
         // 서버 미연결 상태에서도 UI는 초기값으로 표시
         _updateProviderUI('claude_cli');
+      }
+    }
+
+    async function installPackage() {
+      const btn = document.getElementById('btn-install-pkg');
+      const badge = document.getElementById('pkg-status-badge');
+      btn.disabled = true;
+      btn.textContent = '설치 중…';
+      badge.className = 'pkg-status-badge';
+      badge.textContent = '설치 중…';
+      try {
+        const res = await fetch('/api/install-package', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provider: _selectedProvider }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          badge.className = 'pkg-status-badge ok';
+          badge.textContent = '설치 완료';
+          btn.style.display = 'none';
+        } else {
+          badge.className = 'pkg-status-badge fail';
+          badge.textContent = '설치 실패';
+          btn.textContent = '패키지 설치';
+          btn.disabled = false;
+        }
+      } catch {
+        badge.className = 'pkg-status-badge fail';
+        badge.textContent = '오류';
+        btn.textContent = '패키지 설치';
+        btn.disabled = false;
       }
     }
 
@@ -601,6 +709,43 @@
     });
 
     loadProviderSettings();
+
+    // ── 언어 설정 ──────────────────────────────────────────
+    async function loadLanguageSetting() {
+      try {
+        const res = await fetch('/api/settings');
+        const data = await res.json();
+        const lang = data.language || 'ko';
+        ['ko', 'en', 'vi'].forEach(l =>
+          document.getElementById('lang-' + l).classList.toggle('active', l === lang)
+        );
+      } catch {}
+    }
+
+    async function setLanguage(lang) {
+      ['ko', 'en', 'vi'].forEach(l =>
+        document.getElementById('lang-' + l).classList.toggle('active', l === lang)
+      );
+      const msg = document.getElementById('lang-save-msg');
+      try {
+        await fetch('/api/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ language: lang }),
+        });
+        msg.textContent = '저장됨';
+        setTimeout(() => { msg.textContent = ''; }, 2000);
+      } catch {
+        msg.textContent = '저장 실패';
+      }
+    }
+
+    loadLanguageSetting();
+
+    function restartOnboarding() {
+      localStorage.removeItem('onboarding.done');
+      location.href = 'onboarding.html';
+    }
 
     document.getElementById('shutdown-btn').addEventListener('click', async () => {
       if (!confirm('서버를 종료할까요?')) return;

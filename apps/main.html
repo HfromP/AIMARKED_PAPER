@@ -120,7 +120,7 @@
     /* ── 본문 레이아웃 ── */
     #app-body {
       display: flex;
-      height: calc(100vh - 72px);
+      height: calc(100vh - 72px - var(--nudge-h, 0px));
       overflow: hidden;
     }
 
@@ -1295,6 +1295,37 @@
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
+
+    /* ── 종료 버튼 ─────────────────────────────── */
+    #shutdown-btn { color: #e0453a; }
+    #shutdown-btn:hover { background-color: rgba(224,69,58,.1) !important; color: #c0392b; }
+    body.dark #shutdown-btn { color: #eb5757; }
+    body.dark #shutdown-btn:hover { background-color: rgba(235,87,87,.12) !important; color: #ff6b6b; }
+
+    /* ── AI 넛지 배너 ─────────────────────────── */
+    #ai-nudge-banner {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 8px 20px;
+      background: #fff3cd;
+      color: #856404;
+      font-size: 13px;
+      border-bottom: 1px solid #ffc107;
+    }
+    #ai-nudge-banner.visible { display: flex; }
+    body.dark #ai-nudge-banner {
+      background: #3a2e00;
+      color: #ffd60a;
+      border-bottom-color: #665200;
+    }
+    #ai-nudge-banner a {
+      color: inherit;
+      font-weight: 600;
+      text-decoration: underline;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -1375,6 +1406,12 @@
     </button>
     </div>
   </nav>
+
+  <!-- AI 미연결 넛지 배너 -->
+  <div id="ai-nudge-banner">
+    <span id="ai-nudge-text">AI가 연결되지 않았습니다.</span>
+    <a onclick="location.href='onboarding.html'" id="ai-nudge-link">설정하러 가기 →</a>
+  </div>
 
   <div id="app-body">
   <!-- 트리 패널 -->
@@ -3026,13 +3063,35 @@
     // ── AI 연결 상태 ─────────────────────────────────
     let _aiAvailable = false;
 
+    // ── i18n (넛지 배너용) ───────────────────────────────────
+    const _NUDGE_I18N = {
+      ko: { text: 'AI가 연결되지 않았습니다.', link: '설정하러 가기 →' },
+      en: { text: 'AI is not connected.',      link: 'Set up now →' },
+      vi: { text: 'AI chưa được kết nối.',     link: 'Thiết lập ngay →' },
+    };
+
     async function checkAiAvailability() {
       try {
-        const [claude, gemini] = await Promise.all([
-          fetch('/api/claude-check').then(r => r.json()).catch(() => ({ ok: false })),
-          fetch('/api/gemini-check').then(r => r.json()).catch(() => ({ ok: false }))
-        ]);
-        _aiAvailable = claude.ok || gemini.ok;
+        const res = await fetch('/api/system-status');
+        const data = await res.json();
+        _aiAvailable = data.ai_connected;
+
+        const banner = document.getElementById('ai-nudge-banner');
+        if (!data.ai_connected) {
+          // 언어에 맞는 텍스트 적용
+          const lang = data.language || localStorage.getItem('settings.language') || 'ko';
+          const i18n = _NUDGE_I18N[lang] || _NUDGE_I18N.ko;
+          document.getElementById('ai-nudge-text').textContent = i18n.text;
+          document.getElementById('ai-nudge-link').textContent = i18n.link;
+          banner.classList.add('visible');
+        } else {
+          banner.classList.remove('visible');
+        }
+        // 배너 높이만큼 app-body 줄이기
+        requestAnimationFrame(() => {
+          const h = banner.classList.contains('visible') ? banner.offsetHeight : 0;
+          document.documentElement.style.setProperty('--nudge-h', h + 'px');
+        });
       } catch {
         _aiAvailable = false;
       }
@@ -3420,6 +3479,11 @@
 
     // 초기 로드
     (async () => {
+      // 온보딩 미완료 시 항상 온보딩 먼저
+      if (!localStorage.getItem('onboarding.done')) {
+        window.location.href = 'onboarding.html';
+        return;
+      }
       await Promise.all([loadWorkspaces(), checkAiAvailability()]);
       const _savedOpen = localStorage.getItem('tree.openNodes');
       if (_savedOpen) {

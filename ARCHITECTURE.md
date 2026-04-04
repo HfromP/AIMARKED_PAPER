@@ -17,23 +17,38 @@
 /
 ├── apps/
 │   ├── main.html               # SPA 진입점. 렌더링 전담, fetch로 Python API 호출
+│   │                           #   로드 시 /api/system-status 확인 → ai_connected:false 이면 넛지 배너 표시
+│   ├── onboarding.html         # 온보딩 페이지. Python 설치 → AI 연결 순서 안내
+│   │                           #   언어 선택 (ko/en/vi), Step1: Python 설치, Step2: AI 설정
+│   │                           #   main.html에서 ai_connected:false 시 redirect 진입
 │   ├── settings.html           # 설정 페이지. 좌: 4개 아이콘 / 우: 나가기(X) → main.html
+│   │                           #   AI 프로바이더별 패키지 설치 버튼 포함
 │   ├── server.py               # HTTP 서버: 정적 파일 서빙(port 5500) + REST API + AI 브리지
-│   │                           #   GET  /api/workspaces       → data.json 반환
-│   │                           #   PUT  /api/workspaces       → data.json 저장
-│   │                           #   GET  /api/settings         → settings.config 반환
-│   │                           #   PUT  /api/settings         → settings.config 저장 (부분 병합)
-│   │                           #   POST /api/ideas/{id}/run   → call_ai() → tasks 생성
+│   │                           #   GET  /api/workspaces           → data.json 반환
+│   │                           #   PUT  /api/workspaces           → data.json 저장
+│   │                           #   GET  /api/settings             → settings.config 반환
+│   │                           #   PUT  /api/settings             → settings.config 저장 (부분 병합)
+│   │                           #   GET  /api/system-status        → python_installed, ai_connected, os 반환
+│   │                           #   POST /api/install-python       → install_python 스크립트 실행
+│   │                           #   POST /api/install-package      → pip install (provider별 패키지)
+│   │                           #   POST /api/ideas/{id}/run       → call_ai() → tasks 생성
 │   │                           #   call_ai(): ai_provider에 따라 OpenAI/Anthropic API/Gemini API/Claude CLI/Gemini CLI 분기
 │   ├── data.json               # 데이터 영속 파일 (workspaces 배열)
 │   └── settings.config         # 앱 설정 (JSON): theme, ai_provider, api_keys{openai,anthropic,gemini}
 ├── ARCHITECTURE.md             # (이 파일) 프로젝트 구조 나침반 — AI 전용
 ├── CLAUDE.md                   # Claude Code 행동 규칙 및 제약 조건
 ├── README.md                   # 프로젝트 소개
-├── install_python.command      # Python 로컬 설치 스크립트 (더블클릭 실행)
-│                               #   → local_python/ 에 Python 설치
+├── install_python.command      # [macOS] Python 로컬 설치 스크립트 (더블클릭 실행)
+│                               #   → apps/dependencies/local_python/ 에 Python 설치
 │                               #   → apps/system.config 생성 (Python 경로 기록)
-├── run.command                 # 서버 실행 스크립트 (더블클릭 실행)
+├── run.command                 # [macOS] 서버 실행 스크립트 (더블클릭 실행)
+│                               #   → apps/system.config 읽어 server.py 실행
+├── apps/Installations/
+│   └── install_python.bat      # [Windows] Python 로컬 설치 스크립트 (더블클릭 실행)
+│                               #   → astral-sh/python-build-standalone 다운로드
+│                               #   → apps/dependencies/local_python/ 에 Python 설치
+│                               #   → apps/system.config 생성 (Python 경로 기록)
+├── apps/run.bat                # [Windows] 서버 실행 스크립트 (더블클릭 실행)
 │                               #   → apps/system.config 읽어 server.py 실행
 └── local_python/               # (install_python.command 실행 후 생성) 로컬 Python 런타임
 ```
@@ -56,6 +71,8 @@ python3 apps/server.py
 | `.dark` class | body | 다크모드 상태 클래스 |
 | `#ws-grid` / `#proj-grid` / `#milestone-grid` / `#idea-grid` | main | 계층 탐색 카드 그리드 |
 | `btn-run` | idea 카드 | POST /api/ideas/{id}/run 호출 → Task 자동 생성 |
+| `#ai-nudge-banner` | nav 하단 | AI 미연결 시 넛지 배너 (onboarding.html 링크) |
+| onboarding.html | 별도 페이지 | Step1: Python 설치, Step2: AI 설정, 언어 선택 |
 
 ---
 
