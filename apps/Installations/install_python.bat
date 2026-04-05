@@ -70,9 +70,15 @@ if errorlevel 1 (
 echo.
 
 echo [3/4] 압축 해제 중...
+set "TAR_CMD="
 where tar >nul 2>&1
-if errorlevel 1 (
-    echo [오류] tar^(또는 bsdtar^) 명령을 PATH에서 찾을 수 없습니다.
+if not errorlevel 1 set "TAR_CMD=tar"
+if "!TAR_CMD!"=="" (
+    where bsdtar >nul 2>&1
+    if not errorlevel 1 set "TAR_CMD=bsdtar"
+)
+if "!TAR_CMD!"=="" (
+    echo [오류] tar 명령을 PATH에서 찾을 수 없습니다.
     echo        다음 중 하나를 확인해 주세요:
     echo        - Windows 내장 tar 사용 가능 여부 확인 ^(Windows 10 1903 이상^)
     echo        - Git for Windows 또는 WSL 설치
@@ -82,7 +88,7 @@ if errorlevel 1 (
     exit /b 1
 )
 if not exist "%PYTHON_DIR%" mkdir "%PYTHON_DIR%"
-tar -xzf "!TMPFILE!" -C "%PYTHON_DIR%" --strip-components=1
+"!TAR_CMD!" -xzf "!TMPFILE!" -C "%PYTHON_DIR%" --strip-components=1
 if errorlevel 1 (
     echo [오류] 압축 해제 실패. 다운로드 파일이 손상되었을 수 있습니다.
     del "!TMPFILE!" 2>nul
