@@ -9,9 +9,14 @@ setlocal EnableDelayedExpansion
 set "SCRIPT_DIR=%~dp0"
 if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
 
-pushd "%SCRIPT_DIR%\.."
+pushd "%SCRIPT_DIR%\.." >nul
+if errorlevel 1 (
+    echo [오류] 서버 디렉터리로 이동할 수 없습니다: "%SCRIPT_DIR%\.."
+    pause
+    exit /b 1
+)
 set "SERVER_DIR=%CD%"
-popd
+popd >nul
 set "DEP_DIR=%SERVER_DIR%\dependencies"
 set "PYTHON_DIR=%DEP_DIR%\local_python"
 set "CONFIG_FILE=%SERVER_DIR%\system.config"
@@ -67,8 +72,11 @@ echo.
 echo [3/4] 압축 해제 중...
 where tar >nul 2>&1
 if errorlevel 1 (
-    echo [오류] tar 명령어를 찾을 수 없습니다.
-    echo        Windows 10 버전 1903 이상이 필요합니다.
+    echo [오류] tar^(또는 bsdtar^) 명령을 PATH에서 찾을 수 없습니다.
+    echo        다음 중 하나를 확인해 주세요:
+    echo        - Windows 내장 tar 사용 가능 여부 확인 ^(Windows 10 1903 이상^)
+    echo        - Git for Windows 또는 WSL 설치
+    echo        - tar/bsdtar 별도 설치 후 PATH 등록
     del "!TMPFILE!" 2>nul
     pause
     exit /b 1
