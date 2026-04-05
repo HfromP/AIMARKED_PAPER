@@ -754,7 +754,9 @@
         if (data.ok) {
           _currentSettings.ai_provider = _selectedProvider;
           _currentSettings.api_keys = updatedKeys;
-          if (_selectedProvider === 'ollama_cli') _currentSettings.ollama_model = payload.ollama_model;
+          if (_selectedProvider === 'ollama_cli' && Object.prototype.hasOwnProperty.call(payload, 'ollama_model')) {
+            _currentSettings.ollama_model = payload.ollama_model;
+          }
           msg.textContent = '저장됨';
           setTimeout(() => { msg.textContent = ''; }, 2000);
         } else {
