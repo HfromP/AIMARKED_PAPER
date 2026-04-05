@@ -983,7 +983,8 @@ async function saveAI() {
     payload.api_keys = { [keyMap[selectedProvider]]: key };
   }
   if (selectedProvider === 'ollama_cli') {
-    payload.ollama_model = document.getElementById('ollama-model-input').value.trim() || 'llama3.2';
+    const ollamaModel = document.getElementById('ollama-model-input').value.trim();
+    if (ollamaModel) payload.ollama_model = ollamaModel;
   }
 
   try {

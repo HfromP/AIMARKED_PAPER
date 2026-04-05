@@ -34,7 +34,7 @@
 │   │                           #   POST /api/ideas/{id}/run       → call_ai() → tasks 생성
 │   │                           #   call_ai(): ai_provider에 따라 OpenAI/Anthropic API/Gemini API/Claude CLI/Gemini CLI/Ollama CLI 분기
 │   ├── data.json               # 데이터 영속 파일 (workspaces 배열)
-│   └── settings.config         # 앱 설정 (JSON): theme, ai_provider, api_keys{openai,anthropic,gemini}, ollama_model
+│   └── settings.config         # 앱 설정 (JSON): language, theme, ai_provider, api_keys{openai,anthropic,gemini}, ollama_model
 ├── ARCHITECTURE.md             # (이 파일) 프로젝트 구조 나침반 — AI 전용
 ├── CLAUDE.md                   # Claude Code 행동 규칙 및 제약 조건
 ├── README.md                   # 프로젝트 소개

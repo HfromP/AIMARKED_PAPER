@@ -38,7 +38,9 @@ def read_settings():
     if not SETTINGS_FILE.exists():
         return {'theme': 'light', 'ai_provider': 'claude_cli', 'api_keys': {'openai': '', 'anthropic': '', 'gemini': ''}, 'ollama_model': 'llama3.2'}
     with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
-        return json.load(f)
+        data = json.load(f)
+    data.setdefault('ollama_model', 'llama3.2')
+    return data
 
 
 def write_settings(settings):
