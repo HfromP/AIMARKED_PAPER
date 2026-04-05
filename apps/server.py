@@ -36,9 +36,12 @@ def write_data(data):
 
 def read_settings():
     if not SETTINGS_FILE.exists():
-        return {'theme': 'light', 'ai_provider': 'claude_cli', 'api_keys': {'openai': '', 'anthropic': '', 'gemini': ''}}
+        return {'language': 'ko', 'theme': 'light', 'ai_provider': 'claude_cli', 'api_keys': {'openai': '', 'anthropic': '', 'gemini': ''}, 'ollama_model': 'llama3.2'}
     with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
-        return json.load(f)
+        data = json.load(f)
+    data.setdefault('language', 'ko')
+    data.setdefault('ollama_model', 'llama3.2')
+    return data
 
 
 def write_settings(settings):
@@ -103,6 +106,17 @@ def call_ai(prompt, timeout=120):
         )
         if result.returncode != 0:
             raise RuntimeError(result.stderr.strip() or 'Gemini CLI 오류')
+        return result.stdout.strip()
+
+    elif provider == 'ollama_cli':
+        ollama_model = settings.get('ollama_model', '').strip() or 'llama3.2'
+        result = subprocess.run(
+            ['ollama', 'run', ollama_model],
+            input=prompt,
+            capture_output=True, text=True, timeout=timeout
+        )
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip() or 'Ollama CLI 오류')
         return result.stdout.strip()
 
     else:  # claude_cli (default)
@@ -209,6 +223,8 @@ class Handler(SimpleHTTPRequestHandler):
             self._handle_claude_check()
         elif self.path == '/api/gemini-check':
             self._handle_gemini_check()
+        elif self.path == '/api/ollama-check':
+            self._handle_ollama_check()
         elif self.path == '/api/browse-folder':
             self._handle_browse_folder()
         else:
@@ -274,7 +290,7 @@ class Handler(SimpleHTTPRequestHandler):
         settings = read_settings()
         provider = settings.get('ai_provider', '')
         keys = settings.get('api_keys', {})
-        if provider in ('claude_cli', 'gemini_cli'):
+        if provider in ('claude_cli', 'gemini_cli', 'ollama_cli'):
             ai_connected = True
         elif provider == 'claude_api' and keys.get('anthropic', '').strip():
             ai_connected = True
@@ -389,6 +405,24 @@ class Handler(SimpleHTTPRequestHandler):
                 self._send_json(200, {'ok': False, 'error': result.stderr.strip()})
         except FileNotFoundError:
             self._send_json(200, {'ok': False, 'error': 'Gemini CLI를 찾을 수 없습니다'})
+        except subprocess.TimeoutExpired:
+            self._send_json(200, {'ok': False, 'error': '응답 시간 초과'})
+        except Exception as e:
+            self._send_json(200, {'ok': False, 'error': str(e)})
+
+    def _handle_ollama_check(self):
+        try:
+            result = subprocess.run(
+                ['ollama', '--version'],
+                capture_output=True, text=True, timeout=10
+            )
+            if result.returncode == 0:
+                version = result.stdout.strip() or result.stderr.strip()
+                self._send_json(200, {'ok': True, 'version': version})
+            else:
+                self._send_json(200, {'ok': False, 'error': result.stderr.strip()})
+        except FileNotFoundError:
+            self._send_json(200, {'ok': False, 'error': 'Ollama CLI를 찾을 수 없습니다'})
         except subprocess.TimeoutExpired:
             self._send_json(200, {'ok': False, 'error': '응답 시간 초과'})
         except Exception as e:
