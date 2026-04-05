@@ -6,8 +6,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # install_python.command 위치: apps/Installations/
 # PYTHON_DIR → apps/dependencies/local_python
 # SERVER_DIR → apps/
-PYTHON_DIR="$(cd "$SCRIPT_DIR/../dependencies" && pwd)/local_python"
 SERVER_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+PYTHON_DIR="$SERVER_DIR/dependencies/local_python"
 CONFIG_FILE="$SERVER_DIR/system.config"
 
 echo "=============================="
