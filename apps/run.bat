@@ -61,6 +61,8 @@ if not "%PYTHON_EXIT_CODE%"=="0" (
     echo [Error] Server exited with code %PYTHON_EXIT_CODE%.
     echo        Check the log above.
     pause
+) else (
+    pause
 )
 
 exit /b %PYTHON_EXIT_CODE%

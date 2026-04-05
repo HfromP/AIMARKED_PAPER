@@ -1,5 +1,5 @@
 @echo off
-chcp 65001 >/dev/null
+chcp 65001 >nul
 setlocal EnableDelayedExpansion
 
 :: Path configuration
@@ -9,14 +9,14 @@ setlocal EnableDelayedExpansion
 set "SCRIPT_DIR=%~dp0"
 if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
 
-pushd "%SCRIPT_DIR%\.." >/dev/null
+pushd "%SCRIPT_DIR%\.." >nul
 if errorlevel 1 (
     echo [Error] Cannot navigate to server directory: "%SCRIPT_DIR%\.."
     pause
     exit /b 1
 )
 set "SERVER_DIR=%CD%"
-popd >/dev/null
+popd >nul
 set "DEP_DIR=%SERVER_DIR%\dependencies"
 set "PYTHON_DIR=%DEP_DIR%\local_python"
 set "CONFIG_FILE=%SERVER_DIR%\system.config"
@@ -71,10 +71,10 @@ echo.
 
 echo [3/4] Extracting...
 set "TAR_CMD="
-where tar >/dev/null 2>&1
+where tar >nul 2>&1
 if not errorlevel 1 set "TAR_CMD=tar"
 if "!TAR_CMD!"=="" (
-    where bsdtar >/dev/null 2>&1
+    where bsdtar >nul 2>&1
     if not errorlevel 1 set "TAR_CMD=bsdtar"
 )
 if "!TAR_CMD!"=="" (
@@ -83,7 +83,7 @@ if "!TAR_CMD!"=="" (
     echo        - Check Windows built-in tar availability ^(Windows 10 1903 or later^)
     echo        - Install Git for Windows or WSL
     echo        - Install tar/bsdtar separately and add to PATH
-    del "!TMPFILE!" 2>/dev/null
+    del "!TMPFILE!" 2>nul
     pause
     exit /b 1
 )
@@ -91,11 +91,11 @@ if not exist "%PYTHON_DIR%" mkdir "%PYTHON_DIR%"
 "!TAR_CMD!" -xzf "!TMPFILE!" -C "%PYTHON_DIR%" --strip-components=1
 if errorlevel 1 (
     echo [Error] Extraction failed. The downloaded file may be corrupted.
-    del "!TMPFILE!" 2>/dev/null
+    del "!TMPFILE!" 2>nul
     pause
     exit /b 1
 )
-del "!TMPFILE!" 2>/dev/null
+del "!TMPFILE!" 2>nul
 
 if not exist "%PYTHON_DIR%\python.exe" (
     echo [Error] Python executable not found.

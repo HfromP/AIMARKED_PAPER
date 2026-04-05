@@ -422,6 +422,8 @@ class Handler(SimpleHTTPRequestHandler):
                 path = result.stdout.strip()
                 if path:
                     self._send_json(200, {'ok': True, 'path': path})
+                elif result.returncode != 0:
+                    self._send_json(500, {'error': f'PowerShell error (code {result.returncode}): {result.stderr.strip()}'})
                 else:
                     self._send_json(200, {'ok': False, 'cancelled': True})
 
@@ -704,9 +706,17 @@ class Handler(SimpleHTTPRequestHandler):
             if system == 'Windows':
                 os.startfile(folder_path)
             elif system == 'Darwin':
-                subprocess.run(['open', folder_path], timeout=5, check=True)
+                try:
+                    subprocess.run(['open', folder_path], timeout=5, check=True)
+                except FileNotFoundError:
+                    self._send_json(500, {'error': "'open' command not found on PATH"})
+                    return
             else:
-                subprocess.run(['xdg-open', folder_path], timeout=5, check=True)
+                try:
+                    subprocess.run(['xdg-open', folder_path], timeout=5, check=True)
+                except FileNotFoundError:
+                    self._send_json(500, {'error': "'xdg-open' command not found on PATH"})
+                    return
 
             self._send_json(200, {'ok': True})
         except FileNotFoundError:
@@ -803,7 +813,7 @@ def _watchdog():
         if elapsed <= HEARTBEAT_TIMEOUT:
             continue
         # 1차 재확인: 1.5초 대기
-        print('[watchdog] 미수신 감지 (2s) → 1.5s 후 재확인')
+        print(f'[watchdog] 미수신 감지 ({HEARTBEAT_TIMEOUT}s) → 1.5s 후 재확인')
         time.sleep(1.5)
         if time.time() - _last_heartbeat <= HEARTBEAT_TIMEOUT:
             continue
@@ -876,24 +886,11 @@ end try
 
 
 def _close_browser_tab():
-    """브라우저에서 localhost:PORT 탭을 닫는다. (Chrome / Edge / Safari / Arc 지원)"""
+    """브라우저에서 localhost:PORT 탭을 닫는다. (macOS의 Chrome / Safari / Arc 지원)"""
     if platform.system() == 'Windows':
-        # PowerShell: Chrome, Edge의 localhost 탭 닫기
-        ps_script = f"""
-$port = {PORT}
-$url  = "localhost:$port"
-foreach ($proc in Get-Process | Where-Object {{ $_.MainWindowTitle -match $url }}) {{
-    $proc.CloseMainWindow() | Out-Null
-}}
-"""
-        try:
-            subprocess.Popen(
-                ['powershell', '-NoProfile', '-NonInteractive',
-                 '-WindowStyle', 'Hidden', '-Command', ps_script],
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-            )
-        except Exception:
-            pass
+        # Windows에서는 메인 윈도우 제목 매칭으로 CloseMainWindow()를 호출하면
+        # 해당 탭이 아닌 전체 브라우저 창(다른 탭 포함)을 닫을 수 있으므로
+        # 자동 종료를 시도하지 않는다.
         return
 
     # macOS — 기존 osascript 코드
