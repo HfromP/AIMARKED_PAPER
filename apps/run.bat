@@ -1,5 +1,5 @@
 @echo off
-chcp 65001 >/dev/null
+chcp 65001 >nul
 setlocal EnableDelayedExpansion
 
 set "SCRIPT_DIR=%~dp0"
