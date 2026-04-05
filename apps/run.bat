@@ -54,3 +54,8 @@ echo ==============================
 echo.
 
 "!PYTHON_BIN!" "%SERVER_PY%"
+if errorlevel 1 (
+    echo.
+    echo [오류] 서버 실행 중 문제가 발생했습니다. 위 메시지를 확인하세요.
+)
+pause
