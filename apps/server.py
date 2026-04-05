@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import json
 import os
+import platform
 import re
+import shutil
 import signal
 import subprocess
 import sys
@@ -15,10 +17,36 @@ PORT = 5500
 BASE_DIR = Path(__file__).parent          # apps/
 DATA_FILE = BASE_DIR / 'data.json'
 SETTINGS_FILE = BASE_DIR / 'settings.config'
-CLAUDE_BIN = Path.home() / '.local' / 'bin' / 'claude'
+
+
+def _find_claude_bin() -> Path:
+    """OS에 무관하게 claude CLI 실행 파일 경로를 탐색한다."""
+    # 1순위: PATH 전체 탐색 (가장 범용적)
+    found = shutil.which('claude')
+    if found:
+        return Path(found)
+    # 2순위: macOS 기본 설치 경로
+    if platform.system() == 'Darwin':
+        p = Path.home() / '.local' / 'bin' / 'claude'
+        if p.exists():
+            return p
+    # 3순위: Windows — npm global 설치 경로 (claude CLI가 npm 패키지인 경우)
+    if platform.system() == 'Windows':
+        appdata = os.environ.get('APPDATA', '')
+        for candidate in [
+            Path(appdata) / 'npm' / 'claude.cmd',
+            Path(appdata) / 'npm' / 'claude',
+        ]:
+            if candidate.exists():
+                return candidate
+    # fallback: PATH에 의존
+    return Path('claude')
+
+
+CLAUDE_BIN = _find_claude_bin()
 _server_instance = None
 _last_heartbeat = None
-HEARTBEAT_TIMEOUT = 2   # 초: 마지막 heartbeat 후 이 시간이 지나면 종료 확인 시작
+HEARTBEAT_TIMEOUT = 8   # 초: 마지막 heartbeat 후 이 시간이 지나면 종료 확인 시작 (프론트 간격 3s × 2 + 여유 2s)
 STARTUP_GRACE = 30      # 초: 서버 시작 직후 watchdog 대기 시간
 
 
@@ -377,16 +405,49 @@ class Handler(SimpleHTTPRequestHandler):
 
     def _handle_browse_folder(self):
         try:
-            result = subprocess.run(
-                ['osascript', '-e', 'POSIX path of (choose folder)'],
-                capture_output=True, text=True, timeout=60
-            )
-            if result.returncode == 0:
+            system = platform.system()
+
+            if system == 'Windows':
+                # PowerShell FolderBrowserDialog 사용
+                ps_script = (
+                    "Add-Type -AssemblyName System.Windows.Forms;"
+                    "$d = New-Object System.Windows.Forms.FolderBrowserDialog;"
+                    "$d.ShowNewFolderButton = $true;"
+                    "if ($d.ShowDialog() -eq 'OK') { Write-Output $d.SelectedPath }"
+                )
+                result = subprocess.run(
+                    ['powershell', '-NoProfile', '-NonInteractive', '-Command', ps_script],
+                    capture_output=True, text=True, timeout=60
+                )
                 path = result.stdout.strip()
-                self._send_json(200, {'ok': True, 'path': path})
+                if path:
+                    self._send_json(200, {'ok': True, 'path': path})
+                else:
+                    self._send_json(200, {'ok': False, 'cancelled': True})
+
+            elif system == 'Darwin':
+                # 기존 macOS 코드
+                result = subprocess.run(
+                    ['osascript', '-e', 'POSIX path of (choose folder)'],
+                    capture_output=True, text=True, timeout=60
+                )
+                if result.returncode == 0:
+                    path = result.stdout.strip()
+                    self._send_json(200, {'ok': True, 'path': path})
+                else:
+                    self._send_json(200, {'ok': False, 'cancelled': True})
+
             else:
-                # 취소한 경우 returncode != 0
-                self._send_json(200, {'ok': False, 'cancelled': True})
+                # Linux — zenity 사용 (설치 필요)
+                result = subprocess.run(
+                    ['zenity', '--file-selection', '--directory'],
+                    capture_output=True, text=True, timeout=60
+                )
+                if result.returncode == 0:
+                    self._send_json(200, {'ok': True, 'path': result.stdout.strip()})
+                else:
+                    self._send_json(200, {'ok': False, 'cancelled': True})
+
         except subprocess.TimeoutExpired:
             self._send_json(200, {'ok': False, 'error': '응답 시간 초과'})
         except Exception as e:
@@ -635,8 +696,21 @@ class Handler(SimpleHTTPRequestHandler):
         try:
             body = json.loads(self._read_body())
             folder_path = body.get('path', '')
-            subprocess.run(['open', folder_path], timeout=5)
+            if not folder_path:
+                self._send_json(400, {'error': '경로가 없습니다.'})
+                return
+
+            system = platform.system()
+            if system == 'Windows':
+                os.startfile(folder_path)
+            elif system == 'Darwin':
+                subprocess.run(['open', folder_path], timeout=5, check=True)
+            else:
+                subprocess.run(['xdg-open', folder_path], timeout=5, check=True)
+
             self._send_json(200, {'ok': True})
+        except FileNotFoundError:
+            self._send_json(500, {'error': f'경로를 찾을 수 없습니다: {folder_path}'})
         except Exception as e:
             self._send_json(500, {'error': str(e)})
 
@@ -745,6 +819,8 @@ def _watchdog():
 
 
 def _get_my_tty():
+    if platform.system() == 'Windows':
+        return None  # Windows는 TTY 개념 없음, _close_terminal에서 WM_CLOSE 사용
     try:
         return os.ttyname(0)
     except Exception:
@@ -752,6 +828,19 @@ def _get_my_tty():
 
 
 def _close_terminal(tty):
+    """현재 터미널(Terminal / iTerm2 / cmd.exe) 창을 닫는다."""
+    if platform.system() == 'Windows':
+        try:
+            import ctypes
+            hwnd = ctypes.windll.kernel32.GetConsoleWindow()
+            if hwnd:
+                # WM_CLOSE(0x0010)를 현재 콘솔 창에 전송
+                ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0)
+        except Exception:
+            pass
+        return
+
+    # macOS — 기존 코드
     if not tty:
         return
     script = f'''
@@ -787,7 +876,27 @@ end try
 
 
 def _close_browser_tab():
-    """AppleScript으로 localhost:PORT 탭을 닫음 (Chrome / Safari / Arc 지원)."""
+    """브라우저에서 localhost:PORT 탭을 닫는다. (Chrome / Edge / Safari / Arc 지원)"""
+    if platform.system() == 'Windows':
+        # PowerShell: Chrome, Edge의 localhost 탭 닫기
+        ps_script = f"""
+$port = {PORT}
+$url  = "localhost:$port"
+foreach ($proc in Get-Process | Where-Object {{ $_.MainWindowTitle -match $url }}) {{
+    $proc.CloseMainWindow() | Out-Null
+}}
+"""
+        try:
+            subprocess.Popen(
+                ['powershell', '-NoProfile', '-NonInteractive',
+                 '-WindowStyle', 'Hidden', '-Command', ps_script],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+        except Exception:
+            pass
+        return
+
+    # macOS — 기존 osascript 코드
     script = f'''
 set theURL to "http://localhost:{PORT}/"
 try

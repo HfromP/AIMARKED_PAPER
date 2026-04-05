@@ -55,9 +55,12 @@ echo.
 
 "!PYTHON_BIN!" "%SERVER_PY%"
 set "PYTHON_EXIT_CODE=%ERRORLEVEL%"
+
 if not "%PYTHON_EXIT_CODE%"=="0" (
     echo.
-    echo [Error] Server error occurred. Check the message above.
+    echo [Error] Server exited with code %PYTHON_EXIT_CODE%.
+    echo        Check the log above.
+    pause
 )
-pause
+
 exit /b %PYTHON_EXIT_CODE%
