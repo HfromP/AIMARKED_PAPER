@@ -525,6 +525,10 @@
             <div class="pname">Gemini CLI</div>
             <div class="ptype" id="ptype-gc">CLI 설치 필요</div>
           </button>
+          <button class="provider-btn" data-provider="ollama_cli" onclick="selectProvider('ollama_cli')">
+            <div class="pname">Ollama CLI</div>
+            <div class="ptype" id="ptype-oc">로컬 CLI 실행</div>
+          </button>
         </div>
 
         <!-- API 타입 UI -->
@@ -542,6 +546,10 @@
         <!-- CLI 타입 UI -->
         <div id="cli-setup" style="display:none;">
           <div class="msg-box info visible" id="cli-msg">CLI가 설치되어 있다면 바로 다음으로 진행하세요.</div>
+          <div id="ollama-model-setup" style="display:none; margin-top:10px;">
+            <label class="api-key-label" style="display:block; margin-bottom:4px;">Ollama 모델 이름</label>
+            <input type="text" class="api-key-input" id="ollama-model-input" placeholder="llama3.2">
+          </div>
         </div>
 
         <div class="btn-row" style="margin-top:14px;">
@@ -916,6 +924,7 @@ function selectProvider(provider) {
     document.getElementById('api-key-input').placeholder = KEY_PLACEHOLDER[provider] || 'API Key';
     document.getElementById('step2-save').disabled = true;
   } else {
+    document.getElementById('ollama-model-setup').style.display = provider === 'ollama_cli' ? 'block' : 'none';
     document.getElementById('step2-save').disabled = false;
   }
 }
@@ -972,6 +981,9 @@ async function saveAI() {
   if (isApi) {
     const keyMap = { claude_api: 'anthropic', openai: 'openai', gemini: 'gemini' };
     payload.api_keys = { [keyMap[selectedProvider]]: key };
+  }
+  if (selectedProvider === 'ollama_cli') {
+    payload.ollama_model = document.getElementById('ollama-model-input').value.trim() || 'llama3.2';
   }
 
   try {

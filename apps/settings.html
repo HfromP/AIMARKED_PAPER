@@ -382,6 +382,7 @@
         <button class="btn-provider" data-provider="openai">GPT-4o</button>
         <button class="btn-provider" data-provider="gemini">Gemini API</button>
         <button class="btn-provider" data-provider="gemini_cli">Gemini CLI</button>
+        <button class="btn-provider" data-provider="ollama_cli">Ollama CLI</button>
       </div>
       <div id="api-key-row" style="display:none; width:100%; max-width:400px; flex-direction:column; gap:6px;">
         <label id="api-key-label" style="font-size:calc(12px * var(--fs,1)); color:#888; text-align:center;"></label>
@@ -390,6 +391,10 @@
           <span class="pkg-status-badge" id="pkg-status-badge">미확인</span>
         </div>
         <input type="password" id="api-key-input" class="api-key-input" placeholder="API 키를 입력하세요">
+      </div>
+      <div id="ollama-model-row" style="display:none; width:100%; max-width:400px; flex-direction:column; gap:6px;">
+        <label style="font-size:calc(12px * var(--fs,1)); color:#888; text-align:center;">Ollama 모델 이름</label>
+        <input type="text" id="ollama-model-input" class="api-key-input" placeholder="llama3.2">
       </div>
       <div style="width:100%; max-width:400px; display:flex; flex-direction:column; align-items:center; gap:6px;">
         <button class="btn-action" id="btn-save-provider" onclick="saveProvider()" style="width:100%; padding:8px 0;">저장</button>
@@ -415,6 +420,16 @@
         <span class="status-badge idle" id="gemini-status">미확인</span>
       </div>
       <div id="gemini-version" style="font-size:calc(12px * var(--fs, 1)); color:#888; text-align:center;"></div>
+    </div>
+
+    <div class="settings-section" id="ollama-cli-check" style="display:none;">
+      <h2>Ollama CLI 연결 확인</h2>
+      <div class="settings-row">
+        <span class="settings-label">연결 상태</span>
+        <button class="btn-action" id="btn-check-ollama" onclick="checkOllama()">연결 확인</button>
+        <span class="status-badge idle" id="ollama-status">미확인</span>
+      </div>
+      <div id="ollama-version" style="font-size:calc(12px * var(--fs, 1)); color:#888; text-align:center;"></div>
     </div>
 
     <div class="settings-section">
@@ -582,16 +597,47 @@
       }
     }
 
+    async function checkOllama() {
+      const btn = document.getElementById('btn-check-ollama');
+      const badge = document.getElementById('ollama-status');
+      const versionEl = document.getElementById('ollama-version');
+
+      btn.disabled = true;
+      badge.className = 'status-badge idle';
+      badge.textContent = '확인 중…';
+      versionEl.textContent = '';
+
+      try {
+        const res = await fetch('/api/ollama-check');
+        const data = await res.json();
+        if (data.ok) {
+          badge.className = 'status-badge ok';
+          badge.textContent = '연결됨';
+          versionEl.textContent = data.version;
+        } else {
+          badge.className = 'status-badge fail';
+          badge.textContent = '연결 실패';
+          versionEl.textContent = data.error;
+        }
+      } catch {
+        badge.className = 'status-badge fail';
+        badge.textContent = '서버 오류';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
     // ── AI 프로바이더 ──────────────────────────────────────
     const PROVIDER_LABELS = {
       claude_cli: null,
       claude_api: 'Anthropic API 키 (sk-ant-...)',
       openai: 'OpenAI API 키 (sk-...)',
       gemini: 'Google Gemini API 키',
-      gemini_cli: null
+      gemini_cli: null,
+      ollama_cli: null
     };
 
-    let _currentSettings = { ai_provider: 'claude_cli', api_keys: { openai: '', anthropic: '', gemini: '' } };
+    let _currentSettings = { ai_provider: 'claude_cli', api_keys: { openai: '', anthropic: '', gemini: '' }, ollama_model: '' };
     let _selectedProvider = 'claude_cli';
 
     function _providerToKeyName(provider) {
@@ -623,8 +669,16 @@
         keyRow.style.display = 'none';
         input.value = '';
       }
+      const ollamaRow = document.getElementById('ollama-model-row');
+      if (provider === 'ollama_cli') {
+        ollamaRow.style.display = 'flex';
+        document.getElementById('ollama-model-input').value = _currentSettings.ollama_model || '';
+      } else {
+        ollamaRow.style.display = 'none';
+      }
       document.getElementById('claude-cli-check').style.display = provider === 'claude_cli' ? '' : 'none';
       document.getElementById('gemini-cli-check').style.display = provider === 'gemini_cli' ? '' : 'none';
+      document.getElementById('ollama-cli-check').style.display = provider === 'ollama_cli' ? '' : 'none';
       document.getElementById('provider-save-msg').textContent = '';
     }
 
@@ -632,7 +686,7 @@
       try {
         const res = await fetch('/api/settings');
         const data = await res.json();
-        _currentSettings = data;
+        _currentSettings = { ...data, ollama_model: data.ollama_model || '' };
         _updateProviderUI(data.ai_provider || 'claude_cli');
       } catch {
         // 서버 미연결 상태에서도 UI는 초기값으로 표시
@@ -684,16 +738,22 @@
         updatedKeys[keyName] = document.getElementById('api-key-input').value.trim();
       }
 
+      const payload = { ai_provider: _selectedProvider, api_keys: updatedKeys };
+      if (_selectedProvider === 'ollama_cli') {
+        payload.ollama_model = document.getElementById('ollama-model-input').value.trim() || 'llama3.2';
+      }
+
       try {
         const res = await fetch('/api/settings', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ai_provider: _selectedProvider, api_keys: updatedKeys })
+          body: JSON.stringify(payload)
         });
         const data = await res.json();
         if (data.ok) {
           _currentSettings.ai_provider = _selectedProvider;
           _currentSettings.api_keys = updatedKeys;
+          if (_selectedProvider === 'ollama_cli') _currentSettings.ollama_model = payload.ollama_model;
           msg.textContent = '저장됨';
           setTimeout(() => { msg.textContent = ''; }, 2000);
         } else {
