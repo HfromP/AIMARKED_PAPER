@@ -36,7 +36,7 @@ def write_data(data):
 
 def read_settings():
     if not SETTINGS_FILE.exists():
-        return {'theme': 'light', 'ai_provider': 'claude_cli', 'api_keys': {'openai': '', 'anthropic': '', 'gemini': ''}}
+        return {'theme': 'light', 'ai_provider': 'claude_cli', 'api_keys': {'openai': '', 'anthropic': '', 'gemini': ''}, 'ollama_model': 'llama3.2'}
     with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
         return json.load(f)
 
@@ -106,7 +106,7 @@ def call_ai(prompt, timeout=120):
         return result.stdout.strip()
 
     elif provider == 'ollama_cli':
-        ollama_model = settings.get('ollama_model', 'llama3.2')
+        ollama_model = settings.get('ollama_model', '').strip() or 'llama3.2'
         result = subprocess.run(
             ['ollama', 'run', ollama_model],
             input=prompt,
