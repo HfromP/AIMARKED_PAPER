@@ -32,13 +32,18 @@ def _find_claude_bin() -> Path:
             return p
     # 3순위: Windows — npm global 설치 경로 (claude CLI가 npm 패키지인 경우)
     if platform.system() == 'Windows':
-        appdata = os.environ.get('APPDATA', '')
-        for candidate in [
-            Path(appdata) / 'npm' / 'claude.cmd',
-            Path(appdata) / 'npm' / 'claude',
-        ]:
-            if candidate.exists():
-                return candidate
+        appdata_roots = [
+            Path(value)
+            for value in (os.environ.get('APPDATA'), os.environ.get('LOCALAPPDATA'))
+            if value
+        ]
+        for root in appdata_roots:
+            for candidate in [
+                root / 'npm' / 'claude.cmd',
+                root / 'npm' / 'claude',
+            ]:
+                if candidate.exists():
+                    return candidate
     # fallback: PATH에 의존
     return Path('claude')
 
@@ -707,15 +712,35 @@ class Handler(SimpleHTTPRequestHandler):
                 os.startfile(folder_path)
             elif system == 'Darwin':
                 try:
-                    subprocess.run(['open', folder_path], timeout=5, check=True)
+                    subprocess.run(
+                        ['open', folder_path],
+                        timeout=5,
+                        check=True,
+                        capture_output=True,
+                        text=True
+                    )
                 except FileNotFoundError:
                     self._send_json(500, {'error': "'open' command not found on PATH"})
                     return
+                except subprocess.CalledProcessError as e:
+                    error_detail = (e.stderr or e.stdout or '').strip() or 'open command failed'
+                    self._send_json(500, {'error': f"'open' failed with exit code {e.returncode}: {error_detail}"})
+                    return
             else:
                 try:
-                    subprocess.run(['xdg-open', folder_path], timeout=5, check=True)
+                    subprocess.run(
+                        ['xdg-open', folder_path],
+                        timeout=5,
+                        check=True,
+                        capture_output=True,
+                        text=True
+                    )
                 except FileNotFoundError:
                     self._send_json(500, {'error': "'xdg-open' command not found on PATH"})
+                    return
+                except subprocess.CalledProcessError as e:
+                    error_detail = (e.stderr or e.stdout or '').strip() or 'xdg-open command failed'
+                    self._send_json(500, {'error': f"'xdg-open' failed with exit code {e.returncode}: {error_detail}"})
                     return
 
             self._send_json(200, {'ok': True})
