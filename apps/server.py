@@ -16,8 +16,33 @@ from pathlib import Path
 
 PORT = 5500
 BASE_DIR = Path(__file__).parent          # apps/
-DATA_FILE = BASE_DIR / 'data.json'
-SETTINGS_FILE = BASE_DIR / 'settings.config'
+
+
+def _get_user_data_dir() -> Path:
+    """OS별 표준 사용자 데이터 폴더를 반환한다."""
+    system = platform.system()
+    if system == 'Windows':
+        appdata = os.environ.get('APPDATA')
+        return Path(appdata) / 'Millestone' if appdata else Path.home() / 'AppData' / 'Roaming' / 'Millestone'
+    if system == 'Darwin':
+        return Path.home() / 'Library' / 'Application Support' / 'Millestone'
+    xdg = os.environ.get('XDG_CONFIG_HOME')
+    return Path(xdg) / 'millestone' if xdg else Path.home() / '.config' / 'millestone'
+
+
+def _migrate_legacy_data(user_data_dir: Path):
+    """apps/ 안의 기존 데이터 파일을 user_data_dir로 복사한다 (덮어쓰기 없음)."""
+    user_data_dir.mkdir(parents=True, exist_ok=True)
+    for name in ('data.json', 'settings.config'):
+        src, dst = BASE_DIR / name, user_data_dir / name
+        if src.exists() and not dst.exists():
+            shutil.copy2(src, dst)
+
+
+USER_DATA_DIR = _get_user_data_dir()
+_migrate_legacy_data(USER_DATA_DIR)
+DATA_FILE = USER_DATA_DIR / 'data.json'
+SETTINGS_FILE = USER_DATA_DIR / 'settings.config'
 
 # subprocess.run에 text 모드 사용 시 공통 kwargs — UTF-8로 디코딩을 시도하고 실패 시 대체(replace) 처리
 _TEXT_SUBPROCESS = {'text': True, 'encoding': 'utf-8', 'errors': 'replace'}
