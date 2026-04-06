@@ -8,6 +8,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import webbrowser
@@ -67,19 +68,18 @@ def build_system_prompt(*parts):
     return " ".join(p.strip() for p in parts if p and p.strip())
 
 
-_CLI_CONTEXT_FILES = {
-    'claude_cli': BASE_DIR / 'CLAUDE.md',
-    'gemini_cli': BASE_DIR / 'GEMINI.md',
+_CLI_CONTEXT_FILENAMES = {
+    'claude_cli': 'CLAUDE.md',
+    'gemini_cli': 'GEMINI.md',
 }
 
 
-def _write_cli_context(provider: str, system_prompt: str | None):
-    """CLI 호출 전 컨텍스트 파일을 생성한다. system_prompt가 없으면 아무것도 하지 않는다."""
-    if not system_prompt:
+def _write_cli_context(provider: str, system_prompt: str | None, directory: str):
+    """요청별 격리 디렉토리에 CLI 컨텍스트 파일을 생성한다."""
+    filename = _CLI_CONTEXT_FILENAMES.get(provider)
+    if not filename or not system_prompt:
         return
-    path = _CLI_CONTEXT_FILES.get(provider)
-    if path:
-        path.write_text(system_prompt, encoding='utf-8')
+    (Path(directory) / filename).write_text(system_prompt, encoding='utf-8')
 
 
 def _find_claude_bin() -> Path:
@@ -198,11 +198,12 @@ def call_ai(prompt, timeout=120, system_prompt=None):
         return resp.text.strip()
 
     elif provider == 'gemini_cli':
-        _write_cli_context('gemini_cli', system_prompt)
-        result = subprocess.run(
-            ['gemini', '-p', prompt],
-            capture_output=True, **_TEXT_SUBPROCESS, timeout=timeout, cwd=BASE_DIR
-        )
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            _write_cli_context('gemini_cli', system_prompt, tmp_dir)
+            result = subprocess.run(
+                ['gemini', '-p', prompt],
+                capture_output=True, **_TEXT_SUBPROCESS, timeout=timeout, cwd=tmp_dir
+            )
         if result.returncode != 0:
             raise RuntimeError(result.stderr.strip() or 'Gemini CLI 오류')
         return result.stdout.strip()
@@ -220,14 +221,15 @@ def call_ai(prompt, timeout=120, system_prompt=None):
         return result.stdout.strip()
 
     else:  # claude_cli (default)
-        _write_cli_context('claude_cli', system_prompt)
-        cmd = [str(CLAUDE_BIN), '--print', '--output-format', 'text']
-        cmd.append(prompt)
-        result = subprocess.run(
-            cmd,
-            capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=timeout,
-            cwd=BASE_DIR
-        )
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            _write_cli_context('claude_cli', system_prompt, tmp_dir)
+            cmd = [str(CLAUDE_BIN), '--print', '--output-format', 'text']
+            cmd.append(prompt)
+            result = subprocess.run(
+                cmd,
+                capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=timeout,
+                cwd=tmp_dir
+            )
         if result.returncode != 0:
             raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
         return result.stdout.strip()
