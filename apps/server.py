@@ -615,7 +615,13 @@ class Handler(SimpleHTTPRequestHandler):
 
             response_text = call_ai(
                 prompt, timeout=120,
-                system_prompt='JSON 배열만 출력하는 도구입니다. 질문 금지. 설명 금지. 반드시 JSON 배열만 출력하세요.'
+                system_prompt=(
+                    '당신은 소프트웨어 개발 Task 목록 생성 도구입니다. '
+                    '반드시 [{"name": "작업명", "importance": 숫자}] 형식의 JSON 배열만 출력하세요. '
+                    'importance는 1, 2, 3 중 하나의 정수입니다. '
+                    'id, title, category, description, features, tags 등 다른 필드는 절대 사용하지 마세요. '
+                    '질문 금지. 설명 금지. JSON 배열 외 어떤 텍스트도 출력하지 마세요.'
+                )
             )
             log_path = BASE_DIR / 'ai_debug.log'
             with open(log_path, 'a', encoding='utf-8') as lf:
