@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import logging
 import json
 import os
 import platform
@@ -183,9 +184,14 @@ def extract_json(text):
         if isinstance(parsed, list):
             return parsed
         if isinstance(parsed, dict):
-            for v in parsed.values():
-                if isinstance(v, list):
-                    return v
+            list_fields = [(k, v) for k, v in parsed.items() if isinstance(v, list)]
+            if len(list_fields) == 1:
+                return list_fields[0][1]
+            if len(list_fields) > 1:
+                keys = ', '.join(repr(k) for k, _ in list_fields)
+                raise ValueError(
+                    f'여러 개의 리스트 필드가 있어 어떤 값을 사용해야 할지 결정할 수 없습니다: {keys}'
+                )
         return None
 
     # ```json ... ``` 블록 우선 시도 (배열 또는 객체)
@@ -204,7 +210,8 @@ def extract_json(text):
         result = _list_from(json.loads(m.group(1)))
         if result is not None:
             return result
-    raise ValueError(f'JSON 배열을 찾을 수 없습니다. AI 응답 내용: {text[:300]!r}')
+    logging.warning('extract_json 실패. AI 응답 내용: %r', text[:300])
+    raise ValueError('JSON 배열을 찾을 수 없습니다.')
 
 
 def find_idea(data, idea_id):
@@ -638,7 +645,7 @@ class Handler(SimpleHTTPRequestHandler):
 
             result = subprocess.run(
                 [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
-                capture_output=True, **_TEXT_SUBPROCESS, timeout=60
+                capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=60
             )
 
             if result.returncode != 0:
