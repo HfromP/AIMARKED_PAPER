@@ -187,30 +187,33 @@ def extract_json(text):
             list_fields = [(k, v) for k, v in parsed.items() if isinstance(v, list)]
             if len(list_fields) == 1:
                 return list_fields[0][1]
-            if len(list_fields) > 1:
-                keys = ', '.join(repr(k) for k, _ in list_fields)
-                raise ValueError(
-                    f'여러 개의 리스트 필드가 있어 어떤 값을 사용해야 할지 결정할 수 없습니다: {keys}'
-                )
         return None
 
-    # ```json ... ``` 블록 우선 시도 (배열 또는 객체)
-    m = re.search(r'```(?:json)?\s*(\[.*?\]|\{.*?\})\s*```', text, re.DOTALL)
+    decoder = json.JSONDecoder()
+
+    # 1. ```json ... ``` 블록 우선 시도 (raw_decode로 중첩 객체 처리)
+    m = re.search(r'```(?:json)?\s*(.*?)\s*```', text, re.DOTALL)
     if m:
-        result = _list_from(json.loads(m.group(1)))
-        if result is not None:
-            return result
-    # 첫 번째 [ ... ] 추출
-    m = re.search(r'(\[.*\])', text, re.DOTALL)
-    if m:
-        return json.loads(m.group(1))
-    # 첫 번째 { ... } 추출 후 내부 배열 탐색
-    m = re.search(r'(\{.*\})', text, re.DOTALL)
-    if m:
-        result = _list_from(json.loads(m.group(1)))
-        if result is not None:
-            return result
-    logging.warning('extract_json 실패. AI 응답 내용: %r', text[:300])
+        try:
+            obj, _ = decoder.raw_decode(m.group(1).strip())
+            result = _list_from(obj)
+            if result is not None:
+                return result
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # 2. 텍스트에서 첫 번째 유효한 [ ... ] 또는 { ... } 탐색
+    for i, c in enumerate(text):
+        if c in ('[', '{'):
+            try:
+                obj, _ = decoder.raw_decode(text, i)
+                result = _list_from(obj)
+                if result is not None:
+                    return result
+            except json.JSONDecodeError:
+                pass
+
+    logging.debug('extract_json 실패. AI 응답 길이: %d', len(text))
     raise ValueError('JSON 배열을 찾을 수 없습니다.')
 
 
