@@ -158,7 +158,7 @@ def call_ai(prompt, timeout=120):
     else:  # claude_cli (default)
         result = subprocess.run(
             [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
-            capture_output=True, **_TEXT_SUBPROCESS, timeout=timeout
+            capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=timeout
         )
         if result.returncode != 0:
             raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
@@ -683,7 +683,7 @@ class Handler(SimpleHTTPRequestHandler):
             # Claude CLI 실행
             result = subprocess.run(
                 [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt_text],
-                capture_output=True, **_TEXT_SUBPROCESS, timeout=120
+                capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=120
             )
             if result.returncode != 0:
                 raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
@@ -800,7 +800,7 @@ class Handler(SimpleHTTPRequestHandler):
 
             result = subprocess.run(
                 [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
-                capture_output=True, **_TEXT_SUBPROCESS, timeout=60
+                capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=60
             )
             if result.returncode != 0:
                 raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
@@ -832,7 +832,7 @@ class Handler(SimpleHTTPRequestHandler):
 
             result = subprocess.run(
                 [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
-                capture_output=True, **_TEXT_SUBPROCESS, timeout=30
+                capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=30
             )
             if result.returncode != 0:
                 raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
