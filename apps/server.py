@@ -414,7 +414,10 @@ class Handler(SimpleHTTPRequestHandler):
 
             if system == 'Windows':
                 # PowerShell FolderBrowserDialog 사용
+                # UTF-8 출력 강제 설정 후 경로 선택
                 ps_script = (
+                    "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8;"
+                    "$OutputEncoding = [System.Text.Encoding]::UTF8;"
                     "Add-Type -AssemblyName System.Windows.Forms;"
                     "$d = New-Object System.Windows.Forms.FolderBrowserDialog;"
                     "$d.ShowNewFolderButton = $true;"
@@ -717,7 +720,7 @@ class Handler(SimpleHTTPRequestHandler):
                         timeout=5,
                         check=True,
                         capture_output=True,
-                        text=True
+                        text=True, encoding='utf-8', errors='replace'
                     )
                 except FileNotFoundError:
                     self._send_json(500, {'error': "'open' command not found on PATH"})
@@ -733,7 +736,7 @@ class Handler(SimpleHTTPRequestHandler):
                         timeout=5,
                         check=True,
                         capture_output=True,
-                        text=True
+                        text=True, encoding='utf-8', errors='replace'
                     )
                 except FileNotFoundError:
                     self._send_json(500, {'error': "'xdg-open' command not found on PATH"})
