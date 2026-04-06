@@ -202,7 +202,7 @@ def call_ai(prompt, timeout=120, system_prompt=None):
             _write_cli_context('gemini_cli', system_prompt, tmp_dir)
             result = subprocess.run(
                 ['gemini', '-p', prompt],
-                capture_output=True, **_TEXT_SUBPROCESS, timeout=timeout, cwd=tmp_dir
+                capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=timeout, cwd=tmp_dir
             )
         if result.returncode != 0:
             raise RuntimeError(result.stderr.strip() or 'Gemini CLI 오류')
@@ -340,17 +340,6 @@ def _call_ai_with_retry(prompt, system_prompt=None, timeout=120,
     raise ValueError("형식 오류 — 재시도 후에도 실패\n\n" + "\n\n".join(log))
 
 
-def find_idea(data, idea_id):
-    """data 구조에서 idea_id에 해당하는 idea dict 반환."""
-    for ws in data.get('workspaces', []):
-        for proj in ws.get('projects', []):
-            for ms in proj.get('milestones', []):
-                for idea in ms.get('ideas', []):
-                    if idea.get('id') == idea_id:
-                        return idea
-    return None
-
-
 def find_idea_context(data, idea_id):
     """data 구조에서 idea_id에 해당하는 (workspace, project, milestone, idea) 반환."""
     for ws in data.get('workspaces', []):
@@ -360,6 +349,12 @@ def find_idea_context(data, idea_id):
                     if idea.get('id') == idea_id:
                         return ws, proj, ms, idea
     return None, None, None, None
+
+
+def find_idea(data, idea_id):
+    """data 구조에서 idea_id에 해당하는 idea dict 반환."""
+    _, _, _, idea = find_idea_context(data, idea_id)
+    return idea
 
 
 def find_task(data, task_id):
