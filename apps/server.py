@@ -595,9 +595,12 @@ class Handler(SimpleHTTPRequestHandler):
             parts.append(
                 f"아이디어 제목: {idea.get('title', '')}\n"
                 f"아이디어 설명: {idea.get('description', '')}\n\n"
-                "위 아이디어를 구현하기 위한 구체적인 Task 목록을 JSON 배열로만 응답해줘.\n"
-                "다른 설명 없이 JSON 배열만 출력해줘.\n"
-                '각 Task는 {"name": "...", "importance": 1|2|3} 형태야. (1=낮음, 2=보통, 3=높음)'
+                "위 아이디어를 구현하기 위한 Task 목록을 JSON 배열로 응답해줘.\n"
+                "규칙:\n"
+                "- 절대 질문하지 말고, 주어진 정보로 합리적으로 추측해서 Task를 생성해줘.\n"
+                "- JSON 배열만 출력하고 다른 설명은 하지 마.\n"
+                '- 각 Task는 {"name": "...", "importance": 1|2|3} 형태야. (1=낮음, 2=보통, 3=높음)\n'
+                '예시: [{"name": "요구사항 분석", "importance": 3}, {"name": "UI 설계", "importance": 2}]'
             )
             prompt = "\n\n".join(parts)
 
