@@ -179,14 +179,31 @@ def _ensure_packages():
 
 def extract_json(text):
     """CLI 응답에서 JSON 배열 추출. 코드블록 안팎 모두 처리."""
-    # ```json ... ``` 블록 우선 시도
-    m = re.search(r'```(?:json)?\s*(\[.*?\])\s*```', text, re.DOTALL)
+    def _list_from(parsed):
+        if isinstance(parsed, list):
+            return parsed
+        if isinstance(parsed, dict):
+            for v in parsed.values():
+                if isinstance(v, list):
+                    return v
+        return None
+
+    # ```json ... ``` 블록 우선 시도 (배열 또는 객체)
+    m = re.search(r'```(?:json)?\s*(\[.*?\]|\{.*?\})\s*```', text, re.DOTALL)
     if m:
-        return json.loads(m.group(1))
+        result = _list_from(json.loads(m.group(1)))
+        if result is not None:
+            return result
     # 첫 번째 [ ... ] 추출
     m = re.search(r'(\[.*\])', text, re.DOTALL)
     if m:
         return json.loads(m.group(1))
+    # 첫 번째 { ... } 추출 후 내부 배열 탐색
+    m = re.search(r'(\{.*\})', text, re.DOTALL)
+    if m:
+        result = _list_from(json.loads(m.group(1)))
+        if result is not None:
+            return result
     raise ValueError('JSON 배열을 찾을 수 없습니다.')
 
 
