@@ -618,6 +618,8 @@ class Handler(SimpleHTTPRequestHandler):
                 lf.write(f'\n=== {datetime.datetime.now().isoformat()} ===\n')
                 lf.write(f'[PROMPT]\n{prompt}\n\n[RESPONSE]\n{response_text}\n')
             tasks = extract_json(response_text)
+            with open(log_path, 'a', encoding='utf-8') as lf:
+                lf.write(f'[PARSED OK] {json.dumps(tasks, ensure_ascii=False)}\n')
 
             # 기존 tasks에 추가 (id는 JS가 없으므로 timestamp 기반 생성)
             import time
