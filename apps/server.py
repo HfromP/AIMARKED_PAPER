@@ -86,7 +86,7 @@ def write_settings(settings):
         json.dump(settings, f, ensure_ascii=False, indent=2)
 
 
-def call_ai(prompt, timeout=120):
+def call_ai(prompt, timeout=120, system_prompt=None):
     """settings.config의 ai_provider에 따라 AI 호출. 텍스트 응답 반환."""
     settings = read_settings()
     provider = settings.get('ai_provider', 'claude_cli')
@@ -157,8 +157,12 @@ def call_ai(prompt, timeout=120):
         return result.stdout.strip()
 
     else:  # claude_cli (default)
+        cmd = [str(CLAUDE_BIN), '--print', '--output-format', 'text']
+        if system_prompt:
+            cmd += ['--system-prompt', system_prompt]
+        cmd.append(prompt)
         result = subprocess.run(
-            [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
+            cmd,
             capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=timeout
         )
         if result.returncode != 0:
@@ -604,7 +608,10 @@ class Handler(SimpleHTTPRequestHandler):
             )
             prompt = "\n\n".join(parts)
 
-            response_text = call_ai(prompt, timeout=120)
+            response_text = call_ai(
+                prompt, timeout=120,
+                system_prompt='JSON 배열만 출력하는 도구입니다. 질문 금지. 설명 금지. 반드시 JSON 배열만 출력하세요.'
+            )
             tasks = extract_json(response_text)
 
             # 기존 tasks에 추가 (id는 JS가 없으므로 timestamp 기반 생성)
