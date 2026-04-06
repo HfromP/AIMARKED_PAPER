@@ -55,6 +55,7 @@ def _find_claude_bin() -> Path:
 CLAUDE_BIN = _find_claude_bin()
 _server_instance = None
 _last_heartbeat = None
+_ai_in_progress = False
 HEARTBEAT_TIMEOUT = 8   # 초: 마지막 heartbeat 후 이 시간이 지나면 종료 확인 시작 (프론트 간격 3s × 2 + 여유 2s)
 STARTUP_GRACE = 30      # 초: 서버 시작 직후 watchdog 대기 시간
 
@@ -613,16 +614,21 @@ class Handler(SimpleHTTPRequestHandler):
             )
             prompt = "\n\n".join(parts)
 
-            response_text = call_ai(
-                prompt, timeout=120,
-                system_prompt=(
-                    '당신은 소프트웨어 개발 Task 목록 생성 도구입니다. '
-                    '반드시 [{"name": "작업명", "importance": 숫자}] 형식의 JSON 배열만 출력하세요. '
-                    'importance는 1, 2, 3 중 하나의 정수입니다. '
-                    'id, title, category, description, features, tags 등 다른 필드는 절대 사용하지 마세요. '
-                    '질문 금지. 설명 금지. JSON 배열 외 어떤 텍스트도 출력하지 마세요.'
+            global _ai_in_progress
+            _ai_in_progress = True
+            try:
+                response_text = call_ai(
+                    prompt, timeout=120,
+                    system_prompt=(
+                        '당신은 소프트웨어 개발 Task 목록 생성 도구입니다. '
+                        '반드시 [{"name": "작업명", "importance": 숫자}] 형식의 JSON 배열만 출력하세요. '
+                        'importance는 1, 2, 3 중 하나의 정수입니다. '
+                        'id, title, category, description, features, tags 등 다른 필드는 절대 사용하지 마세요. '
+                        '질문 금지. 설명 금지. JSON 배열 외 어떤 텍스트도 출력하지 마세요.'
+                    )
                 )
-            )
+            finally:
+                _ai_in_progress = False
             log_path = BASE_DIR / 'ai_debug.log'
             with open(log_path, 'a', encoding='utf-8') as lf:
                 import datetime
@@ -892,6 +898,9 @@ def _watchdog():
         time.sleep(3)
         if _last_heartbeat is None:
             print('[watchdog] heartbeat 아직 미수신')
+            continue
+        if _ai_in_progress:
+            print('[watchdog] AI 처리 중 → 대기')
             continue
         elapsed = time.time() - _last_heartbeat
         print(f'[watchdog] 마지막 heartbeat {elapsed:.1f}s 전')
