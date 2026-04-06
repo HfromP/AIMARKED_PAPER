@@ -37,6 +37,7 @@ def _migrate_legacy_data(user_data_dir: Path):
         src, dst = BASE_DIR / name, user_data_dir / name
         if src.exists() and not dst.exists():
             shutil.copy2(src, dst)
+            src.unlink()
 
 
 USER_DATA_DIR = _get_user_data_dir()
