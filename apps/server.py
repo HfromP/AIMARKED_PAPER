@@ -204,7 +204,7 @@ def extract_json(text):
         result = _list_from(json.loads(m.group(1)))
         if result is not None:
             return result
-    raise ValueError('JSON 배열을 찾을 수 없습니다.')
+    raise ValueError(f'JSON 배열을 찾을 수 없습니다. AI 응답 내용: {text[:300]!r}')
 
 
 def find_idea(data, idea_id):
