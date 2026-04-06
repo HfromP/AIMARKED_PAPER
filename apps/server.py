@@ -16,11 +16,55 @@ from pathlib import Path
 
 PORT = 5500
 BASE_DIR = Path(__file__).parent          # apps/
-DATA_FILE = BASE_DIR / 'data.json'
-SETTINGS_FILE = BASE_DIR / 'settings.config'
+
+
+def _get_user_data_dir() -> Path:
+    """OS별 표준 사용자 데이터 폴더를 반환한다."""
+    system = platform.system()
+    if system == 'Windows':
+        appdata = os.environ.get('APPDATA')
+        return Path(appdata) / 'Millestone' if appdata else Path.home() / 'AppData' / 'Roaming' / 'Millestone'
+    if system == 'Darwin':
+        return Path.home() / 'Library' / 'Application Support' / 'Millestone'
+    xdg = os.environ.get('XDG_CONFIG_HOME')
+    return Path(xdg) / 'millestone' if xdg else Path.home() / '.config' / 'millestone'
+
+
+def _migrate_legacy_data(user_data_dir: Path):
+    """apps/ 안의 기존 데이터 파일을 user_data_dir로 복사한다 (덮어쓰기 없음)."""
+    user_data_dir.mkdir(parents=True, exist_ok=True)
+    for name in ('data.json', 'settings.config'):
+        src, dst = BASE_DIR / name, user_data_dir / name
+        if src.exists() and not dst.exists():
+            shutil.copy2(src, dst)
+            src.unlink()
+
+
+USER_DATA_DIR = _get_user_data_dir()
+_migrate_legacy_data(USER_DATA_DIR)
+DATA_FILE = USER_DATA_DIR / 'data.json'
+SETTINGS_FILE = USER_DATA_DIR / 'settings.config'
 
 # subprocess.run에 text 모드 사용 시 공통 kwargs — UTF-8로 디코딩을 시도하고 실패 시 대체(replace) 처리
 _TEXT_SUBPROCESS = {'text': True, 'encoding': 'utf-8', 'errors': 'replace'}
+
+# ── 시스템 프롬프트 원자 단위 상수 ──────────────────────────────────────────
+_SP_NO_QUESTION = "절대 질문하지 말고 주어진 정보로 합리적으로 추측하여 즉시 답변하세요."
+_SP_TASK_ROLE   = "당신은 소프트웨어 개발 Task 목록 생성 도구입니다."
+_SP_PROMPT_ROLE = "당신은 AI 프롬프트 생성 도구입니다."
+_SP_REFINE_ROLE = "당신은 AI 프롬프트 개선 도구입니다."
+_SP_TASK_FORMAT = (
+    '반드시 [{"name":"작업명","importance":숫자}] 형식의 JSON 배열만 출력하세요. '
+    'importance는 1(낮음)·2(보통)·3(높음) 중 하나의 정수. '
+    'id·title·category·description 등 다른 필드 사용 금지. '
+    'JSON 배열 외 텍스트 출력 금지.'
+)
+_SP_TEXT_ONLY   = "요청한 텍스트만 출력하세요. 설명·머리말·인사·질문 출력 금지."
+
+
+def build_system_prompt(*parts):
+    """여러 시스템 프롬프트 조각을 공백으로 합쳐 하나의 문자열로 반환한다."""
+    return " ".join(p.strip() for p in parts if p and p.strip())
 
 
 def _find_claude_bin() -> Path:
@@ -101,10 +145,11 @@ def call_ai(prompt, timeout=120, system_prompt=None):
         if not api_key:
             raise ValueError('OpenAI API 키가 설정되지 않았습니다.')
         client = openai.OpenAI(api_key=api_key, timeout=timeout)
-        resp = client.chat.completions.create(
-            model='gpt-4o',
-            messages=[{'role': 'user', 'content': prompt}]
-        )
+        messages = []
+        if system_prompt:
+            messages.append({'role': 'system', 'content': system_prompt})
+        messages.append({'role': 'user', 'content': prompt})
+        resp = client.chat.completions.create(model='gpt-4o', messages=messages)
         return resp.choices[0].message.content.strip()
 
     elif provider == 'claude_api':
@@ -116,11 +161,11 @@ def call_ai(prompt, timeout=120, system_prompt=None):
         if not api_key:
             raise ValueError('Anthropic API 키가 설정되지 않았습니다.')
         client = anthropic.Anthropic(api_key=api_key, timeout=timeout)
-        msg = client.messages.create(
-            model='claude-sonnet-4-6',
-            max_tokens=4096,
-            messages=[{'role': 'user', 'content': prompt}]
-        )
+        kwargs = dict(model='claude-sonnet-4-6', max_tokens=4096,
+                      messages=[{'role': 'user', 'content': prompt}])
+        if system_prompt:
+            kwargs['system'] = system_prompt
+        msg = client.messages.create(**kwargs)
         return msg.content[0].text.strip()
 
     elif provider == 'gemini':
@@ -132,13 +177,15 @@ def call_ai(prompt, timeout=120, system_prompt=None):
         if not api_key:
             raise ValueError('Gemini API 키가 설정되지 않았습니다.')
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-2.0-flash',
+                                      system_instruction=system_prompt or None)
         resp = model.generate_content(prompt)
         return resp.text.strip()
 
     elif provider == 'gemini_cli':
+        effective = f"[System]\n{system_prompt}\n\n{prompt}" if system_prompt else prompt
         result = subprocess.run(
-            ['gemini', '-p', prompt],
+            ['gemini', '-p', effective],
             capture_output=True, **_TEXT_SUBPROCESS, timeout=timeout
         )
         if result.returncode != 0:
@@ -147,9 +194,10 @@ def call_ai(prompt, timeout=120, system_prompt=None):
 
     elif provider == 'ollama_cli':
         ollama_model = settings.get('ollama_model', '').strip() or 'llama3.2'
+        effective = f"[System]\n{system_prompt}\n\n{prompt}" if system_prompt else prompt
         result = subprocess.run(
             ['ollama', 'run', ollama_model],
-            input=prompt,
+            input=effective,
             capture_output=True, **_TEXT_SUBPROCESS, timeout=timeout
         )
         if result.returncode != 0:
@@ -218,6 +266,61 @@ def extract_json(text):
                 pass
 
     raise ValueError(f'JSON 배열을 찾을 수 없습니다.\nAI 응답:\n{text}')
+
+
+def _validate_task_json(text):
+    """(ok, reason) 반환. Task JSON 형식·필드를 검증한다."""
+    try:
+        tasks = extract_json(text)
+        for t in tasks:
+            if 'name' not in t:
+                return False, f"'name' 필드 없음: {t}"
+            if t.get('importance') not in (1, 2, 3):
+                return False, f"importance 값 오류: {t.get('importance')!r} (1·2·3만 허용)"
+        return True, ""
+    except ValueError as e:
+        return False, str(e)
+
+
+def _validate_prompt_text(text):
+    """(ok, reason) 반환. 질문형·빈 응답을 감지한다."""
+    stripped = (text or "").strip()
+    if len(stripped) < 10:
+        return False, f"응답이 너무 짧음: {stripped!r}"
+    if stripped.endswith('?') or stripped.endswith('？'):
+        return False, f"질문형 응답 감지: {stripped[:120]}"
+    return True, ""
+
+
+def _call_ai_with_retry(prompt, system_prompt=None, timeout=120,
+                        validate=None, max_retries=2):
+    """AI 호출 + 검증 + 재시도.
+
+    validate: (text) → (ok: bool, reason: str)
+    성공 시 응답 텍스트 반환.
+    전부 실패 시 ValueError (각 시도 요약 포함).
+    """
+    original_prompt = prompt
+    log = []
+    for attempt in range(max_retries + 1):
+        response = call_ai(prompt, timeout=timeout, system_prompt=system_prompt)
+        if validate is None:
+            return response
+        ok, reason = validate(response)
+        log.append(
+            f"[시도 {attempt + 1}] 사유: {reason or '없음'}\n"
+            f"AI 응답: {response[:300]}"
+        )
+        if ok:
+            return response
+        if attempt < max_retries:
+            prompt = (
+                f"이전 응답이 형식 오류였습니다.\n"
+                f"오류 사유: {reason}\n"
+                f"이전 응답(참고): {response[:200]}\n\n"
+                + original_prompt
+            )
+    raise ValueError("형식 오류 — 재시도 후에도 실패\n\n" + "\n\n".join(log))
 
 
 def find_idea(data, idea_id):
@@ -325,6 +428,9 @@ class Handler(SimpleHTTPRequestHandler):
             return
         if self.path == '/api/reveal-folder':
             self._handle_reveal_folder()
+            return
+        if self.path == '/api/open-log':
+            self._handle_open_log()
             return
         if self.path == '/api/classify-message':
             self._handle_classify_message()
@@ -613,15 +719,10 @@ class Handler(SimpleHTTPRequestHandler):
             )
             prompt = "\n\n".join(parts)
 
-            response_text = call_ai(
-                prompt, timeout=120,
-                system_prompt=(
-                    '당신은 소프트웨어 개발 Task 목록 생성 도구입니다. '
-                    '반드시 [{"name": "작업명", "importance": 숫자}] 형식의 JSON 배열만 출력하세요. '
-                    'importance는 1, 2, 3 중 하나의 정수입니다. '
-                    'id, title, category, description, features, tags 등 다른 필드는 절대 사용하지 마세요. '
-                    '질문 금지. 설명 금지. JSON 배열 외 어떤 텍스트도 출력하지 마세요.'
-                )
+            sp = build_system_prompt(_SP_TASK_ROLE, _SP_NO_QUESTION, _SP_TASK_FORMAT)
+            response_text = _call_ai_with_retry(
+                prompt, system_prompt=sp, timeout=120,
+                validate=_validate_task_json, max_retries=2
             )
             log_path = BASE_DIR / 'ai_debug.log'
             with open(log_path, 'a', encoding='utf-8') as lf:
@@ -649,7 +750,7 @@ class Handler(SimpleHTTPRequestHandler):
     def _handle_task_prompt(self, task_id):
         try:
             body = json.loads(self._read_body()) if int(self.headers.get('Content-Length', 0)) else {}
-            system_prompt = body.get('systemPrompt', '').strip()
+            user_sp = body.get('systemPrompt', '').strip()
             history = body.get('conversationHistory', [])
 
             data = read_data()
@@ -659,8 +760,6 @@ class Handler(SimpleHTTPRequestHandler):
                 return
 
             parts = []
-            if system_prompt:
-                parts.append(system_prompt)
             if history:
                 parts.append("[이전 프롬프트 히스토리]\n" +
                              "\n".join(f"{i+1}. {h}" for i, h in enumerate(history)))
@@ -673,19 +772,14 @@ class Handler(SimpleHTTPRequestHandler):
                 "프롬프트 텍스트만 출력하고 다른 설명은 하지 마."
             )
             prompt = "\n\n".join(parts)
+            sp = build_system_prompt(_SP_PROMPT_ROLE, _SP_NO_QUESTION, _SP_TEXT_ONLY, user_sp)
 
-            result = subprocess.run(
-                [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
-                capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=60
+            result = _call_ai_with_retry(
+                prompt, system_prompt=sp, timeout=60,
+                validate=_validate_prompt_text, max_retries=1
             )
+            self._send_json(200, {'ok': True, 'prompt': result})
 
-            if result.returncode != 0:
-                raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
-
-            self._send_json(200, {'ok': True, 'prompt': result.stdout.strip()})
-
-        except subprocess.TimeoutExpired:
-            self._send_json(500, {'error': 'Claude CLI 응답 시간 초과'})
         except Exception as e:
             self._send_json(500, {'error': str(e)})
 
@@ -810,6 +904,25 @@ class Handler(SimpleHTTPRequestHandler):
         except Exception as e:
             self._send_json(500, {'error': str(e)})
 
+    def _handle_open_log(self):
+        log_path = BASE_DIR / 'ai_debug.log'
+        if not log_path.exists():
+            self._send_json(404, {'error': 'AI 로그 파일이 없습니다. 아직 AI를 사용하지 않았거나 로그가 생성되지 않았습니다.'})
+            return
+        try:
+            system = platform.system()
+            if system == 'Windows':
+                os.startfile(str(log_path))
+            elif system == 'Darwin':
+                subprocess.run(['open', str(log_path)], timeout=5, check=True,
+                               capture_output=True, **_TEXT_SUBPROCESS)
+            else:
+                subprocess.run(['xdg-open', str(log_path)], timeout=5, check=True,
+                               capture_output=True, **_TEXT_SUBPROCESS)
+            self._send_json(200, {'ok': True})
+        except Exception as e:
+            self._send_json(500, {'error': str(e)})
+
     def _handle_refine_prompt(self):
         try:
             body = json.loads(self._read_body())
@@ -819,12 +932,10 @@ class Handler(SimpleHTTPRequestHandler):
                 self._send_json(400, {'error': '지시 또는 원본 프롬프트가 없습니다.'})
                 return
 
-            system_prompt = body.get('systemPrompt', '').strip()
+            user_sp = body.get('systemPrompt', '').strip()
             history = body.get('conversationHistory', [])
 
             parts = []
-            if system_prompt:
-                parts.append(system_prompt)
             if history:
                 parts.append("[대화 히스토리]\n" +
                              "\n".join(f"{i+1}. {h}" for i, h in enumerate(history)))
@@ -835,18 +946,11 @@ class Handler(SimpleHTTPRequestHandler):
                 f"수정 지시: {instruction}"
             )
             prompt = "\n\n".join(parts)
+            sp = build_system_prompt(_SP_REFINE_ROLE, _SP_NO_QUESTION, _SP_TEXT_ONLY, user_sp)
 
-            result = subprocess.run(
-                [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
-                capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=60
-            )
-            if result.returncode != 0:
-                raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
+            result = call_ai(prompt, system_prompt=sp, timeout=60)
+            self._send_json(200, {'ok': True, 'refinedPrompt': result})
 
-            self._send_json(200, {'ok': True, 'refinedPrompt': result.stdout.strip()})
-
-        except subprocess.TimeoutExpired:
-            self._send_json(500, {'error': 'Claude CLI 응답 시간 초과'})
         except Exception as e:
             self._send_json(500, {'error': str(e)})
 

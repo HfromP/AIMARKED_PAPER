@@ -433,6 +433,15 @@
     </div>
 
     <div class="settings-section">
+      <h2>디버그</h2>
+      <div class="settings-row">
+        <span class="settings-label">AI 응답 로그</span>
+        <button class="btn-action" onclick="openLog()">로그 열기</button>
+        <span id="log-msg" style="font-size:calc(12px * var(--fs,1)); color:#888; min-height:1em;"></span>
+      </div>
+    </div>
+
+    <div class="settings-section">
       <h2>온보딩</h2>
       <div class="settings-row">
         <span class="settings-label">초기 설정 화면</span>
@@ -810,6 +819,24 @@
     function restartOnboarding() {
       localStorage.removeItem('onboarding.done');
       location.replace('onboarding.html');
+    }
+
+    async function openLog() {
+      const msg = document.getElementById('log-msg');
+      msg.textContent = '열는 중...';
+      try {
+        const res = await fetch('/api/open-log', { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) {
+          msg.textContent = data.error || '오류 발생';
+          setTimeout(() => { msg.textContent = ''; }, 4000);
+        } else {
+          msg.textContent = '';
+        }
+      } catch {
+        msg.textContent = '서버 연결 실패';
+        setTimeout(() => { msg.textContent = ''; }, 4000);
+      }
     }
 
     document.getElementById('shutdown-btn').addEventListener('click', () => {
