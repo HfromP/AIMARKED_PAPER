@@ -669,6 +669,7 @@ class Handler(SimpleHTTPRequestHandler):
                 f"아이디어 설명: {idea.get('description', '')}\n"
                 f"Task 이름: {task.get('name', '')}\n\n"
                 "위 Task를 수행하기 위한 가장 효과적인 AI 프롬프트를 하나 생성해줘.\n"
+                "절대 질문하지 말고, 주어진 정보로 합리적으로 추측해서 바로 프롬프트를 생성해줘.\n"
                 "프롬프트 텍스트만 출력하고 다른 설명은 하지 마."
             )
             prompt = "\n\n".join(parts)
