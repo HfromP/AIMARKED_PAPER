@@ -742,12 +742,12 @@ class Handler(SimpleHTTPRequestHandler):
             )
             prompt = "\n\n".join(parts)
 
-            user_sp = " ".join(filter(None, [
+            user_sp = build_system_prompt(
                 (ws or {}).get('systemPrompt', ''),
                 (proj or {}).get('systemPrompt', ''),
                 (ms or {}).get('systemPrompt', ''),
                 idea.get('systemPrompt', ''),
-            ]))
+            )
             sp = build_system_prompt(_SP_TASK_ROLE, _SP_NO_QUESTION, _SP_TASK_FORMAT, user_sp)
             response_text = _call_ai_with_retry(
                 prompt, system_prompt=sp, timeout=120,
