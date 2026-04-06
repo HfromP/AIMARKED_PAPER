@@ -675,7 +675,9 @@ class Handler(SimpleHTTPRequestHandler):
             prompt = "\n\n".join(parts)
 
             result = subprocess.run(
-                [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
+                [str(CLAUDE_BIN), '--print', '--output-format', 'text',
+                 '--system-prompt', '당신은 AI 프롬프트 생성 도구입니다. 질문 금지. 설명 금지. 프롬프트 텍스트만 출력하세요.',
+                 prompt],
                 capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=60
             )
 
