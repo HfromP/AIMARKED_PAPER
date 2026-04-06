@@ -349,6 +349,17 @@ def find_idea(data, idea_id):
     return None
 
 
+def find_idea_context(data, idea_id):
+    """data 구조에서 idea_id에 해당하는 (workspace, project, milestone, idea) 반환."""
+    for ws in data.get('workspaces', []):
+        for proj in ws.get('projects', []):
+            for ms in proj.get('milestones', []):
+                for idea in ms.get('ideas', []):
+                    if idea.get('id') == idea_id:
+                        return ws, proj, ms, idea
+    return None, None, None, None
+
+
 def find_task(data, task_id):
     """data 구조에서 task_id에 해당하는 (idea, task) 반환."""
     for ws in data.get('workspaces', []):
@@ -703,7 +714,7 @@ class Handler(SimpleHTTPRequestHandler):
     def _handle_run_idea(self, idea_id):
         try:
             data = read_data()
-            idea = find_idea(data, idea_id)
+            ws, proj, ms, idea = find_idea_context(data, idea_id)
             if idea is None:
                 self._send_json(404, {'error': f'idea {idea_id} not found'})
                 return
@@ -734,7 +745,13 @@ class Handler(SimpleHTTPRequestHandler):
             )
             prompt = "\n\n".join(parts)
 
-            sp = build_system_prompt(_SP_TASK_ROLE, _SP_NO_QUESTION, _SP_TASK_FORMAT)
+            user_sp = " ".join(filter(None, [
+                (ws or {}).get('systemPrompt', ''),
+                (proj or {}).get('systemPrompt', ''),
+                (ms or {}).get('systemPrompt', ''),
+                idea.get('systemPrompt', ''),
+            ]))
+            sp = build_system_prompt(_SP_TASK_ROLE, _SP_NO_QUESTION, _SP_TASK_FORMAT, user_sp)
             response_text = _call_ai_with_retry(
                 prompt, system_prompt=sp, timeout=120,
                 validate=_validate_task_json, max_retries=2
