@@ -352,6 +352,9 @@ class Handler(SimpleHTTPRequestHandler):
         if self.path == '/api/reveal-folder':
             self._handle_reveal_folder()
             return
+        if self.path == '/api/open-log':
+            self._handle_open_log()
+            return
         if self.path == '/api/classify-message':
             self._handle_classify_message()
             return
@@ -835,6 +838,25 @@ class Handler(SimpleHTTPRequestHandler):
             self._send_json(200, {'ok': True})
         except FileNotFoundError:
             self._send_json(500, {'error': f'경로를 찾을 수 없습니다: {folder_path}'})
+        except Exception as e:
+            self._send_json(500, {'error': str(e)})
+
+    def _handle_open_log(self):
+        log_path = BASE_DIR / 'ai_debug.log'
+        if not log_path.exists():
+            self._send_json(404, {'error': 'AI 로그 파일이 없습니다. 아직 AI를 사용하지 않았거나 로그가 생성되지 않았습니다.'})
+            return
+        try:
+            system = platform.system()
+            if system == 'Windows':
+                os.startfile(str(log_path))
+            elif system == 'Darwin':
+                subprocess.run(['open', str(log_path)], timeout=5, check=True,
+                               capture_output=True, **_TEXT_SUBPROCESS)
+            else:
+                subprocess.run(['xdg-open', str(log_path)], timeout=5, check=True,
+                               capture_output=True, **_TEXT_SUBPROCESS)
+            self._send_json(200, {'ok': True})
         except Exception as e:
             self._send_json(500, {'error': str(e)})
 
