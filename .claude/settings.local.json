@@ -22,7 +22,9 @@
       "Bash(/usr/local/bin/node --check /tmp/check_main.js)",
       "mcp__Claude_Preview__preview_start",
       "mcp__Control_Chrome__open_url",
-      "mcp__Control_Chrome__execute_javascript"
+      "mcp__Control_Chrome__execute_javascript",
+      "Bash(gh release:*)",
+      "Bash(brew list:*)"
     ]
   }
 }

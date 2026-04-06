@@ -5,6 +5,7 @@ AI 프롬프트를 체계적으로 관리하는 워크스페이스 툴.
 Workspace → Project → Milestone → Idea → Task 계층으로 작업을 구조화하고,
 AI를 연결해 Task별 프롬프트를 자동 생성·실행·저장합니다.
 
+**버전**: v1.0.5
 **지원 언어**: 한국어 · English · Tiếng Việt
 
 ---
@@ -51,6 +52,20 @@ AI를 연결해 Task별 프롬프트를 자동 생성·실행·저장합니다.
 | Gemini CLI | Gemini CLI 설치 | `npm install -g @google/gemini-cli` |
 
 API 타입 선택 시: 설정 페이지에서 **패키지 설치** → **API 키 입력** → 저장
+
+CLI 타입 선택 시: Idea 실행 전 프로젝트 루트에 `CLAUDE.md` / `GEMINI.md` 컨텍스트 파일이 자동 생성됩니다.
+
+---
+
+## 데이터 저장 위치
+
+앱 데이터(워크스페이스, 설정)는 OS 표준 디렉토리에 저장됩니다. 앱을 재설치·업데이트해도 데이터가 유지됩니다.
+
+| OS | 저장 경로 |
+|----|-----------|
+| macOS | `~/Library/Application Support/Millestone/` |
+| Windows | `%APPDATA%\Millestone\` |
+| Linux | `~/.config/millestone/` |
 
 ---
 
