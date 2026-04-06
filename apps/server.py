@@ -18,7 +18,7 @@ BASE_DIR = Path(__file__).parent          # apps/
 DATA_FILE = BASE_DIR / 'data.json'
 SETTINGS_FILE = BASE_DIR / 'settings.config'
 
-# subprocess.run에 text 모드 사용 시 공통 kwargs — 모든 OS에서 UTF-8 인코딩 보장
+# subprocess.run에 text 모드 사용 시 공통 kwargs — UTF-8로 디코딩을 시도하고 실패 시 대체(replace) 처리
 _TEXT_SUBPROCESS = {'text': True, 'encoding': 'utf-8', 'errors': 'replace'}
 
 

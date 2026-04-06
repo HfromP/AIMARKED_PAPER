@@ -6,7 +6,7 @@
 2. **파일 접근은 최대 2개로 제한한다.** ARCHITECTURE.md에서 타겟을 특정한 뒤 접근.
 3. **Search/Glob는 ARCHITECTURE.md로 해결 안 될 때만 사용한다.**
 4. **빌드 산출물, lock 파일, .DS_Store는 절대 읽지 않는다.**
-5. **GitHub 이슈 및 PR은 항상 Agent tool을 통해 읽는다.** `mcp__github__` 툴을 직접 호출하지 않는다.
+5. **GitHub 이슈 및 PR은 항상 Agent tool을 통해 읽는다.** Claude가 `mcp__github__` 툴을 직접 호출하는 대신, Agent tool에 위임하여 읽는다.
 
 ## 작업 규칙
 
