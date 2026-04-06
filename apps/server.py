@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import logging
 import json
 import os
 import platform
@@ -158,7 +159,7 @@ def call_ai(prompt, timeout=120):
     else:  # claude_cli (default)
         result = subprocess.run(
             [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
-            capture_output=True, **_TEXT_SUBPROCESS, timeout=timeout
+            capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=timeout
         )
         if result.returncode != 0:
             raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
@@ -179,14 +180,40 @@ def _ensure_packages():
 
 def extract_json(text):
     """CLI 응답에서 JSON 배열 추출. 코드블록 안팎 모두 처리."""
-    # ```json ... ``` 블록 우선 시도
-    m = re.search(r'```(?:json)?\s*(\[.*?\])\s*```', text, re.DOTALL)
+    def _list_from(parsed):
+        if isinstance(parsed, list):
+            return parsed
+        if isinstance(parsed, dict):
+            list_fields = [(k, v) for k, v in parsed.items() if isinstance(v, list)]
+            if len(list_fields) == 1:
+                return list_fields[0][1]
+        return None
+
+    decoder = json.JSONDecoder()
+
+    # 1. ```json ... ``` 블록 우선 시도 (raw_decode로 중첩 객체 처리)
+    m = re.search(r'```(?:json)?\s*(.*?)\s*```', text, re.DOTALL)
     if m:
-        return json.loads(m.group(1))
-    # 첫 번째 [ ... ] 추출
-    m = re.search(r'(\[.*\])', text, re.DOTALL)
-    if m:
-        return json.loads(m.group(1))
+        try:
+            obj, _ = decoder.raw_decode(m.group(1).strip())
+            result = _list_from(obj)
+            if result is not None:
+                return result
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # 2. 텍스트에서 첫 번째 유효한 [ ... ] 또는 { ... } 탐색
+    for i, c in enumerate(text):
+        if c in ('[', '{'):
+            try:
+                obj, _ = decoder.raw_decode(text, i)
+                result = _list_from(obj)
+                if result is not None:
+                    return result
+            except json.JSONDecodeError:
+                pass
+
+    logging.debug('extract_json 실패. AI 응답 길이: %d', len(text))
     raise ValueError('JSON 배열을 찾을 수 없습니다.')
 
 
@@ -621,7 +648,7 @@ class Handler(SimpleHTTPRequestHandler):
 
             result = subprocess.run(
                 [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
-                capture_output=True, **_TEXT_SUBPROCESS, timeout=60
+                capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=60
             )
 
             if result.returncode != 0:
@@ -666,7 +693,7 @@ class Handler(SimpleHTTPRequestHandler):
             # Claude CLI 실행
             result = subprocess.run(
                 [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt_text],
-                capture_output=True, **_TEXT_SUBPROCESS, timeout=120
+                capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=120
             )
             if result.returncode != 0:
                 raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
@@ -783,7 +810,7 @@ class Handler(SimpleHTTPRequestHandler):
 
             result = subprocess.run(
                 [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
-                capture_output=True, **_TEXT_SUBPROCESS, timeout=60
+                capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=60
             )
             if result.returncode != 0:
                 raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
@@ -815,7 +842,7 @@ class Handler(SimpleHTTPRequestHandler):
 
             result = subprocess.run(
                 [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
-                capture_output=True, **_TEXT_SUBPROCESS, timeout=30
+                capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=30
             )
             if result.returncode != 0:
                 raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
