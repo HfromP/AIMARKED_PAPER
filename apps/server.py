@@ -8,6 +8,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import webbrowser
@@ -65,6 +66,20 @@ _SP_TEXT_ONLY   = "요청한 텍스트만 출력하세요. 설명·머리말·�
 def build_system_prompt(*parts):
     """여러 시스템 프롬프트 조각을 공백으로 합쳐 하나의 문자열로 반환한다."""
     return " ".join(p.strip() for p in parts if p and p.strip())
+
+
+_CLI_CONTEXT_FILENAMES = {
+    'claude_cli': 'CLAUDE.md',
+    'gemini_cli': 'GEMINI.md',
+}
+
+
+def _write_cli_context(provider: str, system_prompt: str | None, directory: str):
+    """요청별 격리 디렉토리에 CLI 컨텍스트 파일을 생성한다."""
+    filename = _CLI_CONTEXT_FILENAMES.get(provider)
+    if not filename or not system_prompt:
+        return
+    (Path(directory) / filename).write_text(system_prompt, encoding='utf-8')
 
 
 def _find_claude_bin() -> Path:
@@ -183,11 +198,12 @@ def call_ai(prompt, timeout=120, system_prompt=None):
         return resp.text.strip()
 
     elif provider == 'gemini_cli':
-        effective = f"[System]\n{system_prompt}\n\n{prompt}" if system_prompt else prompt
-        result = subprocess.run(
-            ['gemini', '-p', effective],
-            capture_output=True, **_TEXT_SUBPROCESS, timeout=timeout
-        )
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            _write_cli_context('gemini_cli', system_prompt, tmp_dir)
+            result = subprocess.run(
+                ['gemini', '-p', prompt],
+                capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=timeout, cwd=tmp_dir
+            )
         if result.returncode != 0:
             raise RuntimeError(result.stderr.strip() or 'Gemini CLI 오류')
         return result.stdout.strip()
@@ -205,14 +221,15 @@ def call_ai(prompt, timeout=120, system_prompt=None):
         return result.stdout.strip()
 
     else:  # claude_cli (default)
-        cmd = [str(CLAUDE_BIN), '--print', '--output-format', 'text']
-        if system_prompt:
-            cmd += ['--system-prompt', system_prompt]
-        cmd.append(prompt)
-        result = subprocess.run(
-            cmd,
-            capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=timeout
-        )
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            _write_cli_context('claude_cli', system_prompt, tmp_dir)
+            cmd = [str(CLAUDE_BIN), '--print', '--output-format', 'text']
+            cmd.append(prompt)
+            result = subprocess.run(
+                cmd,
+                capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=timeout,
+                cwd=tmp_dir
+            )
         if result.returncode != 0:
             raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
         return result.stdout.strip()
@@ -323,15 +340,21 @@ def _call_ai_with_retry(prompt, system_prompt=None, timeout=120,
     raise ValueError("형식 오류 — 재시도 후에도 실패\n\n" + "\n\n".join(log))
 
 
-def find_idea(data, idea_id):
-    """data 구조에서 idea_id에 해당하는 idea dict 반환."""
+def find_idea_context(data, idea_id):
+    """data 구조에서 idea_id에 해당하는 (workspace, project, milestone, idea) 반환."""
     for ws in data.get('workspaces', []):
         for proj in ws.get('projects', []):
             for ms in proj.get('milestones', []):
                 for idea in ms.get('ideas', []):
                     if idea.get('id') == idea_id:
-                        return idea
-    return None
+                        return ws, proj, ms, idea
+    return None, None, None, None
+
+
+def find_idea(data, idea_id):
+    """data 구조에서 idea_id에 해당하는 idea dict 반환."""
+    _, _, _, idea = find_idea_context(data, idea_id)
+    return idea
 
 
 def find_task(data, task_id):
@@ -688,7 +711,7 @@ class Handler(SimpleHTTPRequestHandler):
     def _handle_run_idea(self, idea_id):
         try:
             data = read_data()
-            idea = find_idea(data, idea_id)
+            ws, proj, ms, idea = find_idea_context(data, idea_id)
             if idea is None:
                 self._send_json(404, {'error': f'idea {idea_id} not found'})
                 return
@@ -719,7 +742,13 @@ class Handler(SimpleHTTPRequestHandler):
             )
             prompt = "\n\n".join(parts)
 
-            sp = build_system_prompt(_SP_TASK_ROLE, _SP_NO_QUESTION, _SP_TASK_FORMAT)
+            user_sp = build_system_prompt(
+                (ws or {}).get('systemPrompt', ''),
+                (proj or {}).get('systemPrompt', ''),
+                (ms or {}).get('systemPrompt', ''),
+                idea.get('systemPrompt', ''),
+            )
+            sp = build_system_prompt(_SP_TASK_ROLE, _SP_NO_QUESTION, _SP_TASK_FORMAT, user_sp)
             response_text = _call_ai_with_retry(
                 prompt, system_prompt=sp, timeout=120,
                 validate=_validate_task_json, max_retries=2
