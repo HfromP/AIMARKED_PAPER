@@ -639,7 +639,7 @@ class Handler(SimpleHTTPRequestHandler):
                 t['status'] = 'idea'
                 t['prompts'] = []
 
-            idea.setdefault('tasks', []).extend(tasks)
+            idea['tasks'] = tasks
             write_data(data)
             self._send_json(200, idea)
 
