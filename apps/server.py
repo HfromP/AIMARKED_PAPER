@@ -612,6 +612,11 @@ class Handler(SimpleHTTPRequestHandler):
                 prompt, timeout=120,
                 system_prompt='JSON 배열만 출력하는 도구입니다. 질문 금지. 설명 금지. 반드시 JSON 배열만 출력하세요.'
             )
+            log_path = BASE_DIR / 'ai_debug.log'
+            with open(log_path, 'a', encoding='utf-8') as lf:
+                import datetime
+                lf.write(f'\n=== {datetime.datetime.now().isoformat()} ===\n')
+                lf.write(f'[PROMPT]\n{prompt}\n\n[RESPONSE]\n{response_text}\n')
             tasks = extract_json(response_text)
 
             # 기존 tasks에 추가 (id는 JS가 없으므로 timestamp 기반 생성)
