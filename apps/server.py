@@ -135,7 +135,7 @@ def call_ai(prompt, timeout=120):
     elif provider == 'gemini_cli':
         result = subprocess.run(
             ['gemini', '-p', prompt],
-            capture_output=True, text=True, timeout=timeout
+            capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=timeout
         )
         if result.returncode != 0:
             raise RuntimeError(result.stderr.strip() or 'Gemini CLI 오류')
@@ -146,7 +146,7 @@ def call_ai(prompt, timeout=120):
         result = subprocess.run(
             ['ollama', 'run', ollama_model],
             input=prompt,
-            capture_output=True, text=True, timeout=timeout
+            capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=timeout
         )
         if result.returncode != 0:
             raise RuntimeError(result.stderr.strip() or 'Ollama CLI 오류')
@@ -155,7 +155,7 @@ def call_ai(prompt, timeout=120):
     else:  # claude_cli (default)
         result = subprocess.run(
             [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
-            capture_output=True, text=True, timeout=timeout
+            capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=timeout
         )
         if result.returncode != 0:
             raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
@@ -358,7 +358,7 @@ class Handler(SimpleHTTPRequestHandler):
             result = subprocess.run(
                 cmd,
                 stdin=subprocess.DEVNULL,
-                capture_output=True, text=True, timeout=300
+                capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=300
             )
             if result.returncode == 0:
                 self._send_json(200, {'success': True, 'message': result.stdout.strip()})
@@ -385,7 +385,7 @@ class Handler(SimpleHTTPRequestHandler):
 
             result = subprocess.run(
                 [sys.executable, '-m', 'pip', 'install', pkg],
-                capture_output=True, text=True, timeout=120
+                capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=120
             )
             if result.returncode == 0:
                 self._send_json(200, {'success': True, 'message': f'{pkg} 설치 완료'})
@@ -422,7 +422,7 @@ class Handler(SimpleHTTPRequestHandler):
                 )
                 result = subprocess.run(
                     ['powershell', '-NoProfile', '-NonInteractive', '-Command', ps_script],
-                    capture_output=True, text=True, timeout=60
+                    capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60
                 )
                 path = result.stdout.strip()
                 if path:
@@ -436,7 +436,7 @@ class Handler(SimpleHTTPRequestHandler):
                 # 기존 macOS 코드
                 result = subprocess.run(
                     ['osascript', '-e', 'POSIX path of (choose folder)'],
-                    capture_output=True, text=True, timeout=60
+                    capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60
                 )
                 if result.returncode == 0:
                     path = result.stdout.strip()
@@ -448,7 +448,7 @@ class Handler(SimpleHTTPRequestHandler):
                 # Linux — zenity 사용 (설치 필요)
                 result = subprocess.run(
                     ['zenity', '--file-selection', '--directory'],
-                    capture_output=True, text=True, timeout=60
+                    capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60
                 )
                 if result.returncode == 0:
                     self._send_json(200, {'ok': True, 'path': result.stdout.strip()})
@@ -464,7 +464,7 @@ class Handler(SimpleHTTPRequestHandler):
         try:
             result = subprocess.run(
                 ['gemini', '--version'],
-                capture_output=True, text=True, timeout=10
+                capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=10
             )
             if result.returncode == 0:
                 version = result.stdout.strip() or result.stderr.strip()
@@ -482,7 +482,7 @@ class Handler(SimpleHTTPRequestHandler):
         try:
             result = subprocess.run(
                 ['ollama', '--version'],
-                capture_output=True, text=True, timeout=10
+                capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=10
             )
             if result.returncode == 0:
                 version = result.stdout.strip() or result.stderr.strip()
@@ -500,7 +500,7 @@ class Handler(SimpleHTTPRequestHandler):
         try:
             result = subprocess.run(
                 [str(CLAUDE_BIN), '--version'],
-                capture_output=True, text=True, timeout=10
+                capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=10
             )
             if result.returncode == 0:
                 version = result.stdout.strip() or result.stderr.strip()
@@ -615,7 +615,7 @@ class Handler(SimpleHTTPRequestHandler):
 
             result = subprocess.run(
                 [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
-                capture_output=True, text=True, timeout=60
+                capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60
             )
 
             if result.returncode != 0:
@@ -660,7 +660,7 @@ class Handler(SimpleHTTPRequestHandler):
             # Claude CLI 실행
             result = subprocess.run(
                 [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt_text],
-                capture_output=True, text=True, timeout=120
+                capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=120
             )
             if result.returncode != 0:
                 raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
@@ -777,7 +777,7 @@ class Handler(SimpleHTTPRequestHandler):
 
             result = subprocess.run(
                 [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
-                capture_output=True, text=True, timeout=60
+                capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60
             )
             if result.returncode != 0:
                 raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
@@ -809,7 +809,7 @@ class Handler(SimpleHTTPRequestHandler):
 
             result = subprocess.run(
                 [str(CLAUDE_BIN), '--print', '--output-format', 'text', prompt],
-                capture_output=True, text=True, timeout=30
+                capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=30
             )
             if result.returncode != 0:
                 raise RuntimeError(result.stderr.strip() or 'Claude CLI 오류')
