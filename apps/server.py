@@ -213,8 +213,7 @@ def extract_json(text):
             except json.JSONDecodeError:
                 pass
 
-    logging.debug('extract_json 실패. AI 응답 길이: %d', len(text))
-    raise ValueError('JSON 배열을 찾을 수 없습니다.')
+    raise ValueError(f'JSON 배열을 찾을 수 없습니다.\nAI 응답:\n{text}')
 
 
 def find_idea(data, idea_id):
