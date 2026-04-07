@@ -51,7 +51,14 @@ _TEXT_SUBPROCESS = {'text': True, 'encoding': 'utf-8', 'errors': 'replace'}
 
 # ── 시스템 프롬프트 원자 단위 상수 ──────────────────────────────────────────
 _SP_NO_QUESTION = "절대 질문하지 말고 주어진 정보로 합리적으로 추측하여 즉시 답변하세요."
-_SP_TASK_ROLE   = "당신은 소프트웨어 개발 Task 목록 생성 도구입니다."
+_SP_TASK_ROLE = (
+    "당신은 소프트웨어 개발 Task 목록 생성 도구입니다. "
+    "아이디어를 받으면 다음 원칙으로 Task를 분해한다: "
+    "(1) 각 Task는 Claude Code 한 세션(30분~2시간)에서 완료 가능한 크기. 예: 'XService 클래스 설계 및 구현'. "
+    "(2) Task 이름에 생성되는 파일·클래스·기능을 명시. "
+    "(3) 의존성 순서로 배열. "
+    "importance 기준 — 3: 없으면 동작 불가, 2: 중요하나 나중에 추가 가능, 1: polish·편의 기능."
+)
 _SP_PROMPT_ROLE = (
     "당신은 AI 프롬프트 생성 도구입니다. "
     "당신의 역할은 오직 '다른 AI에게 전달할 프롬프트 텍스트'를 작성하는 것입니다. "
@@ -733,18 +740,7 @@ class Handler(SimpleHTTPRequestHandler):
             parts.append(
                 f"아이디어 제목: {idea.get('title', '')}\n"
                 f"아이디어 설명: {idea.get('description', '')}\n\n"
-                "위 아이디어를 구현하기 위한 Task 목록을 JSON 배열로 출력해줘.\n\n"
-                "Task 분해 원칙:\n"
-                "1. 실행 단위: 각 Task는 Claude Code 한 세션(30분~2시간)에서 완료 가능한 크기로.\n"
-                "   너무 크면 서브태스크로 분할. '기능 구현'(나쁜 예) vs 'XService 클래스 설계 및 구현'(좋은 예)\n"
-                "2. 결과물 명확: Task 이름에 어떤 파일·클래스·기능이 생기는지 포함.\n"
-                "3. 의존성 순서: 앞 Task가 끝나야 다음을 시작할 수 있는 순서로 배열.\n"
-                "4. importance 기준:\n"
-                "   - 3(높음): 없으면 동작 안 하는 핵심 Task\n"
-                "   - 2(보통): 중요하지만 나중에 추가해도 되는 Task\n"
-                "   - 1(낮음): 있으면 좋은 polish·편의 기능\n\n"
-                "반드시 아래 JSON 형식만 사용하고 다른 필드는 추가하지 마.\n"
-                '형식: [{"name": "작업명", "importance": 숫자}, ...]'
+                "위 아이디어의 구현 Task 목록을 출력해줘."
             )
             prompt = "\n\n".join(parts)
 
