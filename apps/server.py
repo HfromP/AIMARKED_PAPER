@@ -323,7 +323,8 @@ def _validate_prompt_text(text):
     if stripped.endswith('?') or stripped.endswith('？'):
         return False, f"질문형 응답 감지: {stripped[:120]}"
     _context_request_endings = ('주세요', '바랍니다', 'please', 'provide')
-    if any(stripped.lower().endswith(e) for e in _context_request_endings):
+    _stripped_for_ending = stripped.rstrip('.。！!')
+    if any(_stripped_for_ending.lower().endswith(e) for e in _context_request_endings):
         return False, f"맥락 요청형 응답 감지: {stripped[:120]}"
     return True, ""
 
