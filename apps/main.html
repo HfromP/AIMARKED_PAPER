@@ -967,13 +967,32 @@
     .importance-dot.medium, .importance-popover-dot.medium { background: #f59e0b; }
     .importance-dot.high,   .importance-popover-dot.high   { background: #ef4444; }
 
-    .task-row-name {
+    .task-row-info {
       flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow: hidden;
+    }
+    .task-row-name {
       font-size: calc(13px * var(--fs, 1));
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    .task-row-desc {
+      font-size: calc(11px * var(--fs, 1));
+      color: #999;
+      border: none;
+      outline: none;
+      background: transparent;
+      width: 100%;
+      padding: 0;
+    }
+    .task-row-desc::placeholder { color: #ccc; }
+    body.dark .task-row-desc { color: #666; }
+    body.dark .task-row-desc::placeholder { color: #444; }
 
     .task-status-select {
       font-size: calc(11px * var(--fs, 1));
@@ -1713,11 +1732,12 @@
 
     class Task {
       constructor(name, importance = IMPORTANCE.MEDIUM, status = STATUS.IDEA) {
-        this.id         = crypto.randomUUID();   // 고유 식별자
-        this.name       = name;                  // Task 이름
-        this.importance = importance;            // IMPORTANCE.LOW | MEDIUM | HIGH
-        this.status     = status;               // STATUS.*
-        this.prompts    = [];                    // Prompt 인스턴스 배열
+        this.id          = crypto.randomUUID();   // 고유 식별자
+        this.name        = name;                  // Task 이름
+        this.description = '';                    // 한 줄 세부 설명
+        this.importance  = importance;            // IMPORTANCE.LOW | MEDIUM | HIGH
+        this.status      = status;               // STATUS.*
+        this.prompts     = [];                    // Prompt 인스턴스 배열
       }
     }
 
@@ -1841,6 +1861,7 @@
               (id.tasks || []).forEach(td => {
                 const task = new Task(td.name, td.importance, td.status);
                 task.id = td.id;
+                task.description = td.description || '';
                 (td.prompts || []).forEach(pd => {
                   if (pd.type === 'result') {
                     task.prompts.push({ ...pd });
@@ -2279,9 +2300,26 @@
           }, 0);
         });
 
+        const info = document.createElement('div');
+        info.className = 'task-row-info';
+
         const name = document.createElement('span');
         name.className = 'task-row-name';
         name.textContent = task.name;
+
+        const desc = document.createElement('input');
+        desc.className = 'task-row-desc';
+        desc.type = 'text';
+        desc.placeholder = '세부 설명...';
+        desc.value = task.description || '';
+        desc.addEventListener('change', async () => {
+          task.description = desc.value.trim();
+          await saveWorkspaces();
+        });
+        desc.addEventListener('dblclick', (e) => e.stopPropagation());
+
+        info.appendChild(name);
+        info.appendChild(desc);
 
         const sel = document.createElement('select');
         sel.className = `task-status-select ws-card-status status-${task.status}`;
@@ -2359,7 +2397,7 @@
         });
 
         row.appendChild(dot);
-        row.appendChild(name);
+        row.appendChild(info);
         row.appendChild(sel);
         row.appendChild(startBtn);
         row.appendChild(delBtn);

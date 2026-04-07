@@ -51,8 +51,20 @@ _TEXT_SUBPROCESS = {'text': True, 'encoding': 'utf-8', 'errors': 'replace'}
 
 # ── 시스템 프롬프트 원자 단위 상수 ──────────────────────────────────────────
 _SP_NO_QUESTION = "절대 질문하지 말고 주어진 정보로 합리적으로 추측하여 즉시 답변하세요."
-_SP_TASK_ROLE   = "당신은 소프트웨어 개발 Task 목록 생성 도구입니다."
-_SP_PROMPT_ROLE = "당신은 AI 프롬프트 생성 도구입니다."
+_SP_TASK_ROLE = (
+    "당신은 소프트웨어 개발 Task 목록 생성 도구입니다. "
+    "아이디어를 받으면 다음 원칙으로 Task를 분해한다: "
+    "(1) 각 Task는 Claude Code 한 세션(30분~2시간)에서 완료 가능한 크기. 예: 'XService 클래스 설계 및 구현'. "
+    "(2) Task 이름에 생성되는 파일·클래스·기능을 명시. "
+    "(3) 의존성 순서로 배열. "
+    "importance 기준 — 3: 없으면 동작 불가, 2: 중요하나 나중에 추가 가능, 1: polish·편의 기능."
+)
+_SP_PROMPT_ROLE = (
+    "당신은 AI 프롬프트 생성 도구입니다. "
+    "당신의 역할은 오직 '다른 AI에게 전달할 프롬프트 텍스트'를 작성하는 것입니다. "
+    "절대로 Task를 직접 수행하거나 결과물을 출력하지 마세요. "
+    "출력은 반드시 프롬프트 텍스트 단 하나여야 합니다."
+)
 _SP_REFINE_ROLE = "당신은 AI 프롬프트 개선 도구입니다."
 _SP_TASK_FORMAT = (
     '반드시 [{"name":"작업명","importance":숫자}] 형식의 JSON 배열만 출력하세요. '
@@ -728,17 +740,7 @@ class Handler(SimpleHTTPRequestHandler):
             parts.append(
                 f"아이디어 제목: {idea.get('title', '')}\n"
                 f"아이디어 설명: {idea.get('description', '')}\n\n"
-                "위 아이디어를 실제로 구현하기 위해 개발자가 수행해야 할 작업(Task) 목록을 JSON 배열로 출력해줘.\n"
-                "Task는 '아이디어 목록'이 아니라 구체적인 개발 단계(예: 설계, 구현, 테스트 등)야.\n"
-                "규칙:\n"
-                "- 절대 질문하지 말고, 주어진 정보로 합리적으로 추측해서 Task를 생성해줘.\n"
-                "- 반드시 아래 JSON 형식만 사용하고 다른 필드는 추가하지 마.\n"
-                '- 형식: [{"name": "작업명", "importance": 숫자}, ...]\n'
-                '- importance는 반드시 1(낮음), 2(보통), 3(높음) 중 하나의 숫자.\n'
-                '예시: [{"name": "요구사항 분석 및 설계", "importance": 3}, '
-                '{"name": "핵심 기능 구현", "importance": 3}, '
-                '{"name": "UI 컴포넌트 개발", "importance": 2}, '
-                '{"name": "테스트 및 디버깅", "importance": 2}]'
+                "위 아이디어의 구현 Task 목록을 출력해줘."
             )
             prompt = "\n\n".join(parts)
 
@@ -792,13 +794,25 @@ class Handler(SimpleHTTPRequestHandler):
             if history:
                 parts.append("[이전 프롬프트 히스토리]\n" +
                              "\n".join(f"{i+1}. {h}" for i, h in enumerate(history)))
+            task_desc = task.get('description', '').strip()
             parts.append(
                 f"아이디어: {idea.get('title', '')}\n"
                 f"아이디어 설명: {idea.get('description', '')}\n"
-                f"Task 이름: {task.get('name', '')}\n\n"
-                "위 Task를 수행하기 위한 가장 효과적인 AI 프롬프트를 하나 생성해줘.\n"
-                "절대 질문하지 말고, 주어진 정보로 합리적으로 추측해서 바로 프롬프트를 생성해줘.\n"
-                "프롬프트 텍스트만 출력하고 다른 설명은 하지 마."
+                f"Task 이름: {task.get('name', '')}\n"
+                + (f"Task 세부 설명: {task_desc}\n" if task_desc else "") +
+                "\n위 Task를 수행하기 위해 다른 AI(Claude Code)에게 전달할 프롬프트를 작성해줘.\n"
+                "아래 구조를 반드시 따를 것:\n\n"
+                "## Task: [Task 이름]\n\n"
+                "[Task의 목적 1~2문장]\n\n"
+                "### 구현할 것\n"
+                "- [결과물]: [구체적인 스펙]\n\n"
+                "### 제약 조건\n"
+                "- [기존 코드/패턴과의 연결, 네이밍, 파일 위치 등]\n\n"
+                "### 완료 기준\n"
+                "- [ ] [검증 가능한 기준]\n\n"
+                "---\n"
+                "계획을 먼저 작성하고 승인 후 구현해줘.\n\n"
+                "규칙: Task를 직접 실행하지 말고 프롬프트 텍스트만 출력할 것."
             )
             prompt = "\n\n".join(parts)
             sp = build_system_prompt(_SP_PROMPT_ROLE, _SP_NO_QUESTION, _SP_TEXT_ONLY, user_sp)
