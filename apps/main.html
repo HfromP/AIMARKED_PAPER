@@ -3687,6 +3687,7 @@
 
     document.getElementById('loading-wait-btn').addEventListener('click', () => {
       document.getElementById('loading-popup').classList.add('popup-hidden');
+      document.getElementById('loading-overlay').classList.remove('open');
     });
 
     // 페이지 로드 시 저장된 테마 및 폰트 스케일 적용
