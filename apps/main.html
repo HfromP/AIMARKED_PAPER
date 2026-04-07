@@ -2297,8 +2297,9 @@
         if (idea.tasks.length > 0) {
           const confirmed = await showRunConfirm();
           if (!confirmed) return;
-          idea.tasks = [];
         }
+        const previousTasks = idea.tasks.slice();
+        idea.tasks = [];
         runBtn.disabled = true;
         const orig = runBtn.innerHTML;
         runBtn.innerHTML = '...';
@@ -2316,6 +2317,7 @@
           renderIdeaDetail(ws, proj, ms, idea);
           renderTree();
         } catch (err) {
+          idea.tasks = previousTasks;
           if (err.name !== 'AbortError') alert('Task 생성 실패: ' + err.message);
         } finally {
           hideLoadingPopup();
@@ -2617,9 +2619,10 @@
           if (idea.tasks.length > 0) {
             const confirmed = await showRunConfirm();
             if (!confirmed) return;
-            idea.tasks = [];
           }
 
+          const previousTasks = idea.tasks.slice();
+          idea.tasks = [];
           btn.disabled = true;
           const origHTML = btn.innerHTML;
           btn.innerHTML = '<span style="font-size:calc(11px * var(--fs, 1));padding:0 2px">...</span>';
@@ -2636,6 +2639,7 @@
             renderIdeas(ws, proj, ms);
             renderTree();
           } catch (err) {
+            idea.tasks = previousTasks;
             if (err.name !== 'AbortError') alert('Task 생성 실패: ' + err.message);
           } finally {
             hideLoadingPopup();
