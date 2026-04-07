@@ -67,7 +67,7 @@ _SP_PROMPT_ROLE = (
 )
 _SP_REFINE_ROLE = (
     "당신은 AI 프롬프트 개선 도구입니다. "
-    "[원본 프롬프트]를 [수정 지시]에 따라 수정한 결과 프롬프트 텍스트만 출력하라. "
+    "원본 프롬프트를 수정 지시에 따라 수정한 결과 텍스트만 출력하라. "
     "맥락 요청·상태 메시지·설명·질문·'대기 중' 같은 출력은 절대 금지."
 )
 _SP_TASK_FORMAT = (
@@ -323,7 +323,8 @@ def _validate_prompt_text(text):
     if stripped.endswith('?') or stripped.endswith('？'):
         return False, f"질문형 응답 감지: {stripped[:120]}"
     _context_request_endings = ('주세요', '바랍니다', 'please', 'provide')
-    if any(stripped.lower().endswith(e) for e in _context_request_endings):
+    _stripped_for_ending = stripped.rstrip('.。！!')
+    if any(_stripped_for_ending.lower().endswith(e) for e in _context_request_endings):
         return False, f"맥락 요청형 응답 감지: {stripped[:120]}"
     return True, ""
 
