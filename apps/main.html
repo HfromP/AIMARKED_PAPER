@@ -1307,6 +1307,63 @@
     }
     #run-confirm-modal.open { display: flex; }
 
+    /* ── Loading Popup ── */
+    #loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+    }
+    #loading-overlay.open { display: flex; }
+    #loading-popup {
+      background: #fff;
+      border-radius: 14px;
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      min-width: 240px;
+    }
+    body.dark #loading-popup { background: #1e1e1e; }
+    .loading-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid #e0e0e0;
+      border-top-color: #555;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    body.dark .loading-spinner { border-color: #444; border-top-color: #aaa; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading-message {
+      margin: 0;
+      font-size: calc(14px * var(--fs, 1));
+      color: inherit;
+    }
+    .loading-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    .loading-buttons button {
+      padding: 7px 18px;
+      border-radius: 8px;
+      border: 1px solid #d0d0d0;
+      background: none;
+      font-size: calc(13px * var(--fs, 1));
+      color: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .loading-buttons button:hover { background: rgba(0,0,0,0.06); }
+    body.dark .loading-buttons button { border-color: #555; }
+    body.dark .loading-buttons button:hover { background: rgba(255,255,255,0.08); }
+    #loading-popup.popup-hidden { display: none; }
+
     /* ── Toast ── */
     #toast {
       position: fixed;
@@ -1699,6 +1756,17 @@
       <div class="modal-actions">
         <button class="btn-modal" id="btn-run-confirm-cancel">아니오</button>
         <button class="btn-modal btn-confirm" id="btn-run-confirm-ok">예, 실행</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="loading-overlay">
+    <div id="loading-popup">
+      <div class="loading-spinner"></div>
+      <p id="loading-message">AI가 응답 중입니다...</p>
+      <div class="loading-buttons">
+        <button id="loading-cancel-btn">취소</button>
+        <button id="loading-wait-btn">기다리기</button>
       </div>
     </div>
   </div>
@@ -2234,8 +2302,9 @@
         runBtn.disabled = true;
         const orig = runBtn.innerHTML;
         runBtn.innerHTML = '...';
+        showLoadingPopup();
         try {
-          const res = await fetch(`/api/ideas/${idea.id}/run`, { method: 'POST' });
+          const res = await fetch(`/api/ideas/${idea.id}/run`, { method: 'POST', signal: currentAbortController.signal });
           const updated = await res.json();
           if (updated.error) throw new Error(updated.error);
           idea.tasks = (updated.tasks || []).map(td => {
@@ -2247,8 +2316,9 @@
           renderIdeaDetail(ws, proj, ms, idea);
           renderTree();
         } catch (err) {
-          alert('Task 생성 실패: ' + err.message);
+          if (err.name !== 'AbortError') alert('Task 생성 실패: ' + err.message);
         } finally {
+          hideLoadingPopup();
           runBtn.disabled = false;
           runBtn.innerHTML = orig;
         }
@@ -2553,8 +2623,9 @@
           btn.disabled = true;
           const origHTML = btn.innerHTML;
           btn.innerHTML = '<span style="font-size:calc(11px * var(--fs, 1));padding:0 2px">...</span>';
+          showLoadingPopup();
           try {
-            const res = await fetch(`/api/ideas/${idea.id}/run`, { method: 'POST' });
+            const res = await fetch(`/api/ideas/${idea.id}/run`, { method: 'POST', signal: currentAbortController.signal });
             const updated = await res.json();
             if (updated.error) throw new Error(updated.error);
             idea.tasks = (updated.tasks || []).map(td => {
@@ -2565,8 +2636,9 @@
             renderIdeas(ws, proj, ms);
             renderTree();
           } catch (err) {
-            alert('Task 생성 실패: ' + err.message);
+            if (err.name !== 'AbortError') alert('Task 생성 실패: ' + err.message);
           } finally {
+            hideLoadingPopup();
             btn.disabled = false;
             btn.innerHTML = origHTML;
           }
@@ -3592,6 +3664,30 @@
     function saveTheme(theme) {
       localStorage.setItem(STORAGE_KEY, theme);
     }
+
+    // ── Loading Popup ──
+    let currentAbortController = null;
+
+    function showLoadingPopup() {
+      currentAbortController = new AbortController();
+      document.getElementById('loading-popup').classList.remove('popup-hidden');
+      document.getElementById('loading-overlay').classList.add('open');
+    }
+
+    function hideLoadingPopup() {
+      document.getElementById('loading-overlay').classList.remove('open');
+      document.getElementById('loading-popup').classList.remove('popup-hidden');
+      currentAbortController = null;
+    }
+
+    document.getElementById('loading-cancel-btn').addEventListener('click', () => {
+      currentAbortController?.abort();
+      hideLoadingPopup();
+    });
+
+    document.getElementById('loading-wait-btn').addEventListener('click', () => {
+      document.getElementById('loading-popup').classList.add('popup-hidden');
+    });
 
     // 페이지 로드 시 저장된 테마 및 폰트 스케일 적용
     applyTheme(loadTheme());
