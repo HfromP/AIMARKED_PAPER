@@ -130,6 +130,7 @@ def _find_claude_bin() -> Path:
 CLAUDE_BIN = _find_claude_bin()
 _server_instance = None
 _last_heartbeat = None
+_ai_session_history: list = []
 HEARTBEAT_TIMEOUT = 8   # 초: 마지막 heartbeat 후 이 시간이 지나면 종료 확인 시작 (프론트 간격 3s × 2 + 여유 2s)
 STARTUP_GRACE = 30      # 초: 서버 시작 직후 watchdog 대기 시간
 
@@ -487,6 +488,9 @@ class Handler(SimpleHTTPRequestHandler):
         if self.path == '/api/heartbeat':
             self._handle_heartbeat()
             return
+        if self.path == '/api/reset-session':
+            self._handle_reset_session()
+            return
         self._send_json(404, {'error': 'Not found'})
 
     # ── 핸들러 구현 ────────────────────────────────────────
@@ -589,6 +593,13 @@ class Handler(SimpleHTTPRequestHandler):
         global _last_heartbeat
         _last_heartbeat = time.time()
         self._send_json(200, {'ok': True})
+
+    def _handle_reset_session(self):
+        global _ai_session_history
+        _ai_session_history.clear()
+        settings = read_settings()
+        provider = settings.get('ai_provider', 'claude_cli')
+        self._send_json(200, {'success': True, 'provider': provider})
 
     def _handle_browse_folder(self):
         try:

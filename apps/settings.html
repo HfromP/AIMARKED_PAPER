@@ -433,6 +433,15 @@
     </div>
 
     <div class="settings-section">
+      <h2>AI 세션</h2>
+      <div class="settings-row">
+        <span class="settings-label">세션 초기화</span>
+        <button class="btn-action" id="btn-reset-session" onclick="resetSession()">세션 초기화</button>
+        <span id="session-reset-msg" style="font-size:calc(12px * var(--fs,1)); color:#888; min-height:1em;"></span>
+      </div>
+    </div>
+
+    <div class="settings-section">
       <h2>디버그</h2>
       <div class="settings-row">
         <span class="settings-label">AI 응답 로그</span>
@@ -819,6 +828,23 @@
     function restartOnboarding() {
       localStorage.removeItem('onboarding.done');
       location.replace('onboarding.html');
+    }
+
+    async function resetSession() {
+      const btn = document.getElementById('btn-reset-session');
+      const msg = document.getElementById('session-reset-msg');
+      btn.disabled = true;
+      msg.textContent = '초기화 중…';
+      try {
+        const res = await fetch('/api/reset-session', { method: 'POST' });
+        const data = await res.json();
+        msg.textContent = data.success ? '초기화 완료' : '초기화 실패';
+      } catch {
+        msg.textContent = '서버 오류';
+      } finally {
+        btn.disabled = false;
+        setTimeout(() => { msg.textContent = ''; }, 2000);
+      }
     }
 
     async function openLog() {
