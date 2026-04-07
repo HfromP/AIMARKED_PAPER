@@ -348,10 +348,12 @@ def _validate_refine_text(text):
 
 
 def _call_ai_with_retry(prompt, system_prompt=None, timeout=120,
-                        validate=None, max_retries=2):
+                        validate=None, max_retries=2, log_fn=None):
     """AI 호출 + 검증 + 재시도.
 
     validate: (text) → (ok: bool, reason: str)
+    log_fn:   (attempt: int, response: str, ok: bool|None, reason: str|None) → None
+              응답을 받는 즉시 호출됨 (validate 전).
     성공 시 응답 텍스트 반환.
     전부 실패 시 ValueError (각 시도 요약 포함).
     """
@@ -360,8 +362,12 @@ def _call_ai_with_retry(prompt, system_prompt=None, timeout=120,
     for attempt in range(max_retries + 1):
         response = call_ai(prompt, timeout=timeout, system_prompt=system_prompt)
         if validate is None:
+            if log_fn:
+                log_fn(attempt + 1, response, True, None)
             return response
         ok, reason = validate(response)
+        if log_fn:
+            log_fn(attempt + 1, response, ok, reason)
         log.append(
             f"[시도 {attempt + 1}] 사유: {reason or '없음'}\n"
             f"AI 응답: {response[:300]}"
@@ -1031,15 +1037,19 @@ class Handler(SimpleHTTPRequestHandler):
             log_path = BASE_DIR / 'ai_debug.log'
             with open(log_path, 'a', encoding='utf-8') as lf:
                 lf.write(f'\n=== REFINE {datetime.datetime.now().isoformat()} ===\n')
+                lf.write(f'[SYSTEM]\n{sp}\n')
                 lf.write(f'[PROMPT]\n{prompt}\n')
+
+            def _log_attempt(attempt, response, ok, reason):
+                with open(log_path, 'a', encoding='utf-8') as lf:
+                    lf.write(f'[시도 {attempt}] ok={ok} | 사유={reason or "없음"}\n')
+                    lf.write(f'[응답]\n{response}\n')
 
             result = _call_ai_with_retry(
                 prompt, system_prompt=sp, timeout=60,
-                validate=_validate_refine_text, max_retries=1
+                validate=_validate_refine_text, max_retries=1,
+                log_fn=_log_attempt
             )
-
-            with open(log_path, 'a', encoding='utf-8') as lf:
-                lf.write(f'[RESPONSE]\n{result}\n')
 
             self._send_json(200, {'ok': True, 'refinedPrompt': result})
 
