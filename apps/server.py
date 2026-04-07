@@ -733,17 +733,18 @@ class Handler(SimpleHTTPRequestHandler):
             parts.append(
                 f"아이디어 제목: {idea.get('title', '')}\n"
                 f"아이디어 설명: {idea.get('description', '')}\n\n"
-                "위 아이디어를 실제로 구현하기 위해 개발자가 수행해야 할 작업(Task) 목록을 JSON 배열로 출력해줘.\n"
-                "Task는 '아이디어 목록'이 아니라 구체적인 개발 단계(예: 설계, 구현, 테스트 등)야.\n"
-                "규칙:\n"
-                "- 절대 질문하지 말고, 주어진 정보로 합리적으로 추측해서 Task를 생성해줘.\n"
-                "- 반드시 아래 JSON 형식만 사용하고 다른 필드는 추가하지 마.\n"
-                '- 형식: [{"name": "작업명", "importance": 숫자}, ...]\n'
-                '- importance는 반드시 1(낮음), 2(보통), 3(높음) 중 하나의 숫자.\n'
-                '예시: [{"name": "요구사항 분석 및 설계", "importance": 3}, '
-                '{"name": "핵심 기능 구현", "importance": 3}, '
-                '{"name": "UI 컴포넌트 개발", "importance": 2}, '
-                '{"name": "테스트 및 디버깅", "importance": 2}]'
+                "위 아이디어를 구현하기 위한 Task 목록을 JSON 배열로 출력해줘.\n\n"
+                "Task 분해 원칙:\n"
+                "1. 실행 단위: 각 Task는 Claude Code 한 세션(30분~2시간)에서 완료 가능한 크기로.\n"
+                "   너무 크면 서브태스크로 분할. '기능 구현'(나쁜 예) vs 'XService 클래스 설계 및 구현'(좋은 예)\n"
+                "2. 결과물 명확: Task 이름에 어떤 파일·클래스·기능이 생기는지 포함.\n"
+                "3. 의존성 순서: 앞 Task가 끝나야 다음을 시작할 수 있는 순서로 배열.\n"
+                "4. importance 기준:\n"
+                "   - 3(높음): 없으면 동작 안 하는 핵심 Task\n"
+                "   - 2(보통): 중요하지만 나중에 추가해도 되는 Task\n"
+                "   - 1(낮음): 있으면 좋은 polish·편의 기능\n\n"
+                "반드시 아래 JSON 형식만 사용하고 다른 필드는 추가하지 마.\n"
+                '형식: [{"name": "작업명", "importance": 숫자}, ...]'
             )
             prompt = "\n\n".join(parts)
 
