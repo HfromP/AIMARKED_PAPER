@@ -797,14 +797,25 @@ class Handler(SimpleHTTPRequestHandler):
             if history:
                 parts.append("[이전 프롬프트 히스토리]\n" +
                              "\n".join(f"{i+1}. {h}" for i, h in enumerate(history)))
+            task_desc = task.get('description', '').strip()
             parts.append(
                 f"아이디어: {idea.get('title', '')}\n"
                 f"아이디어 설명: {idea.get('description', '')}\n"
-                f"Task 이름: {task.get('name', '')}\n\n"
-                "위 Task를 수행하기 위해 다른 AI에게 전달할 프롬프트 텍스트를 하나 작성해줘.\n"
-                "- 출력은 프롬프트 텍스트 자체만 작성할 것\n"
-                "- Task를 직접 실행하거나 결과를 출력하지 말 것\n"
-                "- 설명, 서문, 예시 없이 프롬프트 텍스트만 출력할 것"
+                f"Task 이름: {task.get('name', '')}\n"
+                + (f"Task 세부 설명: {task_desc}\n" if task_desc else "") +
+                "\n위 Task를 수행하기 위해 다른 AI(Claude Code)에게 전달할 프롬프트를 작성해줘.\n"
+                "아래 구조를 반드시 따를 것:\n\n"
+                "## Task: [Task 이름]\n\n"
+                "[Task의 목적 1~2문장]\n\n"
+                "### 구현할 것\n"
+                "- [결과물]: [구체적인 스펙]\n\n"
+                "### 제약 조건\n"
+                "- [기존 코드/패턴과의 연결, 네이밍, 파일 위치 등]\n\n"
+                "### 완료 기준\n"
+                "- [ ] [검증 가능한 기준]\n\n"
+                "---\n"
+                "계획을 먼저 작성하고 승인 후 구현해줘.\n\n"
+                "규칙: Task를 직접 실행하지 말고 프롬프트 텍스트만 출력할 것."
             )
             prompt = "\n\n".join(parts)
             sp = build_system_prompt(_SP_PROMPT_ROLE, _SP_NO_QUESTION, _SP_TEXT_ONLY, user_sp)
