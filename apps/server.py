@@ -336,6 +336,17 @@ def _validate_prompt_text(text):
     return True, ""
 
 
+def _validate_refine_text(text):
+    """refine-prompt 전용 검증. 빈 응답과 순수 질문만 거른다.
+    정제된 프롬프트는 '주세요'로 끝나도 정상이므로 맥락 요청 체크를 하지 않는다."""
+    stripped = (text or "").strip()
+    if len(stripped) < 3:
+        return False, f"응답이 너무 짧음: {stripped!r}"
+    if stripped.endswith('?') or stripped.endswith('？'):
+        return False, f"질문형 응답 감지: {stripped[:120]}"
+    return True, ""
+
+
 def _call_ai_with_retry(prompt, system_prompt=None, timeout=120,
                         validate=None, max_retries=2):
     """AI 호출 + 검증 + 재시도.
@@ -1024,7 +1035,7 @@ class Handler(SimpleHTTPRequestHandler):
 
             result = _call_ai_with_retry(
                 prompt, system_prompt=sp, timeout=60,
-                validate=_validate_prompt_text, max_retries=1
+                validate=_validate_refine_text, max_retries=1
             )
 
             with open(log_path, 'a', encoding='utf-8') as lf:
