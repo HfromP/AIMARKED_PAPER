@@ -1968,6 +1968,8 @@
       document.getElementById('btn-add-proj').style.display = '';
       document.getElementById('ws-grid').style.display = 'none';
       document.getElementById('proj-grid').style.display = '';
+      document.getElementById('idea-detail').style.display = 'none';
+      document.getElementById('content').classList.remove('idea-active');
       document.getElementById('ws-sysprompt-block').style.display = '';
       document.getElementById('ws-ctx-sysprompt').value = ws.systemPrompt || '';
       renderProjects(ws);
@@ -2099,6 +2101,8 @@
       document.getElementById('ws-sysprompt-block').style.display = 'none';
       document.getElementById('btn-add-milestone').style.display = '';
       document.getElementById('milestone-grid').style.display = '';
+      document.getElementById('idea-detail').style.display = 'none';
+      document.getElementById('content').classList.remove('idea-active');
       document.getElementById('proj-sysprompt-block').style.display = '';
       document.getElementById('proj-ctx-sysprompt').value = proj.systemPrompt || '';
       renderMilestones(ws, proj);
@@ -3068,6 +3072,8 @@
       document.getElementById('proj-grid').style.display = 'none';
       document.getElementById('milestone-grid').style.display = 'none';
       document.getElementById('idea-grid').style.display = 'none';
+      document.getElementById('idea-detail').style.display = 'none';
+      document.getElementById('content').classList.remove('idea-active');
       document.getElementById('btn-add-ws').style.display = '';
       document.getElementById('btn-add-proj').style.display = 'none';
       document.getElementById('btn-add-milestone').style.display = 'none';
