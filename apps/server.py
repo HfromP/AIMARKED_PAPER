@@ -65,7 +65,11 @@ _SP_PROMPT_ROLE = (
     "절대로 Task를 직접 수행하거나 결과물을 출력하지 마세요. "
     "출력은 반드시 프롬프트 텍스트 단 하나여야 합니다."
 )
-_SP_REFINE_ROLE = "당신은 AI 프롬프트 개선 도구입니다."
+_SP_REFINE_ROLE = (
+    "당신은 AI 프롬프트 개선 도구입니다. "
+    "주어진 지시에 따라 원본 프롬프트를 수정한 결과물만 출력하라. "
+    "상태 메시지·설명·질문·'대기 중' 같은 처리 중 문구는 절대 출력하지 마라."
+)
 _SP_TASK_FORMAT = (
     '반드시 [{"name":"작업명","importance":숫자}] 형식의 JSON 배열만 출력하세요. '
     'importance는 1(낮음)·2(보통)·3(높음) 중 하나의 정수. '
@@ -979,9 +983,10 @@ class Handler(SimpleHTTPRequestHandler):
             history = body.get('conversationHistory', [])
 
             parts = []
-            if history:
+            history_to_show = history[:-1] if history and history[-1] == original else history
+            if history_to_show:
                 parts.append("[대화 히스토리]\n" +
-                             "\n".join(f"{i+1}. {h}" for i, h in enumerate(history)))
+                             "\n".join(f"{i+1}. {h}" for i, h in enumerate(history_to_show)))
             parts.append(
                 "다음 프롬프트를 주어진 지시에 따라 수정해줘.\n"
                 "수정된 프롬프트만 출력하고 다른 설명은 하지 마.\n\n"
@@ -991,7 +996,10 @@ class Handler(SimpleHTTPRequestHandler):
             prompt = "\n\n".join(parts)
             sp = build_system_prompt(_SP_REFINE_ROLE, _SP_NO_QUESTION, _SP_TEXT_ONLY, user_sp)
 
-            result = call_ai(prompt, system_prompt=sp, timeout=60)
+            result = _call_ai_with_retry(
+                prompt, system_prompt=sp, timeout=60,
+                validate=_validate_prompt_text, max_retries=1
+            )
             self._send_json(200, {'ok': True, 'refinedPrompt': result})
 
         except Exception as e:
