@@ -2315,6 +2315,7 @@
           task.description = desc.value.trim();
           saveWorkspaces();
         });
+        desc.addEventListener('dblclick', (e) => e.stopPropagation());
 
         info.appendChild(name);
         info.appendChild(desc);
