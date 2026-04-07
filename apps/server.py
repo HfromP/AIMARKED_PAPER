@@ -187,7 +187,7 @@ def call_ai(prompt, timeout=120, system_prompt=None):
         if system_prompt:
             messages.append({'role': 'system', 'content': system_prompt})
         messages.append({'role': 'user', 'content': prompt})
-        resp = client.chat.completions.create(model='gpt-4o', messages=messages)
+        resp = client.chat.completions.create(model='gpt-4o', messages=messages, temperature=0)
         return resp.choices[0].message.content.strip()
 
     elif provider == 'claude_api':
@@ -199,7 +199,7 @@ def call_ai(prompt, timeout=120, system_prompt=None):
         if not api_key:
             raise ValueError('Anthropic API 키가 설정되지 않았습니다.')
         client = anthropic.Anthropic(api_key=api_key, timeout=timeout)
-        kwargs = dict(model='claude-sonnet-4-6', max_tokens=4096,
+        kwargs = dict(model='claude-sonnet-4-6', max_tokens=4096, temperature=0,
                       messages=[{'role': 'user', 'content': prompt}])
         if system_prompt:
             kwargs['system'] = system_prompt
@@ -217,7 +217,7 @@ def call_ai(prompt, timeout=120, system_prompt=None):
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.0-flash',
                                       system_instruction=system_prompt or None)
-        resp = model.generate_content(prompt)
+        resp = model.generate_content(prompt, generation_config={'temperature': 0})
         return resp.text.strip()
 
     elif provider == 'gemini_cli':
@@ -336,14 +336,16 @@ def _validate_prompt_text(text):
     return True, ""
 
 
-def _validate_refine_text(text):
-    """refine-prompt 전용 검증. 빈 응답과 순수 질문만 거른다.
+def _validate_refine_text(text, original_prompt=None):
+    """refine-prompt 전용 검증. 빈 응답, 순수 질문, 원본 그대로 반환을 거른다.
     정제된 프롬프트는 '주세요'로 끝나도 정상이므로 맥락 요청 체크를 하지 않는다."""
     stripped = (text or "").strip()
     if len(stripped) < 3:
         return False, f"응답이 너무 짧음: {stripped!r}"
     if stripped.endswith('?') or stripped.endswith('？'):
         return False, f"질문형 응답 감지: {stripped[:120]}"
+    if original_prompt and stripped == original_prompt.strip():
+        return False, "원본과 동일 — 수정이 이뤄지지 않음"
     return True, ""
 
 
@@ -1026,9 +1028,11 @@ class Handler(SimpleHTTPRequestHandler):
                 parts.append("[대화 히스토리]\n" +
                              "\n".join(f"{i+1}. {h}" for i, h in enumerate(history_to_show)))
             parts.append(
-                f"[원본 프롬프트]\n{original}\n\n"
-                f"[수정 지시]\n{instruction}\n"
-                f"(수정 지시가 영향을 주는 모든 섹션을 일관되게 반영할 것)"
+                f"<original_prompt>\n{original}\n</original_prompt>\n\n"
+                f"<instruction>\n{instruction}\n"
+                f"(수정 지시가 영향을 주는 모든 섹션을 일관되게 반영할 것)\n</instruction>\n\n"
+                f"위 instruction에 따라 original_prompt를 수정하세요.\n"
+                f"수정된 프롬프트만 출력하세요. 설명·주석·XML 태그 출력 금지."
             )
             prompt = "\n\n".join(parts)
             sp = build_system_prompt(_SP_REFINE_ROLE, _SP_NO_QUESTION, _SP_TEXT_ONLY, user_sp)
@@ -1047,7 +1051,7 @@ class Handler(SimpleHTTPRequestHandler):
 
             result = _call_ai_with_retry(
                 prompt, system_prompt=sp, timeout=60,
-                validate=_validate_refine_text, max_retries=1,
+                validate=lambda t: _validate_refine_text(t, original), max_retries=1,
                 log_fn=_log_attempt
             )
 

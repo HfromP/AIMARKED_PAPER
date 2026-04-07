@@ -330,6 +330,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: 16px;
+      align-items: start;
     }
 
     #proj-modal, #milestone-modal {
@@ -347,6 +348,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: 16px;
+      align-items: start;
     }
 
     #btn-add-milestone {
@@ -391,6 +393,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
       gap: 16px;
+      align-items: start;
     }
 
     #btn-add-idea {
@@ -488,6 +491,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: 16px;
+      align-items: start;
     }
 
     .ws-card {
@@ -1204,30 +1208,16 @@
       padding-left: 4px;
     }
 
-    .chat-score-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 13px;
-      padding: 1px 4px;
-      border-radius: 4px;
-      color: #bbb;
-      transition: color 0.12s;
-    }
-    .chat-score-btn:hover { color: #555; }
-    .chat-score-btn.active { color: #f59e0b; }
-    .chat-score-btn.active.down { color: #ef4444; }
-
     .chat-del-btn {
       background: none;
       border: none;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 15px;
       color: #ddd;
-      padding: 1px 4px;
+      padding: 1px 5px;
       border-radius: 4px;
       transition: color 0.12s;
-      margin-left: auto;
+      line-height: 1;
     }
     .chat-del-btn:hover { color: #e53e3e; }
 
@@ -1235,14 +1225,21 @@
       background: none;
       border: none;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 15px;
       color: #bbb;
-      padding: 1px 4px;
+      padding: 1px 5px;
       border-radius: 4px;
       transition: color 0.12s;
+      line-height: 1;
     }
     .chat-copy-btn:hover { color: #555; }
     body.dark .chat-copy-btn:hover { color: #ccc; }
+
+    .chat-btn-right-group {
+      display: flex;
+      gap: 2px;
+      margin-left: auto;
+    }
 
     #task-chat-input-area {
       flex-shrink: 0;
@@ -1766,7 +1763,6 @@
       <p id="loading-message">AI가 응답 중입니다...</p>
       <div class="loading-buttons">
         <button id="loading-cancel-btn">취소</button>
-        <button id="loading-wait-btn">기다리기</button>
       </div>
     </div>
   </div>
@@ -2020,8 +2016,8 @@
           <div class="ws-card-desc">${escapeHtml(ws.description) || '<span style="opacity:0.4">설명 없음</span>'}</div>
         `;
         card.addEventListener('click', () => selectWorkspace(ws));
-        card.querySelector('.btn-edit').addEventListener('click', () => openModal('edit', ws));
-        card.querySelector('.btn-delete').addEventListener('click', () => deleteWorkspace(ws.id));
+        card.querySelector('.btn-edit').addEventListener('click', (e) => { e.stopPropagation(); openModal('edit', ws); });
+        card.querySelector('.btn-delete').addEventListener('click', (e) => { e.stopPropagation(); deleteWorkspace(ws.id); });
         grid.appendChild(card);
       });
     }
@@ -2087,8 +2083,8 @@
           <div class="ws-card-desc">${escapeHtml(proj.description) || '<span style="opacity:0.4">설명 없음</span>'}</div>
         `;
         card.addEventListener('click', () => selectProject(ws, proj));
-        card.querySelector('.btn-edit').addEventListener('click', () => openProjModal('edit', ws, proj));
-        card.querySelector('.btn-delete').addEventListener('click', () => deleteProject(ws, proj.id));
+        card.querySelector('.btn-edit').addEventListener('click', (e) => { e.stopPropagation(); openProjModal('edit', ws, proj); });
+        card.querySelector('.btn-delete').addEventListener('click', (e) => { e.stopPropagation(); deleteProject(ws, proj.id); });
         grid.appendChild(card);
       });
     }
@@ -2658,6 +2654,23 @@
       });
     }
 
+    // ── 모달 변경 감지 헬퍼 ──
+    const _modalSnap = {};
+    function _snapModal(key, ids) {
+      _modalSnap[key] = ids.map(id => ({ id, val: document.getElementById(id).value }));
+    }
+    function _isDirtyModal(key) {
+      return (_modalSnap[key] || []).some(({ id, val }) => document.getElementById(id).value !== val);
+    }
+    function _tryClose(key, saveFn, closeFn) {
+      if (_isDirtyModal(key)) {
+        if (confirm('저장하시겠습니까?')) saveFn();
+        else closeFn();
+      } else {
+        closeFn();
+      }
+    }
+
     let _editingIdeaId = null;
 
     function openIdeaModal(mode, ws, proj, ms, idea = null) {
@@ -2669,6 +2682,7 @@
       descInput.value = idea ? idea.description : '';
       _editingIdeaId = idea ? idea.id : null;
       modal.classList.add('open');
+      _snapModal('idea', ['idea-name-input', 'idea-desc-input']);
       nameInput.focus();
     }
 
@@ -2686,17 +2700,20 @@
       if (!title) { document.getElementById('idea-name-input').focus(); return; }
       const desc = document.getElementById('idea-desc-input').value.trim();
 
+      let newIdea = null;
       if (_editingIdeaId) {
         const idea = ms.ideas.find(i => i.id === _editingIdeaId);
         if (idea) { idea.title = title; idea.description = desc; }
       } else {
-        ms.ideas.push(new Idea(title, desc));
+        newIdea = new Idea(title, desc);
+        ms.ideas.push(newIdea);
       }
 
       saveWorkspaces();
       renderIdeas(ws, proj, ms);
       renderTree();
       closeIdeaModal();
+      if (newIdea) selectIdea(ws, proj, ms, newIdea);
     }
 
     function deleteIdea(ws, proj, ms, id) {
@@ -2750,8 +2767,8 @@
           <div class="ws-card-status status-${st}">${STATUS_LABEL[st]}</div>
         `;
         card.addEventListener('click', () => selectMilestone(ws, proj, ms));
-        card.querySelector('.btn-edit').addEventListener('click', () => openMilestoneModal('edit', ws, proj, ms));
-        card.querySelector('.btn-delete').addEventListener('click', () => deleteMilestone(ws, proj, ms.id));
+        card.querySelector('.btn-edit').addEventListener('click', (e) => { e.stopPropagation(); openMilestoneModal('edit', ws, proj, ms); });
+        card.querySelector('.btn-delete').addEventListener('click', (e) => { e.stopPropagation(); deleteMilestone(ws, proj, ms.id); });
         grid.appendChild(card);
       });
     }
@@ -2768,6 +2785,7 @@
       document.getElementById('milestone-sysprompt-input').value = ms ? (ms.systemPrompt || '') : '';
       _editingMilestoneId = ms ? ms.id : null;
       modal.classList.add('open');
+      _snapModal('ms', ['milestone-name-input', 'milestone-desc-input', 'milestone-sysprompt-input']);
       nameInput.focus();
     }
 
@@ -2785,6 +2803,7 @@
       const desc = document.getElementById('milestone-desc-input').value.trim();
       const sysprompt = document.getElementById('milestone-sysprompt-input').value.trim();
 
+      let newMs = null;
       if (_editingMilestoneId) {
         const ms = proj.milestones.find(m => m.id === _editingMilestoneId);
         if (ms) { ms.name = name; ms.description = desc; ms.systemPrompt = sysprompt; }
@@ -2792,12 +2811,14 @@
         const ms = new Milestone(name, desc);
         ms.systemPrompt = sysprompt;
         proj.milestones.push(ms);
+        newMs = ms;
       }
 
       saveWorkspaces();
       renderMilestones(ws, proj);
       renderTree();
       closeMilestoneModal();
+      if (newMs) selectMilestone(ws, proj, newMs);
     }
 
     function deleteMilestone(ws, proj, id) {
@@ -2846,6 +2867,7 @@
         _editingProjId = null;
       }
       modal.classList.add('open');
+      _snapModal('proj', ['proj-name-input', 'proj-desc-input', 'proj-sysprompt-input', 'proj-path-input']);
       nameInput.focus();
     }
 
@@ -2863,6 +2885,7 @@
       const sysprompt = document.getElementById('proj-sysprompt-input').value.trim();
       const path = document.getElementById('proj-path-input').value.trim();
 
+      let newProj = null;
       if (_editingProjId) {
         const proj = ws.projects.find(p => p.id === _editingProjId);
         if (proj) { proj.name = name; proj.description = desc; proj.systemPrompt = sysprompt; proj.outputPath = path; }
@@ -2870,12 +2893,14 @@
         const proj = new Project(name, desc, path);
         proj.systemPrompt = sysprompt;
         ws.projects.push(proj);
+        newProj = proj;
       }
 
       saveWorkspaces();
       renderProjects(ws);
       renderTree();
       closeProjModal();
+      if (newProj) selectProject(ws, newProj);
     }
 
     function deleteProject(ws, id) {
@@ -2914,6 +2939,7 @@
         _editingId = null;
       }
       modal.classList.add('open');
+      _snapModal('ws', ['ws-name-input', 'ws-desc-input', 'ws-sysprompt-input']);
       nameInput.focus();
     }
 
@@ -2931,6 +2957,7 @@
       const desc = document.getElementById('ws-desc-input').value.trim();
       const sysprompt = document.getElementById('ws-sysprompt-input').value.trim();
 
+      let newWs = null;
       if (_editingId) {
         const ws = workspaces.find(w => w.id === _editingId);
         if (ws) { ws.name = name; ws.description = desc; ws.systemPrompt = sysprompt; }
@@ -2938,12 +2965,14 @@
         const ws = new Workspace(name, desc);
         ws.systemPrompt = sysprompt;
         workspaces.push(ws);
+        newWs = ws;
       }
 
       saveWorkspaces();
       renderWorkspaces();
       renderTree();
       closeModal();
+      if (newWs) selectWorkspace(newWs);
     }
 
     function deleteWorkspace(id) {
@@ -2977,13 +3006,13 @@
       if (ms) openIdeaModal('add', ws, proj, ms);
     });
     document.getElementById('idea-modal').addEventListener('click', e => {
-      if (e.target === e.currentTarget) closeIdeaModal();
+      if (e.target === e.currentTarget) _tryClose('idea', saveIdea, closeIdeaModal);
     });
-    document.getElementById('btn-idea-modal-cancel').addEventListener('click', closeIdeaModal);
+    document.getElementById('btn-idea-modal-cancel').addEventListener('click', () => _tryClose('idea', saveIdea, closeIdeaModal));
     document.getElementById('btn-idea-modal-confirm').addEventListener('click', saveIdea);
     document.getElementById('idea-name-input').addEventListener('keydown', e => {
       if (e.key === 'Enter') saveIdea();
-      if (e.key === 'Escape') closeIdeaModal();
+      if (e.key === 'Escape') _tryClose('idea', saveIdea, closeIdeaModal);
     });
     document.getElementById('btn-add-milestone').addEventListener('click', () => {
       const ws = workspaces.find(w => w.id === _selectedWsId);
@@ -2991,31 +3020,31 @@
       if (proj) openMilestoneModal('add', ws, proj);
     });
     document.getElementById('milestone-modal').addEventListener('click', e => {
-      if (e.target === e.currentTarget) closeMilestoneModal();
+      if (e.target === e.currentTarget) _tryClose('ms', saveMilestone, closeMilestoneModal);
     });
-    document.getElementById('btn-milestone-modal-cancel').addEventListener('click', closeMilestoneModal);
+    document.getElementById('btn-milestone-modal-cancel').addEventListener('click', () => _tryClose('ms', saveMilestone, closeMilestoneModal));
     document.getElementById('btn-milestone-modal-confirm').addEventListener('click', saveMilestone);
     document.getElementById('milestone-name-input').addEventListener('keydown', e => {
       if (e.key === 'Enter') saveMilestone();
-      if (e.key === 'Escape') closeMilestoneModal();
+      if (e.key === 'Escape') _tryClose('ms', saveMilestone, closeMilestoneModal);
     });
     document.getElementById('proj-modal').addEventListener('click', e => {
-      if (e.target === e.currentTarget) closeProjModal();
+      if (e.target === e.currentTarget) _tryClose('proj', saveProject, closeProjModal);
     });
-    document.getElementById('btn-proj-modal-cancel').addEventListener('click', closeProjModal);
+    document.getElementById('btn-proj-modal-cancel').addEventListener('click', () => _tryClose('proj', saveProject, closeProjModal));
     document.getElementById('btn-proj-modal-confirm').addEventListener('click', saveProject);
     document.getElementById('proj-name-input').addEventListener('keydown', e => {
       if (e.key === 'Enter') saveProject();
-      if (e.key === 'Escape') closeProjModal();
+      if (e.key === 'Escape') _tryClose('proj', saveProject, closeProjModal);
     });
-    document.getElementById('btn-modal-cancel').addEventListener('click', closeModal);
+    document.getElementById('btn-modal-cancel').addEventListener('click', () => _tryClose('ws', saveWorkspace, closeModal));
     document.getElementById('btn-modal-confirm').addEventListener('click', saveWorkspace);
     document.getElementById('ws-modal').addEventListener('click', e => {
-      if (e.target === e.currentTarget) closeModal();
+      if (e.target === e.currentTarget) _tryClose('ws', saveWorkspace, closeModal);
     });
     document.getElementById('ws-name-input').addEventListener('keydown', e => {
       if (e.key === 'Enter') saveWorkspace();
-      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Escape') _tryClose('ws', saveWorkspace, closeModal);
     });
 
     // ──────────────────────────────────────────
@@ -3073,6 +3102,9 @@
       document.getElementById('milestone-grid').style.display = 'none';
       document.getElementById('idea-grid').style.display = 'none';
       document.getElementById('idea-detail').style.display = 'none';
+      document.getElementById('ws-sysprompt-block').style.display = 'none';
+      document.getElementById('proj-sysprompt-block').style.display = 'none';
+      document.getElementById('ms-sysprompt-block').style.display = 'none';
       document.getElementById('content').classList.remove('idea-active');
       document.getElementById('btn-add-ws').style.display = 'none';
       document.getElementById('btn-add-proj').style.display = 'none';
@@ -3378,6 +3410,7 @@
             });
           });
 
+          delBtn.style.marginLeft = 'auto';
           actions.appendChild(openBtn);
           actions.appendChild(delBtn);
           bubble.appendChild(text);
@@ -3430,40 +3463,23 @@
             }
           });
 
-          const upBtn = document.createElement('button');
-          upBtn.className = 'chat-score-btn' + (p.score === SCORE.UP ? ' active' : '');
-          upBtn.textContent = '👍';
-          upBtn.addEventListener('click', () => {
-            p.score = p.score === SCORE.UP ? SCORE.NONE : SCORE.UP;
-            saveWorkspaces();
-            renderTaskChat(task);
-          });
-
-          const downBtn = document.createElement('button');
-          downBtn.className = 'chat-score-btn down' + (p.score === SCORE.DOWN ? ' active' : '');
-          downBtn.textContent = '👎';
-          downBtn.addEventListener('click', () => {
-            p.score = p.score === SCORE.DOWN ? SCORE.NONE : SCORE.DOWN;
-            saveWorkspaces();
-            renderTaskChat(task);
-          });
-
           const copyBtn = document.createElement('button');
           copyBtn.className = 'chat-copy-btn';
-          copyBtn.textContent = '⎘';
+          copyBtn.textContent = '⧉';
           copyBtn.title = '복사';
           copyBtn.addEventListener('click', () => {
             navigator.clipboard.writeText(p.message).then(() => {
               copyBtn.textContent = '✓';
-              setTimeout(() => { copyBtn.textContent = '⎘'; }, 1000);
+              setTimeout(() => { copyBtn.textContent = '⧉'; }, 1000);
             });
           });
 
+          const rightGroup = document.createElement('div');
+          rightGroup.className = 'chat-btn-right-group';
+          rightGroup.appendChild(copyBtn);
+          rightGroup.appendChild(delBtn);
           actions.appendChild(execBtn);
-          actions.appendChild(copyBtn);
-          actions.appendChild(upBtn);
-          actions.appendChild(downBtn);
-          actions.appendChild(delBtn);
+          actions.appendChild(rightGroup);
           bubble.appendChild(text);
           bubble.appendChild(actions);
         }
@@ -3700,10 +3716,6 @@
       hideLoadingPopup();
     });
 
-    document.getElementById('loading-wait-btn').addEventListener('click', () => {
-      document.getElementById('loading-popup').classList.add('popup-hidden');
-      document.getElementById('loading-overlay').classList.remove('open');
-    });
 
     // 페이지 로드 시 저장된 테마 및 폰트 스케일 적용
     applyTheme(loadTheme());
