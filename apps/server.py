@@ -68,7 +68,13 @@ _SP_PROMPT_ROLE = (
 _SP_REFINE_ROLE = (
     "당신은 AI 프롬프트 개선 도구입니다. "
     "원본 프롬프트를 수정 지시에 따라 수정한 결과 텍스트만 출력하라. "
-    "맥락 요청·상태 메시지·설명·질문·'대기 중' 같은 출력은 절대 금지."
+    "맥락 요청·상태 메시지·설명·질문·'대기 중' 같은 출력은 절대 금지. "
+    "수정 원칙: "
+    "(1) 기존 구조 유지 — 전체를 다시 쓰지 말고 필요한 부분만 수정한다. "
+    "(2) 의도 보존 — 수정 지시가 명시하지 않은 내용은 원본 그대로 유지한다. "
+    "(3) 파급 효과 추적 — 수정이 완료 기준·예시·제약 조건 등 다른 섹션과 충돌하면 해당 섹션도 함께 수정한다. "
+    "(4) 충돌 해소 — 수정 지시와 기존 내용이 충돌하면 수정 지시를 우선한다. "
+    "금지: 수정 지시에 없는 내용 추가 또는 삭제, 기존 용어를 동의어로 교체, 섹션 순서 변경, 언어(한국어·영어) 혼용."
 )
 _SP_TASK_FORMAT = (
     '반드시 [{"name":"작업명","importance":숫자}] 형식의 JSON 배열만 출력하세요. '
@@ -1004,7 +1010,8 @@ class Handler(SimpleHTTPRequestHandler):
                              "\n".join(f"{i+1}. {h}" for i, h in enumerate(history_to_show)))
             parts.append(
                 f"[원본 프롬프트]\n{original}\n\n"
-                f"[수정 지시]\n{instruction}"
+                f"[수정 지시]\n{instruction}\n"
+                f"(수정 지시가 영향을 주는 모든 섹션을 일관되게 반영할 것)"
             )
             prompt = "\n\n".join(parts)
             sp = build_system_prompt(_SP_REFINE_ROLE, _SP_NO_QUESTION, _SP_TEXT_ONLY, user_sp)
