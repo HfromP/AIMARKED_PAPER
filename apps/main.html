@@ -1860,6 +1860,7 @@
               (id.tasks || []).forEach(td => {
                 const task = new Task(td.name, td.importance, td.status);
                 task.id = td.id;
+                task.description = td.description || '';
                 (td.prompts || []).forEach(pd => {
                   if (pd.type === 'result') {
                     task.prompts.push({ ...pd });
