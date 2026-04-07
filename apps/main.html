@@ -2437,6 +2437,7 @@
           e.stopPropagation();
           startBtn.disabled = true;
           startBtn.textContent = '…';
+          showLoadingPopup();
           try {
             openTaskChat(task);
             const conversationHistory = (task.prompts || [])
@@ -2447,7 +2448,8 @@
               body: JSON.stringify({
                 systemPrompt: buildSystemPrompt(task.id),
                 conversationHistory
-              })
+              }),
+              signal: currentAbortController.signal
             });
             const result = await res.json();
             if (!result.ok) throw new Error(result.error);
@@ -2460,9 +2462,11 @@
             renderTree();
             openTaskChat(task);
           } catch (err) {
-            alert('프롬프트 생성 실패: ' + err.message);
+            if (err.name !== 'AbortError') alert('프롬프트 생성 실패: ' + err.message);
             startBtn.disabled = false;
             startBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+          } finally {
+            hideLoadingPopup();
           }
         });
 
@@ -3388,11 +3392,13 @@
           execBtn.addEventListener('click', async () => {
             execBtn.disabled = true;
             execBtn.textContent = '실행 중…';
+            showLoadingPopup();
             try {
               const res = await fetch(`/api/tasks/${task.id}/execute`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: p.message })
+                body: JSON.stringify({ prompt: p.message }),
+                signal: currentAbortController.signal
               });
               const data = await res.json();
               if (!data.ok) throw new Error(data.error);
@@ -3412,9 +3418,11 @@
               saveWorkspaces();
               renderTaskChat(task);
             } catch (err) {
-              alert('실행 실패: ' + err.message);
+              if (err.name !== 'AbortError') alert('실행 실패: ' + err.message);
               execBtn.disabled = false;
               execBtn.textContent = '▶ 실행';
+            } finally {
+              hideLoadingPopup();
             }
           });
 
@@ -3508,6 +3516,7 @@
       refineBtn.disabled = true;
       document.getElementById('task-chat-send').disabled = true;
       refineBtn.textContent = '수정 중…';
+      showLoadingPopup();
       try {
         const conversationHistory = (_chatTask.prompts || [])
           .filter(p => p.type !== 'result')
@@ -3520,7 +3529,8 @@
             originalPrompt,
             conversationHistory,
             systemPrompt: buildSystemPrompt(_chatTask.id)
-          })
+          }),
+          signal: currentAbortController.signal
         });
         const data = await res.json();
         if (!data.ok) throw new Error(data.error);
@@ -3530,8 +3540,9 @@
         renderTaskChat(_chatTask);
         document.getElementById('task-chat-input').value = '';
       } catch (err) {
-        showToast('수정 실패: ' + err.message);
+        if (err.name !== 'AbortError') showToast('수정 실패: ' + err.message);
       } finally {
+        hideLoadingPopup();
         _sending = false;
         refineBtn.disabled = false;
         document.getElementById('task-chat-send').disabled = false;
