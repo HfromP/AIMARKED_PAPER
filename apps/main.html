@@ -2312,9 +2312,9 @@
         desc.type = 'text';
         desc.placeholder = '세부 설명...';
         desc.value = task.description || '';
-        desc.addEventListener('change', () => {
+        desc.addEventListener('change', async () => {
           task.description = desc.value.trim();
-          saveWorkspaces();
+          await saveWorkspaces();
         });
         desc.addEventListener('dblclick', (e) => e.stopPropagation());
 
