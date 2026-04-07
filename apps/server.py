@@ -67,8 +67,8 @@ _SP_PROMPT_ROLE = (
 )
 _SP_REFINE_ROLE = (
     "당신은 AI 프롬프트 개선 도구입니다. "
-    "주어진 지시에 따라 원본 프롬프트를 수정한 결과물만 출력하라. "
-    "상태 메시지·설명·질문·'대기 중' 같은 처리 중 문구는 절대 출력하지 마라."
+    "[원본 프롬프트]를 [수정 지시]에 따라 수정한 결과 프롬프트 텍스트만 출력하라. "
+    "맥락 요청·상태 메시지·설명·질문·'대기 중' 같은 출력은 절대 금지."
 )
 _SP_TASK_FORMAT = (
     '반드시 [{"name":"작업명","importance":숫자}] 형식의 JSON 배열만 출력하세요. '
@@ -316,12 +316,15 @@ def _validate_task_json(text):
 
 
 def _validate_prompt_text(text):
-    """(ok, reason) 반환. 질문형·빈 응답을 감지한다."""
+    """(ok, reason) 반환. 질문형·빈 응답·맥락 요청형 응답을 감지한다."""
     stripped = (text or "").strip()
     if len(stripped) < 10:
         return False, f"응답이 너무 짧음: {stripped!r}"
     if stripped.endswith('?') or stripped.endswith('？'):
         return False, f"질문형 응답 감지: {stripped[:120]}"
+    _context_request_endings = ('주세요', '바랍니다', 'please', 'provide')
+    if any(stripped.lower().endswith(e) for e in _context_request_endings):
+        return False, f"맥락 요청형 응답 감지: {stripped[:120]}"
     return True, ""
 
 
@@ -988,18 +991,26 @@ class Handler(SimpleHTTPRequestHandler):
                 parts.append("[대화 히스토리]\n" +
                              "\n".join(f"{i+1}. {h}" for i, h in enumerate(history_to_show)))
             parts.append(
-                "다음 프롬프트를 주어진 지시에 따라 수정해줘.\n"
-                "수정된 프롬프트만 출력하고 다른 설명은 하지 마.\n\n"
-                f"원본 프롬프트:\n{original}\n\n"
-                f"수정 지시: {instruction}"
+                f"[원본 프롬프트]\n{original}\n\n"
+                f"[수정 지시]\n{instruction}"
             )
             prompt = "\n\n".join(parts)
             sp = build_system_prompt(_SP_REFINE_ROLE, _SP_NO_QUESTION, _SP_TEXT_ONLY, user_sp)
+
+            import datetime
+            log_path = BASE_DIR / 'ai_debug.log'
+            with open(log_path, 'a', encoding='utf-8') as lf:
+                lf.write(f'\n=== REFINE {datetime.datetime.now().isoformat()} ===\n')
+                lf.write(f'[PROMPT]\n{prompt}\n')
 
             result = _call_ai_with_retry(
                 prompt, system_prompt=sp, timeout=60,
                 validate=_validate_prompt_text, max_retries=1
             )
+
+            with open(log_path, 'a', encoding='utf-8') as lf:
+                lf.write(f'[RESPONSE]\n{result}\n')
+
             self._send_json(200, {'ok': True, 'refinedPrompt': result})
 
         except Exception as e:
