@@ -52,7 +52,12 @@ _TEXT_SUBPROCESS = {'text': True, 'encoding': 'utf-8', 'errors': 'replace'}
 # ── 시스템 프롬프트 원자 단위 상수 ──────────────────────────────────────────
 _SP_NO_QUESTION = "절대 질문하지 말고 주어진 정보로 합리적으로 추측하여 즉시 답변하세요."
 _SP_TASK_ROLE   = "당신은 소프트웨어 개발 Task 목록 생성 도구입니다."
-_SP_PROMPT_ROLE = "당신은 AI 프롬프트 생성 도구입니다."
+_SP_PROMPT_ROLE = (
+    "당신은 AI 프롬프트 생성 도구입니다. "
+    "당신의 역할은 오직 '다른 AI에게 전달할 프롬프트 텍스트'를 작성하는 것입니다. "
+    "절대로 Task를 직접 수행하거나 결과물을 출력하지 마세요. "
+    "출력은 반드시 프롬프트 텍스트 단 하나여야 합니다."
+)
 _SP_REFINE_ROLE = "당신은 AI 프롬프트 개선 도구입니다."
 _SP_TASK_FORMAT = (
     '반드시 [{"name":"작업명","importance":숫자}] 형식의 JSON 배열만 출력하세요. '
@@ -796,9 +801,10 @@ class Handler(SimpleHTTPRequestHandler):
                 f"아이디어: {idea.get('title', '')}\n"
                 f"아이디어 설명: {idea.get('description', '')}\n"
                 f"Task 이름: {task.get('name', '')}\n\n"
-                "위 Task를 수행하기 위한 가장 효과적인 AI 프롬프트를 하나 생성해줘.\n"
-                "절대 질문하지 말고, 주어진 정보로 합리적으로 추측해서 바로 프롬프트를 생성해줘.\n"
-                "프롬프트 텍스트만 출력하고 다른 설명은 하지 마."
+                "위 Task를 수행하기 위해 다른 AI에게 전달할 프롬프트 텍스트를 하나 작성해줘.\n"
+                "- 출력은 프롬프트 텍스트 자체만 작성할 것\n"
+                "- Task를 직접 실행하거나 결과를 출력하지 말 것\n"
+                "- 설명, 서문, 예시 없이 프롬프트 텍스트만 출력할 것"
             )
             prompt = "\n\n".join(parts)
             sp = build_system_prompt(_SP_PROMPT_ROLE, _SP_NO_QUESTION, _SP_TEXT_ONLY, user_sp)
