@@ -1,4 +1,6 @@
 apps/dependencies/local_python/*
+__pycache__/
+*.pyc
 
 # 로컬 환경 & 사용자 데이터 (배포 제외)
 apps/system.config
