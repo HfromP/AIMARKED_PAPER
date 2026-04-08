@@ -3339,6 +3339,7 @@
       showToast(`"${removed.name}" 삭제됨`, () => {
         clearTimeout(t);
         workspaces.splice(idx, 0, removed);
+        saveWorkspaces();
         renderWorkspaces(); renderTree();
       });
     }
