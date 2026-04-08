@@ -52,7 +52,6 @@ def build_system_prompt(*parts):
 
 
 _CLI_CONTEXT_FILENAMES = {
-    'claude_cli': 'CLAUDE.md',
     'gemini_cli': 'GEMINI.md',
 }
 
