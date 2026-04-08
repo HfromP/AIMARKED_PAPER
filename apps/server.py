@@ -241,15 +241,14 @@ def call_ai(prompt, timeout=120, system_prompt=None):
         return result.stdout.strip()
 
     else:  # claude_cli (default)
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            _write_cli_context('claude_cli', system_prompt, tmp_dir)
-            cmd = [str(CLAUDE_BIN), '--print']
-            cmd.append(prompt)
-            result = subprocess.run(
-                cmd,
-                capture_output=True, stdin=subprocess.DEVNULL, **_TEXT_SUBPROCESS, timeout=timeout,
-                cwd=tmp_dir
-            )
+        cmd = [str(CLAUDE_BIN), '--print', '--output-format', 'text']
+        if system_prompt:
+            cmd += ['--system-prompt', system_prompt]
+        result = subprocess.run(
+            cmd,
+            input=prompt,
+            capture_output=True, **_TEXT_SUBPROCESS, timeout=timeout,
+        )
         if result.returncode != 0:
             raise RuntimeError(result.stderr.strip() or result.stdout.strip() or 'Claude CLI 오류')
         return result.stdout.strip()
