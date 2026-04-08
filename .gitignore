@@ -8,3 +8,6 @@ apps/ai_debug.log
 apps/data.json
 apps/settings.config
 apps/__pycache__/
+
+# 릴리즈 ZIP (GitHub Releases 업로드용, git 추적 불필요)
+Millestone_v*.zip
