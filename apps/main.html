@@ -2693,7 +2693,8 @@
             clearTimeout(t);
             idea.tasks.splice(tIdx, 0, task);
             renderIdeaDetail(ws, proj, ms, idea); renderTree();
-          });
+            saveWorkspaces();
+          }, 3000);
         });
 
         row.addEventListener('dblclick', (e) => {
