@@ -781,11 +781,6 @@ document.getElementById('shutdown-btn').addEventListener('click', () => {
   window.close();
 });
 
-function _sendHeartbeat() { fetch('/api/heartbeat', { method: 'POST' }).catch(() => {}); }
-setInterval(_sendHeartbeat, 3000);
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') _sendHeartbeat(); });
-window.addEventListener('focus', _sendHeartbeat);
-
 // ── 스텝 관리 ───────────────────────────────────────────────────────
 let currentStep = 1;
 
