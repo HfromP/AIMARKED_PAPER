@@ -481,11 +481,6 @@
   </main>
 
   <script>
-    function _sendHeartbeat() { fetch('/api/heartbeat', { method: 'POST' }).catch(() => {}); }
-    setInterval(_sendHeartbeat, 3000);
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') _sendHeartbeat(); });
-    window.addEventListener('focus', _sendHeartbeat);
-
     const STORAGE_KEY = 'settings.theme';
     const DEFAULT_THEME = 'light';
     const FONT_SCALE_KEY = 'settings.fontScale';
