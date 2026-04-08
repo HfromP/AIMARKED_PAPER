@@ -2,7 +2,7 @@ import os
 import platform
 import subprocess
 
-from data import PORT
+from config import PORT
 
 
 def _get_my_tty():

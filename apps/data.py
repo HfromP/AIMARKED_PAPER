@@ -4,7 +4,8 @@ import platform
 import shutil
 from pathlib import Path
 
-PORT = 5500
+from config import PORT  # noqa: F401 — re-exported for backward compatibility
+
 BASE_DIR = Path(__file__).parent          # apps/
 
 # subprocess.run에 text 모드 사용 시 공통 kwargs — UTF-8로 디코딩을 시도하고 실패 시 대체(replace) 처리

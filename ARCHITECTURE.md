@@ -33,7 +33,8 @@
 │   │                           #   POST /api/install-package      → pip install (provider별 패키지)
 │   │                           #   POST /api/ideas/{id}/run       → call_ai() → tasks 생성
 │   │                           #   import: data.py, ai.py, os_utils.py
-│   ├── data.py                 # 데이터 레이어: 경로 상수(BASE_DIR, PORT, DATA_FILE, SETTINGS_FILE)
+│   ├── config.py               # 순수 상수 모듈 (부수효과 없음): PORT=5500
+│   ├── data.py                 # 데이터 레이어: 경로 상수(BASE_DIR, DATA_FILE, SETTINGS_FILE)
 │   │                           #   read_data/write_data, read_settings/write_settings
 │   │                           #   find_idea_context, find_task, find_task_context 등 탐색 헬퍼
 │   ├── ai.py                   # AI 레이어: 6개 provider 분기(call_ai), 시스템 프롬프트 상수
@@ -42,7 +43,7 @@
 │   │                           #   import: data.py (read_settings, _TEXT_SUBPROCESS)
 │   ├── os_utils.py             # OS/플랫폼 유틸: 터미널·브라우저 탭 닫기 (_close_terminal, _close_browser_tab)
 │   │                           #   _get_my_tty (macOS/Linux TTY 탐색)
-│   │                           #   import: data.py (PORT)
+│   │                           #   import: config.py (PORT)
 │   ├── data.json               # 데이터 영속 파일 (workspaces 배열)
 │   └── settings.config         # 앱 설정 (JSON): language, theme, ai_provider, api_keys{openai,anthropic,gemini}, ollama_model
 ├── ARCHITECTURE.md             # (이 파일) 프로젝트 구조 나침반 — AI 전용
