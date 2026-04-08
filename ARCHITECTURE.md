@@ -23,7 +23,7 @@
 │   │                           #   main.html에서 ai_connected:false 시 redirect 진입
 │   ├── settings.html           # 설정 페이지. 좌: 4개 아이콘 / 우: 나가기(X) → main.html
 │   │                           #   AI 프로바이더별 패키지 설치 버튼 포함
-│   ├── server.py               # HTTP 서버: 정적 파일 서빙(port 5500) + REST API + AI 브리지
+│   ├── server.py               # HTTP 서버 진입점: 정적 파일 서빙(port 5500) + REST API 라우팅
 │   │                           #   GET  /api/workspaces           → data.json 반환
 │   │                           #   PUT  /api/workspaces           → data.json 저장
 │   │                           #   GET  /api/settings             → settings.config 반환
@@ -32,7 +32,17 @@
 │   │                           #   POST /api/install-python       → install_python 스크립트 실행
 │   │                           #   POST /api/install-package      → pip install (provider별 패키지)
 │   │                           #   POST /api/ideas/{id}/run       → call_ai() → tasks 생성
-│   │                           #   call_ai(): ai_provider에 따라 OpenAI/Anthropic API/Gemini API/Claude CLI/Gemini CLI/Ollama CLI 분기
+│   │                           #   import: data.py, ai.py, os_utils.py
+│   ├── data.py                 # 데이터 레이어: 경로 상수(BASE_DIR, PORT, DATA_FILE, SETTINGS_FILE)
+│   │                           #   read_data/write_data, read_settings/write_settings
+│   │                           #   find_idea_context, find_task, find_task_context 등 탐색 헬퍼
+│   ├── ai.py                   # AI 레이어: 6개 provider 분기(call_ai), 시스템 프롬프트 상수
+│   │                           #   extract_json, _validate_*, _call_ai_with_retry
+│   │                           #   CLAUDE_BIN 탐색, _ensure_packages
+│   │                           #   import: data.py (read_settings, _TEXT_SUBPROCESS)
+│   ├── os_utils.py             # OS/플랫폼 유틸: 터미널·브라우저 탭 닫기 (_close_terminal, _close_browser_tab)
+│   │                           #   _get_my_tty (macOS/Linux TTY 탐색)
+│   │                           #   import: data.py (PORT)
 │   ├── data.json               # 데이터 영속 파일 (workspaces 배열)
 │   └── settings.config         # 앱 설정 (JSON): language, theme, ai_provider, api_keys{openai,anthropic,gemini}, ollama_model
 ├── ARCHITECTURE.md             # (이 파일) 프로젝트 구조 나침반 — AI 전용
