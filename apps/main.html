@@ -3576,15 +3576,6 @@
       }
     }
 
-    // ──────────────────────────────────────────
-    // Heartbeat (페이지 살아있음 알림)
-    // 브라우저 백그라운드 시 setInterval이 ~60s로 throttle되므로
-    // visibilitychange/focus 시 즉시 전송해 watchdog 오탐 방지
-    // ──────────────────────────────────────────
-    function _sendHeartbeat() { fetch('/api/heartbeat', { method: 'POST' }).catch(() => {}); }
-    setInterval(_sendHeartbeat, 3000);
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') _sendHeartbeat(); });
-    window.addEventListener('focus', _sendHeartbeat);
 
     // ──────────────────────────────────────────
     // Collapsible 헬퍼

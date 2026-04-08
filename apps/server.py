@@ -135,10 +135,7 @@ def _find_claude_bin() -> Path:
 
 CLAUDE_BIN = _find_claude_bin()
 _server_instance = None
-_last_heartbeat = None
 _ai_session_history: list = []
-HEARTBEAT_TIMEOUT = 8   # 초: 마지막 heartbeat 후 이 시간이 지나면 종료 확인 시작 (프론트 간격 3s × 2 + 여유 2s)
-STARTUP_GRACE = 30      # 초: 서버 시작 직후 watchdog 대기 시간
 
 
 def read_data():
@@ -510,9 +507,6 @@ class Handler(SimpleHTTPRequestHandler):
         if self.path == '/api/shutdown':
             self._handle_shutdown()
             return
-        if self.path == '/api/heartbeat':
-            self._handle_heartbeat()
-            return
         if self.path == '/api/reset-session':
             self._handle_reset_session()
             return
@@ -613,11 +607,6 @@ class Handler(SimpleHTTPRequestHandler):
             time.sleep(0.5)  # 응답이 클라이언트에 완전히 전달된 뒤 종료
             _server_instance.shutdown()
         threading.Thread(target=_delayed_shutdown, daemon=True).start()
-
-    def _handle_heartbeat(self):
-        global _last_heartbeat
-        _last_heartbeat = time.time()
-        self._send_json(200, {'ok': True})
 
     def _handle_reset_session(self):
         global _ai_session_history
@@ -1094,36 +1083,6 @@ class Handler(SimpleHTTPRequestHandler):
             self._send_json(500, {'error': str(e)})
 
 
-def _watchdog():
-    """3초 주기로 heartbeat 확인. 1회 미수신 → 1.5s 재확인 → 1s 재확인 → 종료."""
-    print(f'[watchdog] 시작 (grace {STARTUP_GRACE}s 대기 중...)')
-    time.sleep(STARTUP_GRACE)
-    print('[watchdog] 감시 시작')
-    while True:
-        time.sleep(3)
-        if _last_heartbeat is None:
-            print('[watchdog] heartbeat 아직 미수신')
-            continue
-        elapsed = time.time() - _last_heartbeat
-        print(f'[watchdog] 마지막 heartbeat {elapsed:.1f}s 전')
-        if elapsed <= HEARTBEAT_TIMEOUT:
-            continue
-        # 1차 재확인: 1.5초 대기
-        print(f'[watchdog] 미수신 감지 ({HEARTBEAT_TIMEOUT}s) → 1.5s 후 재확인')
-        time.sleep(1.5)
-        if time.time() - _last_heartbeat <= HEARTBEAT_TIMEOUT:
-            continue
-        # 2차 재확인: 1초 대기
-        print('[watchdog] 재확인 실패 → 1s 후 최종 확인')
-        time.sleep(1.0)
-        if time.time() - _last_heartbeat <= HEARTBEAT_TIMEOUT:
-            continue
-        # 최종 종료
-        print('[watchdog] 페이지 닫힘 확정 → 서버 종료')
-        threading.Thread(target=_server_instance.shutdown, daemon=True).start()
-        return
-
-
 def _get_my_tty():
     if platform.system() == 'Windows':
         return None  # Windows는 TTY 개념 없음, _close_terminal에서 WM_CLOSE 사용
@@ -1240,7 +1199,6 @@ if __name__ == '__main__':
     url = f'http://localhost:{PORT}/main.html'
     print(f'Millestone server running at {url}')
     webbrowser.open(url)
-    threading.Thread(target=_watchdog, daemon=True).start()
     try:
         _server_instance.serve_forever()
     except KeyboardInterrupt:
