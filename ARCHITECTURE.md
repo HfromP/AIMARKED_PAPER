@@ -32,6 +32,8 @@
 │   │                           #   POST /api/install-python       → install_python 스크립트 실행
 │   │                           #   POST /api/install-package      → pip install (provider별 패키지)
 │   │                           #   POST /api/ideas/{id}/run       → call_ai() → tasks 생성
+│   │                           #   GET  /api/ideas/{id}/prompt    → AI 호출 없이 프롬프트 텍스트만 반환
+│   │                           #   call_ai(): ai_provider에 따라 OpenAI/Anthropic API/Gemini API/Claude CLI/Gemini CLI/Ollama CLI 분기
 │   │                           #   import: data.py, ai.py, os_utils.py
 │   ├── config.py               # 순수 상수 모듈 (부수효과 없음): PORT=5500
 │   ├── data.py                 # 데이터 레이어: 경로 상수(BASE_DIR, DATA_FILE, SETTINGS_FILE)
@@ -46,6 +48,7 @@
 │   │                           #   import: config.py (PORT)
 │   ├── data.json               # 데이터 영속 파일 (workspaces 배열)
 │   └── settings.config         # 앱 설정 (JSON): language, theme, ai_provider, api_keys{openai,anthropic,gemini}, ollama_model
+│       # data.json 스키마: workspaces[].color, projects[].color, milestones[].color, ideas[].color (색상 태그)
 ├── ARCHITECTURE.md             # (이 파일) 프로젝트 구조 나침반 — AI 전용
 ├── CLAUDE.md                   # Claude Code 행동 규칙 및 제약 조건
 ├── README.md                   # 프로젝트 소개
@@ -80,9 +83,17 @@ python3 apps/server.py
 | `#theme-toggle` | nav 우측 | 다크/라이트 모드 토글 (달↔태양 아이콘) |
 | `#settings-btn` | nav 우측 | settings.html 이동 |
 | `.dark` class | body | 다크모드 상태 클래스 |
-| `#ws-grid` / `#proj-grid` / `#milestone-grid` / `#idea-grid` | main | 계층 탐색 카드 그리드 |
+| `#breadcrumb` | nav 하단 | 현재 계층 경로 표시 (클릭으로 상위 이동) |
+| `#ws-grid` / `#proj-grid` / `#milestone-grid` / `#idea-grid` | main | 계층 탐색 카드 그리드 (드래그앤드롭 정렬 지원) |
 | `btn-run` | idea 카드 | POST /api/ideas/{id}/run 호출 → Task 자동 생성 |
+| `btn-preview` | idea 카드 | GET /api/ideas/{id}/prompt → AI 프롬프트 미리보기 모달 |
+| `#prompt-preview-modal` | main.html | AI에 전달될 시스템/유저 프롬프트 텍스트 표시 |
 | `#ai-nudge-banner` | nav 하단 | AI 미연결 시 넛지 배너 (onboarding.html 링크) |
+| 색상 태그 `.color-dot-btn` | 카드 헤더 | 카드별 프리셋 색상 태그 (좌측 보더 색상 반영) |
+| 진행률 바 `.progress-bar-track` | 카드 하단 | done 태스크 비율 기반 진행률 시각화 |
+| 인라인 이름 편집 | 카드 이름 더블클릭 | 모달 없이 이름 직접 편집 |
+| Undo 토스트 | 삭제 직후 | 3초 지연 삭제 + 취소 버튼 |
+| 키보드 단축키 | 전역 keydown | Esc: 뒤로가기, N: 새 항목 추가 |
 | onboarding.html | 별도 페이지 | Step1: Python 설치, Step2: AI 설정, 언어 선택 |
 
 ---

@@ -7,3 +7,4 @@ apps/system.config
 apps/ai_debug.log
 apps/data.json
 apps/settings.config
+apps/__pycache__/

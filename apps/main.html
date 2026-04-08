@@ -120,7 +120,7 @@
     /* ── 본문 레이아웃 ── */
     #app-body {
       display: flex;
-      height: calc(100vh - 72px - var(--nudge-h, 0px));
+      height: calc(100vh - 72px - var(--bc-h, 25px) - var(--nudge-h, 0px));
       overflow: hidden;
     }
 
@@ -1390,6 +1390,192 @@
     body.dark #shutdown-btn { color: #eb5757; }
     body.dark #shutdown-btn:hover { background-color: rgba(235,87,87,.12) !important; color: #ff6b6b; }
 
+    /* ── 브레드크럼 ── */
+    #breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 20px;
+      font-size: calc(12px * var(--fs, 1));
+      color: #888;
+      border-bottom: 1px solid #f0f0f0;
+      overflow: hidden;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    body.dark #breadcrumb { border-bottom-color: #2a2a2a; color: #666; }
+    .bc-item {
+      cursor: pointer;
+      padding: 1px 4px;
+      border-radius: 4px;
+      transition: background-color 0.12s, color 0.12s;
+      flex-shrink: 0;
+    }
+    .bc-item:hover { background: rgba(0,0,0,0.06); color: #333; }
+    body.dark .bc-item:hover { background: rgba(255,255,255,0.08); color: #ccc; }
+    .bc-item.bc-current { color: #333; font-weight: 500; cursor: default; }
+    body.dark .bc-item.bc-current { color: #ccc; }
+    .bc-sep { flex-shrink: 0; opacity: 0.5; user-select: none; }
+
+    /* ── 색상 태그 ── */
+    .color-dot-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 3px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.5;
+      transition: opacity 0.15s;
+      flex-shrink: 0;
+    }
+    .color-dot-btn:hover, .color-dot-btn.has-color { opacity: 1; }
+    .color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ccc;
+      border: 1px solid rgba(0,0,0,0.15);
+    }
+    .color-picker-popup {
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 8px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+      z-index: 200;
+      width: 120px;
+    }
+    body.dark .color-picker-popup { background: #2a2a2a; border-color: #444; }
+    .color-picker-swatch {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.12s, border-color 0.12s;
+      flex-shrink: 0;
+    }
+    .color-picker-swatch:hover { transform: scale(1.2); }
+    .color-picker-swatch.selected { border-color: #555; }
+    body.dark .color-picker-swatch.selected { border-color: #ccc; }
+
+    /* ── 진행률 바 ── */
+    .progress-wrap {
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .progress-bar-track {
+      flex: 1;
+      height: 4px;
+      background: #f0f0f0;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    body.dark .progress-bar-track { background: #2a2a2a; }
+    .progress-bar-fill {
+      height: 100%;
+      background: #4caf50;
+      border-radius: 2px;
+      transition: width 0.3s;
+    }
+    .progress-pct {
+      font-size: calc(11px * var(--fs, 1));
+      color: #999;
+      flex-shrink: 0;
+    }
+    body.dark .progress-pct { color: #666; }
+
+    /* ── Drag & Drop ── */
+    .ws-card.drag-over {
+      border-color: #888;
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.12);
+    }
+    body.dark .ws-card.drag-over {
+      border-color: #888;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.15);
+    }
+    .ws-card.dragging { opacity: 0.4; }
+
+    /* ── Undo 토스트 ── */
+    #toast {
+      pointer-events: auto;
+    }
+    #toast.show { pointer-events: auto; }
+    .toast-undo-btn {
+      margin-left: 12px;
+      background: none;
+      border: 1px solid rgba(255,255,255,0.5);
+      border-radius: 4px;
+      color: #fff;
+      padding: 2px 8px;
+      font-size: calc(12px * var(--fs, 1));
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+    .toast-undo-btn:hover { background: rgba(255,255,255,0.15); }
+
+    /* ── AI 프롬프트 미리보기 모달 ── */
+    #prompt-preview-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    #prompt-preview-modal.open { display: flex; }
+    #prompt-preview-box {
+      background: #fff;
+      border-radius: 14px;
+      padding: 24px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    }
+    body.dark #prompt-preview-box { background: #1e1e1e; }
+    .prompt-preview-section {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .prompt-preview-label {
+      font-size: calc(11px * var(--fs, 1));
+      font-weight: 600;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .prompt-preview-text {
+      font-size: calc(12px * var(--fs, 1));
+      color: #555;
+      background: #f8f8f8;
+      border-radius: 8px;
+      padding: 10px 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-y: auto;
+      max-height: 200px;
+      font-family: inherit;
+    }
+    body.dark .prompt-preview-text { background: #2a2a2a; color: #aaa; }
+
     /* ── AI 넛지 배너 ─────────────────────────── */
     #ai-nudge-banner {
       display: none;
@@ -1494,6 +1680,11 @@
     </button>
     </div>
   </nav>
+
+  <!-- 브레드크럼 -->
+  <div id="breadcrumb">
+    <span class="bc-item bc-current" data-level="home">홈</span>
+  </div>
 
   <!-- AI 미연결 넛지 배너 -->
   <div id="ai-nudge-banner">
@@ -1757,6 +1948,27 @@
     </div>
   </div>
 
+  <!-- AI 프롬프트 미리보기 모달 -->
+  <div id="prompt-preview-modal">
+    <div id="prompt-preview-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:calc(15px * var(--fs,1));font-weight:700;">AI 프롬프트 미리보기</span>
+        <button id="prompt-preview-close" class="btn-card-icon" style="width:28px;height:28px;font-size:18px;color:#aaa;">×</button>
+      </div>
+      <div class="prompt-preview-section">
+        <div class="prompt-preview-label">시스템 프롬프트</div>
+        <div class="prompt-preview-text" id="prompt-preview-system"></div>
+      </div>
+      <div class="prompt-preview-section">
+        <div class="prompt-preview-label">유저 프롬프트</div>
+        <div class="prompt-preview-text" id="prompt-preview-user"></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;">
+        <button class="btn-modal" id="prompt-preview-copy">복사</button>
+      </div>
+    </div>
+  </div>
+
   <div id="loading-overlay">
     <div id="loading-popup">
       <div class="loading-spinner"></div>
@@ -1909,18 +2121,22 @@
         const ws = new Workspace(d.name, d.description);
         ws.id = d.id;
         ws.systemPrompt = d.systemPrompt || '';
+        ws.color = d.color || null;
         (d.projects || []).forEach(pd => {
           const proj = new Project(pd.name, pd.description, pd.outputPath);
           proj.id = pd.id;
           proj.systemPrompt = pd.systemPrompt || '';
+          proj.color = pd.color || null;
           (pd.milestones || []).forEach(md => {
             const ms = new Milestone(md.name, md.description);
             ms.id = md.id;
             ms.systemPrompt = md.systemPrompt || '';
+            ms.color = md.color || null;
             (md.ideas || []).forEach(id => {
               const idea = new Idea(id.title, id.description);
               idea.id = id.id;
               idea.systemPrompt = id.systemPrompt || '';
+              idea.color = id.color || null;
               idea.files = (id.files || []).map(f => ({ name: f.name, content: f.content }));
               (id.tasks || []).forEach(td => {
                 const task = new Task(td.name, td.importance, td.status);
@@ -1973,6 +2189,7 @@
       document.getElementById('ws-sysprompt-block').style.display = '';
       document.getElementById('ws-ctx-sysprompt').value = ws.systemPrompt || '';
       renderProjects(ws);
+      updateBreadcrumb(); saveNavState();
     }
 
     function deselectWorkspace() {
@@ -1984,42 +2201,63 @@
       document.getElementById('ws-grid').style.display = '';
       document.getElementById('proj-grid').style.display = 'none';
       document.getElementById('ws-sysprompt-block').style.display = 'none';
+      updateBreadcrumb(); saveNavState();
     }
 
     function renderWorkspaces() {
       const grid = document.getElementById('ws-grid');
       grid.innerHTML = '';
-      workspaces.forEach(ws => {
+      workspaces.forEach((ws, idx) => {
         const card = document.createElement('div');
         card.className = 'ws-card';
+        card.draggable = true;
         if (ws.id === _selectedWsId) card.classList.add('ws-card--selected');
-        card.innerHTML = `
-          <div class="ws-card-header">
-            <div class="ws-card-name">${escapeHtml(ws.name)}</div>
-            <div class="ws-card-icon-actions">
-              <button class="btn-card-icon btn-edit" data-tooltip="수정">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-              </button>
-              <button class="btn-card-icon btn-delete" data-tooltip="삭제">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="3 6 5 6 21 6"/>
-                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                  <path d="M10 11v6"/><path d="M14 11v6"/>
-                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div class="ws-card-desc">${escapeHtml(ws.description) || '<span style="opacity:0.4">설명 없음</span>'}</div>
-        `;
+        if (ws.color) card.style.borderLeft = `3px solid ${ws.color}`;
+
+        const header = document.createElement('div');
+        header.className = 'ws-card-header';
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'ws-card-name';
+        nameEl.textContent = ws.name;
+        _bindInlineEdit(nameEl, ws, 'name', () => { saveWorkspaces(); renderWorkspaces(); renderTree(); });
+
+        const actions = document.createElement('div');
+        actions.className = 'ws-card-icon-actions';
+        actions.innerHTML = `
+          <button class="btn-card-icon btn-edit" data-tooltip="수정">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+          <button class="btn-card-icon btn-delete" data-tooltip="삭제">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6"/><path d="M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+          </button>`;
+        _prependColorDot(actions, ws, () => { saveWorkspaces(); renderWorkspaces(); });
+
+        header.appendChild(nameEl);
+        header.appendChild(actions);
+
+        const desc = document.createElement('div');
+        desc.className = 'ws-card-desc';
+        desc.innerHTML = ws.description ? escapeHtml(ws.description) : '<span style="opacity:0.4">설명 없음</span>';
+
+        card.appendChild(header);
+        card.appendChild(desc);
+
         card.addEventListener('click', () => selectWorkspace(ws));
         card.querySelector('.btn-edit').addEventListener('click', (e) => { e.stopPropagation(); openModal('edit', ws); });
         card.querySelector('.btn-delete').addEventListener('click', (e) => { e.stopPropagation(); deleteWorkspace(ws.id); });
+
+        _bindDragDrop(card, workspaces, idx, () => { saveWorkspaces(); renderWorkspaces(); });
         grid.appendChild(card);
       });
     }
@@ -2057,36 +2295,60 @@
     function renderProjects(ws) {
       const grid = document.getElementById('proj-grid');
       grid.innerHTML = '';
-      ws.projects.forEach(proj => {
+      ws.projects.forEach((proj, idx) => {
         const card = document.createElement('div');
         card.className = 'ws-card';
-        card.innerHTML = `
-          <div class="ws-card-header">
-            <div class="ws-card-name">${escapeHtml(proj.name)}</div>
-            <div class="ws-card-icon-actions">
-              <button class="btn-card-icon btn-edit" data-tooltip="수정">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-              </button>
-              <button class="btn-card-icon btn-delete" data-tooltip="삭제">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="3 6 5 6 21 6"/>
-                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                  <path d="M10 11v6"/><path d="M14 11v6"/>
-                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div class="ws-card-desc">${escapeHtml(proj.description) || '<span style="opacity:0.4">설명 없음</span>'}</div>
-        `;
+        card.draggable = true;
+        if (proj.color) card.style.borderLeft = `3px solid ${proj.color}`;
+
+        const header = document.createElement('div');
+        header.className = 'ws-card-header';
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'ws-card-name';
+        nameEl.textContent = proj.name;
+        _bindInlineEdit(nameEl, proj, 'name', () => { saveWorkspaces(); renderProjects(ws); renderTree(); });
+
+        const actions = document.createElement('div');
+        actions.className = 'ws-card-icon-actions';
+        actions.innerHTML = `
+          <button class="btn-card-icon btn-edit" data-tooltip="수정">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+          <button class="btn-card-icon btn-delete" data-tooltip="삭제">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6"/><path d="M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+          </button>`;
+        _prependColorDot(actions, proj, () => { saveWorkspaces(); renderProjects(ws); });
+
+        header.appendChild(nameEl);
+        header.appendChild(actions);
+
+        const desc = document.createElement('div');
+        desc.className = 'ws-card-desc';
+        desc.innerHTML = proj.description ? escapeHtml(proj.description) : '<span style="opacity:0.4">설명 없음</span>';
+
+        // 진행률 바 (밀리스톤 → 아이디어 → 태스크 합산)
+        const progEl = _makeProgressBar(_calcProjectProgress(proj));
+
+        card.appendChild(header);
+        card.appendChild(desc);
+        if (progEl) card.appendChild(progEl);
+
         card.addEventListener('click', () => selectProject(ws, proj));
         card.querySelector('.btn-edit').addEventListener('click', (e) => { e.stopPropagation(); openProjModal('edit', ws, proj); });
         card.querySelector('.btn-delete').addEventListener('click', (e) => { e.stopPropagation(); deleteProject(ws, proj.id); });
+
+        _bindDragDrop(card, ws.projects, idx, () => { saveWorkspaces(); renderProjects(ws); });
         grid.appendChild(card);
       });
     }
@@ -2106,6 +2368,7 @@
       document.getElementById('proj-sysprompt-block').style.display = '';
       document.getElementById('proj-ctx-sysprompt').value = proj.systemPrompt || '';
       renderMilestones(ws, proj);
+      updateBreadcrumb(); saveNavState();
     }
 
     function deselectProject() {
@@ -2119,6 +2382,7 @@
       document.getElementById('milestone-grid').style.display = 'none';
       document.getElementById('ws-sysprompt-block').style.display = '';
       document.getElementById('ws-ctx-sysprompt').value = ws.systemPrompt || '';
+      updateBreadcrumb(); saveNavState();
     }
 
     // ──────────────────────────────────────────
@@ -2141,6 +2405,7 @@
         const t = idea.tasks.find(t => t.id === _chatTask.id);
         if (t) openTaskChat(t);
       }
+      updateBreadcrumb(); saveNavState();
     }
 
     function deselectIdea() {
@@ -2157,6 +2422,7 @@
       document.getElementById('ms-ctx-sysprompt').value = ms.systemPrompt || '';
       document.getElementById('content').classList.remove('idea-active');
       renderIdeas(ws, proj, ms);
+      updateBreadcrumb(); saveNavState();
     }
 
     function renderIdeaDetail(ws, proj, ms, idea) {
@@ -2418,10 +2684,17 @@
         delBtn.className = 'task-row-del';
         delBtn.textContent = '×';
         delBtn.addEventListener('click', () => {
-          idea.tasks = idea.tasks.filter(t => t.id !== task.id);
-          saveWorkspaces();
-          renderIdeaDetail(ws, proj, ms, idea);
-          renderTree();
+          const tIdx = idea.tasks.findIndex(t => t.id === task.id);
+          if (tIdx === -1) return;
+          idea.tasks.splice(tIdx, 1);
+          renderIdeaDetail(ws, proj, ms, idea); renderTree();
+          let t = setTimeout(() => { saveWorkspaces(); }, 3000);
+          showToast(`"${task.name}" 삭제됨`, () => {
+            clearTimeout(t);
+            idea.tasks.splice(tIdx, 0, task);
+            renderIdeaDetail(ws, proj, ms, idea); renderTree();
+            saveWorkspaces();
+          }, 3000);
         });
 
         row.addEventListener('dblclick', (e) => {
@@ -2531,6 +2804,7 @@
       document.getElementById('ms-ctx-sysprompt').value = ms.systemPrompt || '';
       document.getElementById('content').classList.remove('idea-active');
       renderIdeas(ws, proj, ms);
+      updateBreadcrumb(); saveNavState();
     }
 
     function deselectMilestone() {
@@ -2548,15 +2822,18 @@
       document.getElementById('proj-sysprompt-block').style.display = '';
       document.getElementById('proj-ctx-sysprompt').value = proj.systemPrompt || '';
       document.getElementById('content').classList.remove('idea-active');
+      updateBreadcrumb(); saveNavState();
     }
 
     function renderIdeas(ws, proj, ms) {
       const grid = document.getElementById('idea-grid');
       grid.innerHTML = '';
-      ms.ideas.forEach(idea => {
+      ms.ideas.forEach((idea, idx) => {
         const card = document.createElement('div');
         card.className = 'ws-card';
+        card.draggable = true;
         const st = idea.status;
+        if (idea.color) card.style.borderLeft = `3px solid ${idea.color}`;
         const PREVIEW = 3;
         const allTasks = idea.tasks;
         const renderTaskItems = (tasks) => tasks.map(t => `
@@ -2568,53 +2845,90 @@
           ? renderTaskItems(allTasks.slice(0, PREVIEW))
           : '<div class="idea-empty-tasks">Task 없음</div>';
 
-        card.innerHTML = `
-          <div class="ws-card-header">
-            <div class="ws-card-name">${escapeHtml(idea.title)}</div>
-            <div class="ws-card-icon-actions">
-              <button class="btn-card-icon btn-run" data-tooltip="실행">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="5 3 19 12 5 21 5 3"/>
-                </svg>
-              </button>
-              <button class="btn-card-icon btn-edit" data-tooltip="수정">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-              </button>
-              <button class="btn-card-icon btn-delete" data-tooltip="삭제">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="3 6 5 6 21 6"/>
-                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                  <path d="M10 11v6"/><path d="M14 11v6"/>
-                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div class="ws-card-desc">${escapeHtml(idea.description) || '<span style="opacity:0.4">설명 없음</span>'}</div>
-          <div class="ws-card-status status-${st}">${STATUS_LABEL[st]}</div>
-          <div class="idea-task-list">${tasksHtml}</div>
-          ${allTasks.length > PREVIEW ? `<button class="idea-task-toggle btn-toggle-tasks">▼ ${allTasks.length - PREVIEW}개 더 보기</button>` : ''}
-        `;
+        // header 수동 구성
+        const header = document.createElement('div');
+        header.className = 'ws-card-header';
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'ws-card-name';
+        nameEl.textContent = idea.title;
+        _bindInlineEdit(nameEl, idea, 'title', () => { saveWorkspaces(); renderIdeas(ws, proj, ms); renderTree(); });
+
+        const actions = document.createElement('div');
+        actions.className = 'ws-card-icon-actions';
+        actions.innerHTML = `
+          <button class="btn-card-icon btn-preview" data-tooltip="프롬프트 미리보기" ${!_aiAvailable ? 'disabled style="opacity:0.4"' : ''}>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+          <button class="btn-card-icon btn-run" data-tooltip="실행">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+          </button>
+          <button class="btn-card-icon btn-edit" data-tooltip="수정">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+          <button class="btn-card-icon btn-delete" data-tooltip="삭제">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6"/><path d="M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+          </button>`;
+        _prependColorDot(actions, idea, () => { saveWorkspaces(); renderIdeas(ws, proj, ms); });
+
+        header.appendChild(nameEl);
+        header.appendChild(actions);
+
+        const descEl = document.createElement('div');
+        descEl.className = 'ws-card-desc';
+        descEl.innerHTML = idea.description ? escapeHtml(idea.description) : '<span style="opacity:0.4">설명 없음</span>';
+
+        card.appendChild(header);
+        card.appendChild(descEl);
+
+        // 상태 + 태스크 목록
+        const statusBadge = document.createElement('div');
+        statusBadge.className = `ws-card-status status-${st}`;
+        statusBadge.textContent = STATUS_LABEL[st];
+        card.appendChild(statusBadge);
+
+        const taskListEl = document.createElement('div');
+        taskListEl.className = 'idea-task-list';
+        taskListEl.innerHTML = tasksHtml;
+        card.appendChild(taskListEl);
 
         if (allTasks.length > PREVIEW) {
+          const toggleBtn = document.createElement('button');
+          toggleBtn.className = 'idea-task-toggle btn-toggle-tasks';
+          toggleBtn.textContent = `▼ ${allTasks.length - PREVIEW}개 더 보기`;
           let expanded = false;
-          const taskList = card.querySelector('.idea-task-list');
-          const toggleBtn = card.querySelector('.btn-toggle-tasks');
           toggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             expanded = !expanded;
-            taskList.innerHTML = renderTaskItems(expanded ? allTasks : allTasks.slice(0, PREVIEW));
-            toggleBtn.textContent = expanded
-              ? '▲ 접기'
-              : `▼ ${allTasks.length - PREVIEW}개 더 보기`;
+            taskListEl.innerHTML = renderTaskItems(expanded ? allTasks : allTasks.slice(0, PREVIEW));
+            toggleBtn.textContent = expanded ? '▲ 접기' : `▼ ${allTasks.length - PREVIEW}개 더 보기`;
           });
+          card.appendChild(toggleBtn);
         }
+
+        // 프롬프트 미리보기 버튼
+        card.querySelector('.btn-preview').addEventListener('click', (e) => {
+          e.stopPropagation();
+          openPromptPreview(idea.id);
+        });
+
         card.querySelector('.btn-run').addEventListener('click', async (e) => {
           e.stopPropagation();
           const btn = e.currentTarget;
@@ -2654,6 +2968,8 @@
         card.addEventListener('click', () => selectIdea(ws, proj, ms, idea));
         card.querySelector('.btn-edit').addEventListener('click', (e) => { e.stopPropagation(); openIdeaModal('edit', ws, proj, ms, idea); });
         card.querySelector('.btn-delete').addEventListener('click', (e) => { e.stopPropagation(); deleteIdea(ws, proj, ms, idea.id); });
+
+        _bindDragDrop(card, ms.ideas, idx, () => { saveWorkspaces(); renderIdeas(ws, proj, ms); });
         grid.appendChild(card);
       });
     }
@@ -2722,12 +3038,16 @@
 
     function deleteIdea(ws, proj, ms, id) {
       const idx = ms.ideas.findIndex(i => i.id === id);
-      if (idx !== -1) {
-        ms.ideas.splice(idx, 1);
+      if (idx === -1) return;
+      const [removed] = ms.ideas.splice(idx, 1);
+      renderIdeas(ws, proj, ms); renderTree();
+      let t = setTimeout(() => { saveWorkspaces(); }, 3000);
+      showToast(`"${removed.title}" 삭제됨`, () => {
+        clearTimeout(t);
+        ms.ideas.splice(idx, 0, removed);
         saveWorkspaces();
-        renderIdeas(ws, proj, ms);
-        renderTree();
-      }
+        renderIdeas(ws, proj, ms); renderTree();
+      });
     }
 
     // ──────────────────────────────────────────
@@ -2741,38 +3061,65 @@
     function renderMilestones(ws, proj) {
       const grid = document.getElementById('milestone-grid');
       grid.innerHTML = '';
-      proj.milestones.forEach(ms => {
+      proj.milestones.forEach((ms, idx) => {
         const card = document.createElement('div');
         card.className = 'ws-card';
+        card.draggable = true;
         const st = ms.status;
-        card.innerHTML = `
-          <div class="ws-card-header">
-            <div class="ws-card-name">${escapeHtml(ms.name)}</div>
-            <div class="ws-card-icon-actions">
-              <button class="btn-card-icon btn-edit" data-tooltip="수정">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-              </button>
-              <button class="btn-card-icon btn-delete" data-tooltip="삭제">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="3 6 5 6 21 6"/>
-                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                  <path d="M10 11v6"/><path d="M14 11v6"/>
-                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div class="ws-card-desc">${escapeHtml(ms.description) || '<span style="opacity:0.4">설명 없음</span>'}</div>
-          <div class="ws-card-status status-${st}">${STATUS_LABEL[st]}</div>
-        `;
+        if (ms.color) card.style.borderLeft = `3px solid ${ms.color}`;
+
+        const header = document.createElement('div');
+        header.className = 'ws-card-header';
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'ws-card-name';
+        nameEl.textContent = ms.name;
+        _bindInlineEdit(nameEl, ms, 'name', () => { saveWorkspaces(); renderMilestones(ws, proj); renderTree(); });
+
+        const actions = document.createElement('div');
+        actions.className = 'ws-card-icon-actions';
+        actions.innerHTML = `
+          <button class="btn-card-icon btn-edit" data-tooltip="수정">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+          <button class="btn-card-icon btn-delete" data-tooltip="삭제">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6"/><path d="M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+          </button>`;
+        _prependColorDot(actions, ms, () => { saveWorkspaces(); renderMilestones(ws, proj); });
+
+        header.appendChild(nameEl);
+        header.appendChild(actions);
+
+        const desc = document.createElement('div');
+        desc.className = 'ws-card-desc';
+        desc.innerHTML = ms.description ? escapeHtml(ms.description) : '<span style="opacity:0.4">설명 없음</span>';
+
+        const statusBadge = document.createElement('div');
+        statusBadge.className = `ws-card-status status-${st}`;
+        statusBadge.textContent = STATUS_LABEL[st];
+
+        const progEl = _makeProgressBar(_calcMilestoneProgress(ms));
+
+        card.appendChild(header);
+        card.appendChild(desc);
+        card.appendChild(statusBadge);
+        if (progEl) card.appendChild(progEl);
+
         card.addEventListener('click', () => selectMilestone(ws, proj, ms));
         card.querySelector('.btn-edit').addEventListener('click', (e) => { e.stopPropagation(); openMilestoneModal('edit', ws, proj, ms); });
         card.querySelector('.btn-delete').addEventListener('click', (e) => { e.stopPropagation(); deleteMilestone(ws, proj, ms.id); });
+
+        _bindDragDrop(card, proj.milestones, idx, () => { saveWorkspaces(); renderMilestones(ws, proj); });
         grid.appendChild(card);
       });
     }
@@ -2827,12 +3174,16 @@
 
     function deleteMilestone(ws, proj, id) {
       const idx = proj.milestones.findIndex(m => m.id === id);
-      if (idx !== -1) {
-        proj.milestones.splice(idx, 1);
+      if (idx === -1) return;
+      const [removed] = proj.milestones.splice(idx, 1);
+      renderMilestones(ws, proj); renderTree();
+      let t = setTimeout(() => { saveWorkspaces(); }, 3000);
+      showToast(`"${removed.name}" 삭제됨`, () => {
+        clearTimeout(t);
+        proj.milestones.splice(idx, 0, removed);
         saveWorkspaces();
-        renderMilestones(ws, proj);
-        renderTree();
-      }
+        renderMilestones(ws, proj); renderTree();
+      });
     }
 
     async function browseProjectFolder() {
@@ -2909,12 +3260,16 @@
 
     function deleteProject(ws, id) {
       const idx = ws.projects.findIndex(p => p.id === id);
-      if (idx !== -1) {
-        ws.projects.splice(idx, 1);
+      if (idx === -1) return;
+      const [removed] = ws.projects.splice(idx, 1);
+      renderProjects(ws); renderTree();
+      let t = setTimeout(() => { saveWorkspaces(); }, 3000);
+      showToast(`"${removed.name}" 삭제됨`, () => {
+        clearTimeout(t);
+        ws.projects.splice(idx, 0, removed);
         saveWorkspaces();
-        renderProjects(ws);
-        renderTree();
-      }
+        renderProjects(ws); renderTree();
+      });
     }
 
     // ──────────────────────────────────────────
@@ -2981,12 +3336,16 @@
 
     function deleteWorkspace(id) {
       const idx = workspaces.findIndex(w => w.id === id);
-      if (idx !== -1) {
-        workspaces.splice(idx, 1);
+      if (idx === -1) return;
+      const [removed] = workspaces.splice(idx, 1);
+      renderWorkspaces(); renderTree();
+      let t = setTimeout(() => { saveWorkspaces(); }, 3000);
+      showToast(`"${removed.name}" 삭제됨`, () => {
+        clearTimeout(t);
+        workspaces.splice(idx, 0, removed);
         saveWorkspaces();
-        renderWorkspaces();
-        renderTree();
-      }
+        renderWorkspaces(); renderTree();
+      });
     }
 
     // ──────────────────────────────────────────
@@ -3068,6 +3427,7 @@
       _selectedWsId = null;
       _selectedProjId = null;
       _selectedMilestoneId = null;
+      _selectedIdeaId = null;
       document.getElementById('ws-grid').style.display = '';
       document.getElementById('proj-grid').style.display = 'none';
       document.getElementById('milestone-grid').style.display = 'none';
@@ -3081,6 +3441,7 @@
       document.getElementById('btn-exit-ws').style.display = 'none';
       document.querySelector('.content-header h1').textContent = '워크스페이스';
       renderWorkspaces();
+      updateBreadcrumb(); saveNavState();
     });
 
     // 저장된 패널 상태 복원 (기본값: collapsed)
@@ -3223,12 +3584,26 @@
 
     // ── Toast ────────────────────────────────────────
     let _toastTimer = null;
-    function showToast(msg) {
+    function showToast(msg, undoCb = null, duration = undoCb ? 3000 : 2800) {
       const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.classList.add('show');
       clearTimeout(_toastTimer);
-      _toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+      el.innerHTML = '';
+      const text = document.createTextNode(msg);
+      el.appendChild(text);
+      if (undoCb) {
+        const btn = document.createElement('button');
+        btn.className = 'toast-undo-btn';
+        btn.textContent = '취소';
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          clearTimeout(_toastTimer);
+          el.classList.remove('show');
+          undoCb();
+        });
+        el.appendChild(btn);
+      }
+      el.classList.add('show');
+      _toastTimer = setTimeout(() => el.classList.remove('show'), duration);
     }
 
     // ── AI 연결 상태 ─────────────────────────────────
@@ -3665,6 +4040,8 @@
       }
       renderWorkspaces();
       renderTree();
+      updateBreadcrumb();
+      restoreNavState();
     })();
 
     // ──────────────────────────────────────────
@@ -3725,6 +4102,314 @@
       applyTheme(next);
       saveTheme(next);
     });
+
+    // ──────────────────────────────────────────
+    // 브레드크럼 (기능 3)
+    // ──────────────────────────────────────────
+    function updateBreadcrumb() {
+      const bc = document.getElementById('breadcrumb');
+      bc.innerHTML = '';
+      const sep = () => { const s = document.createElement('span'); s.className = 'bc-sep'; s.textContent = '/'; return s; };
+
+      const homeItem = document.createElement('span');
+      homeItem.className = 'bc-item' + (!_selectedWsId ? ' bc-current' : '');
+      homeItem.textContent = '홈';
+      if (_selectedWsId) homeItem.addEventListener('click', () => document.getElementById('tree-home-btn').click());
+      bc.appendChild(homeItem);
+
+      if (_selectedWsId) {
+        const ws = workspaces.find(w => w.id === _selectedWsId);
+        if (!ws) return;
+        bc.appendChild(sep());
+        const wsItem = document.createElement('span');
+        wsItem.className = 'bc-item' + (!_selectedProjId ? ' bc-current' : '');
+        wsItem.textContent = ws.name;
+        if (_selectedProjId) wsItem.addEventListener('click', () => { deselectIdea && _selectedIdeaId && deselectIdea(); deselectMilestone && _selectedMilestoneId && deselectMilestone(); deselectProject && _selectedProjId && deselectProject(); });
+        bc.appendChild(wsItem);
+
+        if (_selectedProjId) {
+          const proj = ws.projects.find(p => p.id === _selectedProjId);
+          if (!proj) return;
+          bc.appendChild(sep());
+          const projItem = document.createElement('span');
+          projItem.className = 'bc-item' + (!_selectedMilestoneId ? ' bc-current' : '');
+          projItem.textContent = proj.name;
+          if (_selectedMilestoneId) projItem.addEventListener('click', () => { _selectedIdeaId && deselectIdea(); _selectedMilestoneId && deselectMilestone(); });
+          bc.appendChild(projItem);
+
+          if (_selectedMilestoneId) {
+            const ms = proj.milestones.find(m => m.id === _selectedMilestoneId);
+            if (!ms) return;
+            bc.appendChild(sep());
+            const msItem = document.createElement('span');
+            msItem.className = 'bc-item' + (!_selectedIdeaId ? ' bc-current' : '');
+            msItem.textContent = ms.name;
+            if (_selectedIdeaId) msItem.addEventListener('click', () => deselectIdea());
+            bc.appendChild(msItem);
+
+            if (_selectedIdeaId) {
+              const idea = ms.ideas.find(i => i.id === _selectedIdeaId);
+              if (!idea) return;
+              bc.appendChild(sep());
+              const ideaItem = document.createElement('span');
+              ideaItem.className = 'bc-item bc-current';
+              ideaItem.textContent = idea.title;
+              bc.appendChild(ideaItem);
+            }
+          }
+        }
+      }
+      // 높이 동적 계산
+      requestAnimationFrame(() => {
+        const h = bc.offsetHeight;
+        document.documentElement.style.setProperty('--bc-h', h + 'px');
+      });
+    }
+
+    // ──────────────────────────────────────────
+    // 최근 방문 기록 저장/복원 (기능 4)
+    // ──────────────────────────────────────────
+    const _NAV_KEY = 'nav.lastState';
+    function saveNavState() {
+      localStorage.setItem(_NAV_KEY, JSON.stringify({
+        wsId: _selectedWsId,
+        projId: _selectedProjId,
+        msId: _selectedMilestoneId,
+        ideaId: _selectedIdeaId,
+      }));
+    }
+    function restoreNavState() {
+      try {
+        const saved = localStorage.getItem(_NAV_KEY);
+        if (!saved) return;
+        const { wsId, projId, msId, ideaId } = JSON.parse(saved);
+        const ws = workspaces.find(w => w.id === wsId);
+        if (!ws) return;
+        const proj = ws.projects.find(p => p.id === projId);
+        if (!proj) { selectWorkspace(ws); return; }
+        const ms = proj.milestones.find(m => m.id === msId);
+        if (!ms) { selectWorkspace(ws); selectProject(ws, proj); return; }
+        const idea = ms.ideas.find(i => i.id === ideaId);
+        selectWorkspace(ws);
+        selectProject(ws, proj);
+        selectMilestone(ws, proj, ms);
+        if (idea) selectIdea(ws, proj, ms, idea);
+      } catch {}
+    }
+
+    // ──────────────────────────────────────────
+    // 드래그 & 드롭 (기능 5)
+    // ──────────────────────────────────────────
+    let _dragSrcIdx = -1;
+    let _dragSrcArr = null;
+
+    function _bindDragDrop(card, arr, idx, onDrop) {
+      card.addEventListener('dragstart', (e) => {
+        _dragSrcIdx = idx;
+        _dragSrcArr = arr;
+        card.classList.add('dragging');
+        if (e.dataTransfer) {
+          e.dataTransfer.setData('text/plain', '');
+          e.dataTransfer.effectAllowed = 'move';
+        }
+      });
+      card.addEventListener('dragend', () => card.classList.remove('dragging'));
+      card.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        card.classList.add('drag-over');
+      });
+      card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+      card.addEventListener('drop', (e) => {
+        e.preventDefault();
+        card.classList.remove('drag-over');
+        if (_dragSrcArr !== arr || _dragSrcIdx === idx) return;
+        const [moved] = arr.splice(_dragSrcIdx, 1);
+        const insertIdx = _dragSrcIdx < idx ? idx - 1 : idx;
+        arr.splice(insertIdx, 0, moved);
+        onDrop();
+      });
+    }
+
+    // ──────────────────────────────────────────
+    // 인라인 이름 편집 (기능 6)
+    // ──────────────────────────────────────────
+    function _bindInlineEdit(el, obj, field, onSave) {
+      el.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        const original = obj[field];
+        const input = document.createElement('input');
+        input.value = original;
+        input.style.cssText = `width:100%;font-size:inherit;font-weight:inherit;font-family:inherit;
+          border:none;outline:1px solid #888;border-radius:3px;padding:0 2px;background:transparent;color:inherit;`;
+        el.textContent = '';
+        el.appendChild(input);
+        input.focus();
+        input.select();
+        let committed = false;
+        function commit() {
+          if (committed) return;
+          committed = true;
+          const val = input.value.trim();
+          if (val && val !== original) { obj[field] = val; onSave(); }
+          else { el.textContent = original; }
+        }
+        function cancel() {
+          if (committed) return;
+          committed = true;
+          el.textContent = original;
+        }
+        input.addEventListener('keydown', e => {
+          if (e.key === 'Enter') { e.preventDefault(); commit(); }
+          if (e.key === 'Escape') cancel();
+        });
+        input.addEventListener('blur', commit);
+        input.addEventListener('click', e => e.stopPropagation());
+      });
+    }
+
+    // ──────────────────────────────────────────
+    // 색상 태그 (기능 8)
+    // ──────────────────────────────────────────
+    const _COLOR_PRESETS = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6','#ec4899','#6b7280'];
+
+    function _prependColorDot(actionsEl, obj, onSave) {
+      const btn = document.createElement('button');
+      btn.className = 'color-dot-btn btn-card-icon' + (obj.color ? ' has-color' : '');
+      btn.title = '색상 태그';
+      btn.style.position = 'relative';
+      const dot = document.createElement('span');
+      dot.className = 'color-dot';
+      dot.style.background = obj.color || '#ccc';
+      btn.appendChild(dot);
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.querySelectorAll('.color-picker-popup').forEach(p => p.remove());
+        const popup = document.createElement('div');
+        popup.className = 'color-picker-popup';
+        // 색상 없애기 버튼
+        const clearSwatch = document.createElement('span');
+        clearSwatch.className = 'color-picker-swatch' + (!obj.color ? ' selected' : '');
+        clearSwatch.style.cssText = 'background:#eee;border:1px dashed #bbb;';
+        clearSwatch.title = '없음';
+        clearSwatch.addEventListener('click', (e) => { e.stopPropagation(); obj.color = null; dot.style.background = '#ccc'; btn.classList.remove('has-color'); popup.remove(); onSave(); });
+        popup.appendChild(clearSwatch);
+        _COLOR_PRESETS.forEach(c => {
+          const sw = document.createElement('span');
+          sw.className = 'color-picker-swatch' + (obj.color === c ? ' selected' : '');
+          sw.style.background = c;
+          sw.addEventListener('click', (ev) => { ev.stopPropagation(); obj.color = c; dot.style.background = c; btn.classList.add('has-color'); popup.remove(); onSave(); });
+          popup.appendChild(sw);
+        });
+        btn.appendChild(popup);
+        setTimeout(() => document.addEventListener('click', () => popup.remove(), { once: true }), 0);
+      });
+      actionsEl.insertBefore(btn, actionsEl.firstChild);
+    }
+
+    // ──────────────────────────────────────────
+    // 진행률 계산 & 렌더 (기능 7)
+    // ──────────────────────────────────────────
+    function _calcIdeaProgress(idea) {
+      const tasks = idea.tasks || [];
+      if (!tasks.length) return null;
+      const done = tasks.filter(t => t.status === STATUS.DONE).length;
+      return done / tasks.length;
+    }
+    function _calcMilestoneProgress(ms) {
+      const ideas = ms.ideas || [];
+      if (!ideas.length) return null;
+      const vals = ideas.map(_calcIdeaProgress).filter(v => v !== null);
+      if (!vals.length) return null;
+      return vals.reduce((a, b) => a + b, 0) / vals.length;
+    }
+    function _calcProjectProgress(proj) {
+      const milestones = proj.milestones || [];
+      if (!milestones.length) return null;
+      const vals = milestones.map(_calcMilestoneProgress).filter(v => v !== null);
+      if (!vals.length) return null;
+      return vals.reduce((a, b) => a + b, 0) / vals.length;
+    }
+    function _makeProgressBar(ratio) {
+      if (ratio === null) return null;
+      const wrap = document.createElement('div');
+      wrap.className = 'progress-wrap';
+      const track = document.createElement('div');
+      track.className = 'progress-bar-track';
+      const fill = document.createElement('div');
+      fill.className = 'progress-bar-fill';
+      fill.style.width = Math.round(ratio * 100) + '%';
+      const pct = document.createElement('span');
+      pct.className = 'progress-pct';
+      pct.textContent = Math.round(ratio * 100) + '%';
+      track.appendChild(fill);
+      wrap.appendChild(track);
+      wrap.appendChild(pct);
+      return wrap;
+    }
+
+    // ──────────────────────────────────────────
+    // AI 프롬프트 미리보기 (기능 11)
+    // ──────────────────────────────────────────
+    async function openPromptPreview(ideaId) {
+      const modal = document.getElementById('prompt-preview-modal');
+      const sysEl = document.getElementById('prompt-preview-system');
+      const userEl = document.getElementById('prompt-preview-user');
+      sysEl.textContent = '불러오는 중…';
+      userEl.textContent = '';
+      modal.classList.add('open');
+      try {
+        const res = await fetch(`/api/ideas/${ideaId}/prompt`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        sysEl.textContent = data.systemPrompt || '(없음)';
+        userEl.textContent = data.userPrompt || '(없음)';
+      } catch (err) {
+        sysEl.textContent = '오류: ' + err.message;
+      }
+    }
+    document.getElementById('prompt-preview-close').addEventListener('click', () => {
+      document.getElementById('prompt-preview-modal').classList.remove('open');
+    });
+    document.getElementById('prompt-preview-modal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+    });
+    document.getElementById('prompt-preview-copy').addEventListener('click', () => {
+      const sys = document.getElementById('prompt-preview-system').textContent;
+      const usr = document.getElementById('prompt-preview-user').textContent;
+      navigator.clipboard.writeText(`[시스템 프롬프트]\n${sys}\n\n[유저 프롬프트]\n${usr}`).then(() => {
+        showToast('클립보드에 복사됐습니다.');
+      });
+    });
+
+    // ──────────────────────────────────────────
+    // 키보드 단축키 (기능 1)
+    // ──────────────────────────────────────────
+    document.addEventListener('keydown', (e) => {
+      const tag = document.activeElement?.tagName;
+      const isEditing = tag === 'INPUT' || tag === 'TEXTAREA' ||
+        document.activeElement?.isContentEditable ||
+        document.querySelector('.modal-box') && document.querySelector('.ws-modal.open, #proj-modal.open, #milestone-modal.open, #idea-modal.open, #run-confirm-modal.open');
+      if (isEditing) return;
+      if (document.querySelector('#ws-modal.open, #proj-modal.open, #milestone-modal.open, #idea-modal.open')) return;
+
+      if (e.key === 'Escape') {
+        // 프롬프트 미리보기 모달 닫기 우선
+        const previewModal = document.getElementById('prompt-preview-modal');
+        if (previewModal.classList.contains('open')) { previewModal.classList.remove('open'); return; }
+        // 뒤로 가기
+        const exitBtn = document.getElementById('btn-exit-ws');
+        if (exitBtn && exitBtn.style.display !== 'none') exitBtn.click();
+      } else if (e.key === 'n' || e.key === 'N') {
+        // 현재 계층에 맞는 새 항목 추가
+        const candidates = ['btn-add-idea', 'btn-add-milestone', 'btn-add-proj', 'btn-add-ws'];
+        for (const id of candidates) {
+          const btn = document.getElementById(id);
+          if (btn && btn.style.display !== 'none') { btn.click(); break; }
+        }
+      }
+    });
+
   </script>
 </body>
 </html>

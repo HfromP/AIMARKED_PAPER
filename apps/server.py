@@ -30,6 +30,35 @@ _server_instance = None
 _ai_session_history: list = []
 
 
+
+def _build_idea_prompts(ws, proj, ms, idea):
+    """idea 컨텍스트에서 (system_prompt, user_prompt) 튜플을 조립해 반환한다."""
+    parts = []
+    files = idea.get('files', [])
+    if files:
+        file_section = "\n\n".join(
+            f"[참고 파일: {f.get('name', '')}]\n{f.get('content', '')}"
+            for f in files[:3]
+        )
+        parts.append(f"다음 파일들을 참고해서 Task를 구성해줘:\n\n{file_section}")
+
+    parts.append(
+        f"아이디어 제목: {idea.get('title', '')}\n"
+        f"아이디어 설명: {idea.get('description', '')}\n\n"
+        "위 아이디어의 구현 Task 목록을 출력해줘."
+    )
+    user_prompt = "\n\n".join(parts)
+
+    user_sp = build_system_prompt(
+        (ws or {}).get('systemPrompt', ''),
+        (proj or {}).get('systemPrompt', ''),
+        (ms or {}).get('systemPrompt', ''),
+        idea.get('systemPrompt', ''),
+    )
+    system_prompt = build_system_prompt(_SP_TASK_ROLE, _SP_NO_QUESTION, _SP_TASK_FORMAT, user_sp)
+    return system_prompt, user_prompt
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(BASE_DIR), **kwargs)
@@ -69,6 +98,10 @@ class Handler(SimpleHTTPRequestHandler):
         elif self.path == '/api/browse-folder':
             self._handle_browse_folder()
         else:
+            m = re.fullmatch(r'/api/ideas/([^/]+)/prompt', self.path)
+            if m:
+                self._handle_get_idea_prompt(m.group(1))
+                return
             super().do_GET()
 
     def do_PUT(self):
@@ -350,6 +383,20 @@ class Handler(SimpleHTTPRequestHandler):
     def _handle_get_workspaces(self):
         self._send_json(200, read_data())
 
+    def _handle_get_idea_prompt(self, idea_id):
+        """AI 호출 없이 idea에 대한 프롬프트 텍스트만 반환한다."""
+        try:
+            data = read_data()
+            ws, proj, ms, idea = find_idea_context(data, idea_id)
+            if idea is None:
+                self._send_json(404, {'error': f'idea {idea_id} not found'})
+                return
+
+            system_prompt, user_prompt = _build_idea_prompts(ws, proj, ms, idea)
+            self._send_json(200, {'systemPrompt': system_prompt, 'userPrompt': user_prompt})
+        except Exception as e:
+            self._send_json(500, {'error': str(e)})
+
     def _handle_put_workspaces(self):
         try:
             body = self._read_body()
@@ -367,29 +414,7 @@ class Handler(SimpleHTTPRequestHandler):
                 self._send_json(404, {'error': f'idea {idea_id} not found'})
                 return
 
-            parts = []
-            files = idea.get('files', [])
-            if files:
-                file_section = "\n\n".join(
-                    f"[참고 파일: {f.get('name', '')}]\n{f.get('content', '')}"
-                    for f in files[:3]
-                )
-                parts.append(f"다음 파일들을 참고해서 Task를 구성해줘:\n\n{file_section}")
-
-            parts.append(
-                f"아이디어 제목: {idea.get('title', '')}\n"
-                f"아이디어 설명: {idea.get('description', '')}\n\n"
-                "위 아이디어의 구현 Task 목록을 출력해줘."
-            )
-            prompt = "\n\n".join(parts)
-
-            user_sp = build_system_prompt(
-                (ws or {}).get('systemPrompt', ''),
-                (proj or {}).get('systemPrompt', ''),
-                (ms or {}).get('systemPrompt', ''),
-                idea.get('systemPrompt', ''),
-            )
-            sp = build_system_prompt(_SP_TASK_ROLE, _SP_NO_QUESTION, _SP_TASK_FORMAT, user_sp)
+            sp, prompt = _build_idea_prompts(ws, proj, ms, idea)
             response_text = _call_ai_with_retry(
                 prompt, system_prompt=sp, timeout=120,
                 validate=_validate_task_json, max_retries=2
