@@ -4203,7 +4203,10 @@
         _dragSrcIdx = idx;
         _dragSrcArr = arr;
         card.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
+        if (e.dataTransfer) {
+          e.dataTransfer.setData('text/plain', '');
+          e.dataTransfer.effectAllowed = 'move';
+        }
       });
       card.addEventListener('dragend', () => card.classList.remove('dragging'));
       card.addEventListener('dragover', (e) => {
