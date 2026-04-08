@@ -5,7 +5,7 @@ AI 프롬프트를 체계적으로 관리하는 워크스페이스 툴.
 Workspace → Project → Milestone → Idea → Task 계층으로 작업을 구조화하고,
 AI를 연결해 Task별 프롬프트를 자동 생성·실행·저장합니다.
 
-**버전**: v1.0.5
+**버전**: v1.0.8
 **지원 언어**: 한국어 · English · Tiếng Việt
 
 ---
