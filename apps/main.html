@@ -3045,6 +3045,7 @@
       showToast(`"${removed.title}" 삭제됨`, () => {
         clearTimeout(t);
         ms.ideas.splice(idx, 0, removed);
+        saveWorkspaces();
         renderIdeas(ws, proj, ms); renderTree();
       });
     }
@@ -3180,6 +3181,7 @@
       showToast(`"${removed.name}" 삭제됨`, () => {
         clearTimeout(t);
         proj.milestones.splice(idx, 0, removed);
+        saveWorkspaces();
         renderMilestones(ws, proj); renderTree();
       });
     }
@@ -3265,6 +3267,7 @@
       showToast(`"${removed.name}" 삭제됨`, () => {
         clearTimeout(t);
         ws.projects.splice(idx, 0, removed);
+        saveWorkspaces();
         renderProjects(ws); renderTree();
       });
     }
@@ -3581,7 +3584,7 @@
 
     // ── Toast ────────────────────────────────────────
     let _toastTimer = null;
-    function showToast(msg, undoCb = null, duration = 2800) {
+    function showToast(msg, undoCb = null, duration = undoCb ? 3000 : 2800) {
       const el = document.getElementById('toast');
       clearTimeout(_toastTimer);
       el.innerHTML = '';

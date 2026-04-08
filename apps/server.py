@@ -424,6 +424,34 @@ def find_task_context(data, task_id):
     return None, None, None, None
 
 
+def _build_idea_prompts(ws, proj, ms, idea):
+    """idea 컨텍스트에서 (system_prompt, user_prompt) 튜플을 조립해 반환한다."""
+    parts = []
+    files = idea.get('files', [])
+    if files:
+        file_section = "\n\n".join(
+            f"[참고 파일: {f.get('name', '')}]\n{f.get('content', '')}"
+            for f in files[:3]
+        )
+        parts.append(f"다음 파일들을 참고해서 Task를 구성해줘:\n\n{file_section}")
+
+    parts.append(
+        f"아이디어 제목: {idea.get('title', '')}\n"
+        f"아이디어 설명: {idea.get('description', '')}\n\n"
+        "위 아이디어의 구현 Task 목록을 출력해줘."
+    )
+    user_prompt = "\n\n".join(parts)
+
+    user_sp = build_system_prompt(
+        (ws or {}).get('systemPrompt', ''),
+        (proj or {}).get('systemPrompt', ''),
+        (ms or {}).get('systemPrompt', ''),
+        idea.get('systemPrompt', ''),
+    )
+    system_prompt = build_system_prompt(_SP_TASK_ROLE, _SP_NO_QUESTION, _SP_TASK_FORMAT, user_sp)
+    return system_prompt, user_prompt
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(BASE_DIR), **kwargs)
@@ -757,29 +785,7 @@ class Handler(SimpleHTTPRequestHandler):
                 self._send_json(404, {'error': f'idea {idea_id} not found'})
                 return
 
-            parts = []
-            files = idea.get('files', [])
-            if files:
-                file_section = "\n\n".join(
-                    f"[참고 파일: {f.get('name', '')}]\n{f.get('content', '')}"
-                    for f in files[:3]
-                )
-                parts.append(f"다음 파일들을 참고해서 Task를 구성해줘:\n\n{file_section}")
-
-            parts.append(
-                f"아이디어 제목: {idea.get('title', '')}\n"
-                f"아이디어 설명: {idea.get('description', '')}\n\n"
-                "위 아이디어의 구현 Task 목록을 출력해줘."
-            )
-            user_prompt = "\n\n".join(parts)
-
-            user_sp = build_system_prompt(
-                (ws or {}).get('systemPrompt', ''),
-                (proj or {}).get('systemPrompt', ''),
-                (ms or {}).get('systemPrompt', ''),
-                idea.get('systemPrompt', ''),
-            )
-            system_prompt = build_system_prompt(_SP_TASK_ROLE, _SP_NO_QUESTION, _SP_TASK_FORMAT, user_sp)
+            system_prompt, user_prompt = _build_idea_prompts(ws, proj, ms, idea)
             self._send_json(200, {'systemPrompt': system_prompt, 'userPrompt': user_prompt})
         except Exception as e:
             self._send_json(500, {'error': str(e)})
@@ -801,29 +807,7 @@ class Handler(SimpleHTTPRequestHandler):
                 self._send_json(404, {'error': f'idea {idea_id} not found'})
                 return
 
-            parts = []
-            files = idea.get('files', [])
-            if files:
-                file_section = "\n\n".join(
-                    f"[참고 파일: {f.get('name', '')}]\n{f.get('content', '')}"
-                    for f in files[:3]
-                )
-                parts.append(f"다음 파일들을 참고해서 Task를 구성해줘:\n\n{file_section}")
-
-            parts.append(
-                f"아이디어 제목: {idea.get('title', '')}\n"
-                f"아이디어 설명: {idea.get('description', '')}\n\n"
-                "위 아이디어의 구현 Task 목록을 출력해줘."
-            )
-            prompt = "\n\n".join(parts)
-
-            user_sp = build_system_prompt(
-                (ws or {}).get('systemPrompt', ''),
-                (proj or {}).get('systemPrompt', ''),
-                (ms or {}).get('systemPrompt', ''),
-                idea.get('systemPrompt', ''),
-            )
-            sp = build_system_prompt(_SP_TASK_ROLE, _SP_NO_QUESTION, _SP_TASK_FORMAT, user_sp)
+            sp, prompt = _build_idea_prompts(ws, proj, ms, idea)
             response_text = _call_ai_with_retry(
                 prompt, system_prompt=sp, timeout=120,
                 validate=_validate_task_json, max_retries=2
